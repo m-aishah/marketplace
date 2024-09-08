@@ -1,3 +1,7 @@
+'.use client'
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -23,7 +27,9 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <Navbar />
+      <main>{children}</main>
+      <Footer />
       </body>
     </html>
   );
