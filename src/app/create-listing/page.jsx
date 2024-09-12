@@ -2,11 +2,30 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import categories from "./categories";
+import Image from "next/image";
 
 function CreateListing() {
+  const [selectedImage, setSelectedImage] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Category");
   const menuRef = useRef(null);
+
+  const handleImageClick = () => {
+    document.getElementById("imageInput").click();
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.readyState === 2) {
+          setSelectedImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const closeMenu = () => {
     setIsMenuOpen(false);
@@ -31,10 +50,10 @@ function CreateListing() {
   }, []);
 
   return (
-    <div className="w-full h-full flex justify-center items-center">
-      <div className="w-[600px] h-full p-10 flex flex-col items-center">
+    <div className="w-full h-full flex justify-center items-center pb-28">
+      <div className="w-[700px] h-full p-10 flex flex-col items-center">
         <div className="mb-10 self-start">
-          <h1 className="text-black text-3xl font-semibold tracking-tight">
+          <h1 className="text-black text-3xl font-semibold tracking-tight mb-2">
             Add Product
           </h1>
           <p className="text-gray-500 text-base font-light tracking-normal">
@@ -49,11 +68,47 @@ function CreateListing() {
             event.preventDefault();
           }}
         >
-          <div className="w-full bg-[#FAFAFA] flex flex-col items-center gap-4 mb-4 p-3 rounded-lg">
+          <div className="w-full flex items-center p-5 bg-[#FAFAFA] mb-10 rounded-lg">
+            <div className="w-[30%]">
+              <p className="text-[#737373] text-lg font-light">
+                Product Picture
+              </p>
+            </div>
+            <div className="flex-1 flex items-center justify-between">
+              <div
+                onClick={handleImageClick}
+                className="h-[150px] cursor-pointer rounded-lg bg-brand/5 aspect-square mr-5 flex flex-col justify-center items-center hover:bg-gray-200"
+              >
+                {selectedImage ? (
+                  <Image
+                    src={selectedImage}
+                    height={150}
+                    width={150}
+                    alt="selected image"
+                    className="h-full w-full object-cover rounded-lg"
+                  />
+                ) : (
+                  <p className="text-base text-brand">Upload image</p>
+                )}
+              </div>
+              <input
+                type="file"
+                id="imageInput"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleImageChange}
+              />
+              <p className="text-[#737373] text-sm font-light">
+                Image must be below 1024x1024px. Use PNG or JPG format.
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full bg-[#FAFAFA] flex flex-col items-center gap-4 mb-4 p-5 rounded-lg">
             <div className="w-full flex justify-between items-center">
               <label
                 htmlFor="product-name"
-                className="text-lg font-light tracking-tight text-gray-500 w-[30%]"
+                className="text-lg font-light tracking-tight text-[#737373] w-[30%]"
               >
                 Name*
               </label>
@@ -67,7 +122,7 @@ function CreateListing() {
             <div className="w-full flex justify-between items-center">
               <label
                 htmlFor="product-description"
-                className="text-lg font-light tracking-tight text-gray-500 w-[30%]"
+                className="text-lg font-light tracking-tight text-[#737373] w-[30%]"
               >
                 Description*
               </label>
@@ -80,7 +135,7 @@ function CreateListing() {
             <div className="w-full flex justify-between items-center">
               <label
                 htmlFor="product-price"
-                className="text-lg font-light tracking-tight text-gray-500 w-[30%]"
+                className="text-lg font-light tracking-tight text-[#737373] w-[30%]"
               >
                 Price*
               </label>
@@ -94,7 +149,7 @@ function CreateListing() {
             <div className=" w-full flex justify-between items-center">
               <label
                 htmlFor="product-category"
-                className="text-lg font-light tracking-tight text-gray-500 w-[30%]"
+                className="text-lg font-light tracking-tight text-[#737373] w-[30%]"
               >
                 Category*
               </label>
@@ -109,7 +164,7 @@ function CreateListing() {
                 {isMenuOpen && (
                   <div
                     ref={menuRef}
-                    className="absolute w-full rounded shadow-lg top-10 text-base bg-white"
+                    className="absolute w-full rounded shadow-lg top-10 text-base bg-white mt-3"
                   >
                     {categories.map((category) => {
                       return (
@@ -129,11 +184,10 @@ function CreateListing() {
               </div>
             </div>
           </div>
-          {/* <input type="file" /> */}
 
           <div className="w-full flex justify-end">
             <button
-              className="bg-brand text-white font-sans text-base font-normal tracking-tight py-2 px-4 rounded-md hover:bg-brand/60 transition-colors"
+              className="bg-brand text-white font-sans text-base font-normal tracking-tight py-2 px-4 rounded-lg hover:bg-brand/60 transition-colors"
               type="submit"
             >
               Submit
