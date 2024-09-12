@@ -1,4 +1,3 @@
-//create a page for uploading a new product to the marketplace for selling. The options should include an image, title, description, price, and category. The user should be able to submit the product to the marketplace.
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import categories from "./categories";
