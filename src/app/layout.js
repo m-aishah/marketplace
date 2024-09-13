@@ -1,6 +1,6 @@
-'.use client'
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+".use client";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 import localFont from "next/font/local";
 import "./globals.css";
@@ -27,9 +27,9 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Navbar />
-      <main className="flex-grow w-full">{children}</main>
-      <Footer />
+        {/* <Navbar /> */}
+        <main className="flex-grow w-full">{children}</main>
+        {/* <Footer /> */}
       </body>
     </html>
   );
