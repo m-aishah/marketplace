@@ -18,10 +18,10 @@ body {
   flex-direction: column;
 }
 
-header {
+/* header {
   background-color: #0047AB;
   padding: 1rem 2rem;
-}
+} */
 
 .navbar {
   display: flex;
@@ -50,7 +50,7 @@ header {
 }
 
 .nav-links a:hover {
-  color: #FFD700; /* gold color on hover */
+  color: #ffd700; /* gold color on hover */
 }
 
 footer {
@@ -76,7 +76,7 @@ footer {
 }
 
 .footer-links a:hover {
-  color: #FFD700; /* gold color on hover */
+  color: #ffd700; /* gold color on hover */
 }
 
 .main {

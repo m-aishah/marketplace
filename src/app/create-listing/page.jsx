@@ -77,7 +77,7 @@ function CreateListing() {
             <div className="w-full flex flex-col md:justify-between md:flex-row md:flex-1 md:items-center">
               <div
                 onClick={handleImageClick}
-                className="h-[150px] w-[150px] cursor-pointer rounded-lg bg-brand/5 flex flex-col justify-center items-center hover:bg-gray-200 md:aspect-square md:mr-5 md:w-auto"
+                className="h-[150px] w-[150px] cursor-pointer rounded-lg bg-brand/5 flex flex-col justify-center items-center transition hover:bg-gray-200 md:aspect-square md:mr-5 md:w-auto"
               >
                 {selectedImage ? (
                   <Image
