@@ -31,9 +31,9 @@ const Navbar = () => {
     <header
       className={`${
         isScrolled
-          ? "fixed top-0 w-full shadow-lg shadow-brand/20 z-20"
+          ? "fixed top-0 shadow-lg shadow-brand/20 z-20"
           : "relative shadow"
-      } p-4 flex justify-center bg-white transition-all duration-300`}
+      } w-full p-4 flex justify-center bg-white transition-all duration-300`}
     >
       <nav className="max-w-[1400px] flex justify-between items-center w-full">
         <Link href="/" className="flex items-center">
@@ -42,7 +42,7 @@ const Navbar = () => {
             <h1 className="ml-2 text-lg leading-tight font-bold tracking-tighter md:text-3xl">
               Marketplace
             </h1>
-            <div className="ml-1 w-1 h-1 rounded-full bg-slate-500 md:w-2 md:h-2"></div>
+            <div className="ml-1 w-1 h-1 rounded-full bg-gradient-to-r from-[#FF7F50] to-[#98FF98] md:w-2 md:h-2"></div>
           </div>
         </Link>
 
