@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { auth, db, storage } from '../../firebase';
 import { getDoc, doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import Link from 'next/link'; // For client-side navigation in Next.js
+import Link from 'next/link'; 
 import { FiEdit } from 'react-icons/fi';
 import {LoadingSpinner} from '../../components/LoadingSpinner';
 

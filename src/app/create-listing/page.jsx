@@ -4,11 +4,16 @@ import categories from "./categories";
 import Image from "next/image";
 import { FaChevronUp, FaChevronDown, FaUpload } from "react-icons/fa";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { collection, addDoc } from "firebase/firestore";
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '@/firebase';
 
 function CreateListing() {
+  const [user] = useAuthState(auth);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Category");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const menuRef = useRef(null);
 
   const handleImageClick = () => {
@@ -50,10 +55,34 @@ function CreateListing() {
     };
   }, []);
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if(!user) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const docRef = await addDoc(collection(db, 'listings'), {
+        userId: user.uid,
+        name: event.target['product-name'].value,
+        description: event.target['product-description'].value,
+        price: event.target['product-price'].value,
+        category: selectedOption,
+        imageUrl: selectedImage, // TODO: Need to upload image to storage, and then get URL
+        createdAt: new Date(),
+      });
+
+      alert('Listing created');
+    } catch (event) {
+      console.error('Error adding document: ', event);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className="w-full h-full flex justify-center items-center pb-28">
-      {
         <div className="w-full h-full p-4 flex flex-col items-center md:w-[700px] md:p-10">
           <div className="mb-10 self-start">
             <h1 className="text-black text-xl md:text-3xl font-semibold tracking-tight mb-2">
@@ -67,9 +96,7 @@ function CreateListing() {
 
           <form
             className="w-full"
-            onSubmit={(event) => {
-              event.preventDefault();
-            }}
+            onSubmit={handleSubmit}
           >
             <div className="w-full gap-6 flex flex-col p-5 bg-[#FAFAFA] mb-10 rounded-lg md:flex-row md:items-center md:gap-0">
               <div className="w-full md:w-[30%]">
@@ -121,6 +148,7 @@ function CreateListing() {
                 <input
                   className="w-full rounded-md ring-2 ring-gray-300 p-2  placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
                   id="product-name"
+                  required
                   type="text"
                   placeholder="e.g Apple Wristwatch"
                 />
@@ -135,6 +163,7 @@ function CreateListing() {
                 <textarea
                   className="w-full rounded-md ring-2 ring-gray-300 p-2  placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
                   id="product-description"
+                  required
                   placeholder="e.g Used Apple wristwatch in good condition"
                 ></textarea>
               </div>
@@ -148,6 +177,7 @@ function CreateListing() {
                 <input
                   className="w-full rounded-md ring-2 ring-gray-300 p-2  placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
                   id="product-price"
+                  required
                   type="number"
                   placeholder="e.g 500"
                 />
@@ -162,6 +192,7 @@ function CreateListing() {
                 <div className="relative w-full md:flex-1">
                   <button
                     id="product-category"
+                    type="button"
                     className="w-full flex justify-between items-center ring-2 ring-gray-300 rounded-md bg-white text-left p-2 shadow text-base active:ring-brand active:ring-opacity-60 active:shadow-lg active:shadow-brand/10"
                     onClick={() => setIsMenuOpen((prev) => !prev)}
                   >
@@ -196,13 +227,13 @@ function CreateListing() {
               <button
                 className="w-full bg-brand text-white font-sans text-base font-normal tracking-tight py-2 px-4 rounded-lg hover:bg-brand/60 transition-colors md:w-auto"
                 type="submit"
+                disabled={isSubmitting}
               >
-                Submit
+                {isSubmitting ? "Submitting..." : "Submit"}
               </button>
             </div>
           </form>
         </div>
-}
       </div>
     </ProtectedRoute>
   );
