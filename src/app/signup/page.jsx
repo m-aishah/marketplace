@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
+import {doc, setDoc} from 'firebase/firestore';
+import { db } from '../../firebase';
 import { auth } from '../../firebase';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 function Signup() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +42,13 @@ function Signup() {
         }
 
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            await setDoc(doc(db, 'users', user.uid), {
+                username,
+                email,
+            });
             router.push('/dashboard');
         } catch (error) {
             switch (error.code) {
@@ -70,6 +79,19 @@ function Signup() {
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSignup}>
                     <div className="rounded-md shadow-sm -space-y-px">
+                    <div>
+                            <label htmlFor="username" className="sr-only">Username</label>
+                            <input
+                                id="username"
+                                name="username"
+                                type="text"
+                                required
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-brand focus:border-brand focus:z-10 sm:text-sm"
+                                placeholder="Username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                            />
+                        </div> <br/>
                         <div>
                             <label htmlFor="email" className="sr-only">Email address</label>
                             <input
