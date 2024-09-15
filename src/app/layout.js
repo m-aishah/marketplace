@@ -1,13 +1,7 @@
-<<<<<<< HEAD
 '.use client'
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import { AuthProvider } from './AuthContext';
-=======
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
->>>>>>> ce0396eb073fd205e4185e167ada60bd68327835
-
+import { AuthProvider } from './AuthContext';
 import localFont from "next/font/local";
 import "./globals.css";
 

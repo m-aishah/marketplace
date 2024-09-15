@@ -1,31 +1,48 @@
 "use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { FiMenu, FiX } from "react-icons/fi";
+import { usePathname } from 'next/navigation';
+import { FiMenu, FiX, FiUser } from "react-icons/fi";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState(null);
+  const pathname = usePathname();
+  const auth = getAuth();
 
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
     const handleScroll = () => {
-      if (window.scrollY > 0) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 0);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => {
+      unsubscribe();
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [auth]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
+
+  const isActive = (path) => pathname === path;
 
   return (
     <header
@@ -47,18 +64,16 @@ const Navbar = () => {
         </Link>
 
         <div
-          onClick={() => {
-            setIsMenuOpen((prev) => !prev);
-          }}
+          onClick={() => setIsMenuOpen((prev) => !prev)}
           className="md:hidden"
         >
-          {isMenuOpen ? "" : <FiMenu className="relative z-50 w-5 h-5" />}
+          {isMenuOpen ? <FiX className="relative z-50 w-5 h-5" /> : <FiMenu className="relative z-50 w-5 h-5" />}
         </div>
 
         <ul className="hidden gap-5 md:flex">
           <li>
             <Link
-              className="transition hover:text-brand active:text-brand"
+              className={`transition hover:text-brand ${isActive('/') ? 'text-brand font-bold' : ''}`}
               href="/"
             >
               Home
@@ -66,7 +81,7 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              className="transition hover:text-brand active:text-brand"
+              className={`transition hover:text-brand ${isActive('/apartments') ? 'text-brand font-bold' : ''}`}
               href="/apartments"
             >
               Apartments
@@ -74,7 +89,7 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              className="transition hover:text-brand active:text-brand"
+              className={`transition hover:text-brand ${isActive('/goods') ? 'text-brand font-bold' : ''}`}
               href="/goods"
             >
               Goods
@@ -82,7 +97,7 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              className="transition hover:text-brand active:text-brand"
+              className={`transition hover:text-brand ${isActive('/skills') ? 'text-brand font-bold' : ''}`}
               href="/skills"
             >
               Skills
@@ -91,18 +106,37 @@ const Navbar = () => {
         </ul>
 
         <div className="hidden gap-5 md:flex">
-          <Link
-            className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100"
-            href="/login"
-          >
-            Login
-          </Link>
-          <Link
-            className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
-            href="/signup"
-          >
-            Get Started
-          </Link>
+          {user ? (
+            <>
+              <Link
+                className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 flex items-center"
+                href="/profile"
+              >
+                <FiUser className="mr-2" /> Profile
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100"
+                href="/login"
+              >
+                Login
+              </Link>
+              <Link
+                className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
+                href="/signup"
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {isMenuOpen && (
@@ -125,47 +159,71 @@ const Navbar = () => {
 
               <ul className="flex flex-col gap-3 items-center">
                 <li onClick={closeMenu}>
-                  <Link className="transition active:text-brand" href="/">
+                  <Link className={`transition active:text-brand ${isActive('/') ? 'text-brand font-bold' : ''}`} href="/">
                     Home
                   </Link>
                 </li>
                 <li onClick={closeMenu}>
                   <Link
-                    className="transition active:text-brand"
+                    className={`transition active:text-brand ${isActive('/apartments') ? 'text-brand font-bold' : ''}`}
                     href="/apartments"
                   >
                     Apartments
                   </Link>
                 </li>
                 <li onClick={closeMenu}>
-                  <Link className="transition active:text-brand" href="/goods">
+                  <Link className={`transition active:text-brand ${isActive('/goods') ? 'text-brand font-bold' : ''}`} href="/goods">
                     Goods
                   </Link>
                 </li>
                 <li onClick={closeMenu}>
-                  <Link className="transition active:text-brand" href="/skills">
+                  <Link className={`transition active:text-brand ${isActive('/skills') ? 'text-brand font-bold' : ''}`} href="/skills">
                     Skills
                   </Link>
                 </li>
               </ul>
 
               <div className="flex gap-5">
-                <div onClick={closeMenu}>
-                  <Link
-                    className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100"
-                    href="/login"
-                  >
-                    Login
-                  </Link>
-                </div>
-                <div onClick={closeMenu}>
-                  <Link
-                    className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
-                    href="/signup"
-                  >
-                    Get Started
-                  </Link>
-                </div>
+                {user ? (
+                  <>
+                    <div onClick={closeMenu}>
+                      <Link
+                        className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 flex items-center"
+                        href="/profile"
+                      >
+                        <FiUser className="mr-2" /> Profile
+                      </Link>
+                    </div>
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        closeMenu();
+                      }}
+                      className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div onClick={closeMenu}>
+                      <Link
+                        className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100"
+                        href="/login"
+                      >
+                        Login
+                      </Link>
+                    </div>
+                    <div onClick={closeMenu}>
+                      <Link
+                        className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
+                        href="/signup"
+                      >
+                        Get Started
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             </nav>
           </div>
