@@ -132,7 +132,7 @@ function Signup() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="group relative w-full rounded-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-brand hover:bg-brand/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand transition ease-in-out duration-150"
+                            className="transition w-full bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
                         >
                             {isLoading ? 'Signing up...' : 'Sign up'}
                         </button>
@@ -163,7 +163,7 @@ function Signup() {
                     <div className="mt-6">
                         <Link
                             href="/login"
-                            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-brand bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand transition ease-in-out duration-150"
+                            className="transition w-full flex justify-center bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100"
                         >
                             Log in
                         </Link>
