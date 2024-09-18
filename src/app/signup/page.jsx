@@ -23,7 +23,7 @@ function Signup() {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                router.push('/dashboard');
+                router.push('/');
             }
         });
 
@@ -49,7 +49,7 @@ function Signup() {
                 username,
                 email,
             });
-            router.push('/dashboard');
+            router.push('/');
         } catch (error) {
             switch (error.code) {
                 case 'auth/email-already-in-use':

@@ -19,7 +19,7 @@ function Login() {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                router.push('/dashboard');
+                router.push('/');
             }
         });
 
@@ -33,7 +33,7 @@ function Login() {
 
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            router.push('/dashboard');
+            router.push('/');
         } catch (error) {
             switch (error.code) {
                 case 'auth/user-not-found':
