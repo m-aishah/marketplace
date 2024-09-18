@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-
+import { AuthProvider } from './AuthContext';
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -28,9 +28,11 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Navbar />
-        <main className="relative flex-grow w-full">{children}</main>
-        <Footer />
+        <AuthProvider>
+          <Navbar />
+          <main className="relative flex-grow w-full">{children}</main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
