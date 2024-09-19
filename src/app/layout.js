@@ -1,6 +1,8 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { AuthProvider } from './AuthContext';
+import { AuthProvider } from "./AuthContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -32,6 +34,17 @@ export default function RootLayout({ children }) {
           <Navbar />
           <main className="relative flex-grow w-full">{children}</main>
           <Footer />
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
         </AuthProvider>
       </body>
     </html>

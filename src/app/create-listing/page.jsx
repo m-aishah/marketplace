@@ -5,8 +5,9 @@ import Image from "next/image";
 import { FaChevronUp, FaChevronDown, FaUpload } from "react-icons/fa";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { collection, addDoc } from "firebase/firestore";
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/firebase';
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/firebase";
+import { toast } from "react-toastify";
 
 function CreateListing() {
   const [user] = useAuthState(auth);
@@ -15,6 +16,9 @@ function CreateListing() {
   const [selectedOption, setSelectedOption] = useState("Category");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const menuRef = useRef(null);
+  const nameRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const priceRef = useRef(null);
 
   const handleImageClick = () => {
     document.getElementById("imageInput").click();
@@ -57,24 +61,30 @@ function CreateListing() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if(!user) return;
+    if (!user) return;
 
     setIsSubmitting(true);
 
     try {
-      const docRef = await addDoc(collection(db, 'listings'), {
+      const docRef = await addDoc(collection(db, "listings"), {
         userId: user.uid,
-        name: event.target['product-name'].value,
-        description: event.target['product-description'].value,
-        price: event.target['product-price'].value,
+        name: nameRef.current.value,
+        description: descriptionRef.current.value,
+        price: priceRef.current.value,
         category: selectedOption,
         imageUrl: selectedImage, // TODO: Need to upload image to storage, and then get URL
         createdAt: new Date(),
       });
 
-      alert('Listing created');
+      nameRef.current.value = "";
+      descriptionRef.current.value = "";
+      priceRef.current.value = "";
+      setSelectedImage(null);
+      setSelectedOption("Category");
+      toast.success("Product uploaded successfully");
     } catch (event) {
-      console.error('Error adding document: ', event);
+      console.error("Error adding document: ", event);
+      toast.error("Error uploading product");
     } finally {
       setIsSubmitting(false);
     }
@@ -94,10 +104,7 @@ function CreateListing() {
             </p>
           </div>
 
-          <form
-            className="w-full"
-            onSubmit={handleSubmit}
-          >
+          <form className="w-full" onSubmit={handleSubmit}>
             <div className="w-full gap-6 flex flex-col p-5 bg-[#FAFAFA] mb-10 rounded-lg md:flex-row md:items-center md:gap-0">
               <div className="w-full md:w-[30%]">
                 <p className="text-[#737373] text-base font-light md:text-lg">
@@ -148,6 +155,7 @@ function CreateListing() {
                 <input
                   className="w-full rounded-md ring-2 ring-gray-300 p-2  placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
                   id="product-name"
+                  ref={nameRef}
                   required
                   type="text"
                   placeholder="e.g Apple Wristwatch"
@@ -163,6 +171,7 @@ function CreateListing() {
                 <textarea
                   className="w-full rounded-md ring-2 ring-gray-300 p-2  placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
                   id="product-description"
+                  ref={descriptionRef}
                   required
                   placeholder="e.g Used Apple wristwatch in good condition"
                 ></textarea>
@@ -177,6 +186,7 @@ function CreateListing() {
                 <input
                   className="w-full rounded-md ring-2 ring-gray-300 p-2  placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
                   id="product-price"
+                  ref={priceRef}
                   required
                   type="number"
                   placeholder="e.g 500"
