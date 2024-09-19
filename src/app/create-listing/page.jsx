@@ -46,6 +46,7 @@ function CreateListing() {
     setSelectedOption(category);
   };
 
+  //closes drop-down when you click outside of it
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -66,6 +67,7 @@ function CreateListing() {
     setIsSubmitting(true);
 
     try {
+      //adds product to firestore db
       const docRef = await addDoc(collection(db, "listings"), {
         userId: user.uid,
         name: nameRef.current.value,
@@ -75,12 +77,13 @@ function CreateListing() {
         imageUrl: selectedImage, // TODO: Need to upload image to storage, and then get URL
         createdAt: new Date(),
       });
-
+      //clears form fields
       nameRef.current.value = "";
       descriptionRef.current.value = "";
       priceRef.current.value = "";
       setSelectedImage(null);
       setSelectedOption("Category");
+      //shows success message
       toast.success("Product uploaded successfully");
     } catch (event) {
       console.error("Error adding document: ", event);
