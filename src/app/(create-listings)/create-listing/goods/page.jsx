@@ -1,6 +1,6 @@
 "use client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import ListingForm from "@/components/forms/ListingForm";
+import ListingForm from "../../utils/ListingForm";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/firebase";
 import categories from "./categories";

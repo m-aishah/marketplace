@@ -17,4 +17,4 @@ const categories = [
   },
 ];
 
-export default types;
+export default categories;

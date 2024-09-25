@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { FaChevronUp, FaChevronDown, FaUpload } from "react-icons/fa";
-import { uploadImage } from "@/firebase/utils/uploadImageToStorage";
-import { addListing } from "@/firebase/utils/addListingToFirestore";
+import { uploadListingImageToStorage } from "./uploadImageToStorage";
+import { addListingToFirestore } from "./addListingToFirestore";
+import { db } from "@/firebase";
+import { addDoc, collection, updateDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 const ListingForm = ({ user, categories, listingType }) => {
@@ -109,18 +111,13 @@ const ListingForm = ({ user, categories, listingType }) => {
     setIsSubmitting(true);
 
     try {
-      let imageUrl = null;
-      if (imageFile) {
-        imageUrl = await uploadImage(imageFile, user.uid);
-      }
-
+      // Prepare the initial listing data without the image URL
       const listingData = {
         userId: user.uid,
         name: nameRef.current.value,
         description: descriptionRef.current.value,
         price: parseFloat(priceRef.current.value),
         category: selectedOption,
-        imageUrl: imageUrl,
         listingType: listingType
       };
 
@@ -133,8 +130,19 @@ const ListingForm = ({ user, categories, listingType }) => {
         listingData.condition = conditionRef.current.value;
       }
 
-      await addListing(listingData);
+      // Create the listing in Firestore first
+      const docRef = await addDoc(collection(db, "listings"), listingData);
+      const listingId = docRef.id;
 
+      // Now that we have the listingId, upload the image if there is one
+      let imageUrl = null;
+      if (imageFile) {
+        imageUrl = await uploadListingImageToStorage(imageFile, user.uid, listingId);
+        
+        // Update the listing with the image URL
+        await updateDoc(doc(db, "listings", listingId), { imageUrl: imageUrl });
+      }
+      
       // Reset form
       nameRef.current.value = "";
       descriptionRef.current.value = "";

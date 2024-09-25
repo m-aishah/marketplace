@@ -1,7 +1,7 @@
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 
-export const addListing = async (listingData) => {
+export const addListingToFirestore = async (listingData) => {
   try {
     const docRef = await addDoc(collection(db, "listings"), {
       ...listingData,
