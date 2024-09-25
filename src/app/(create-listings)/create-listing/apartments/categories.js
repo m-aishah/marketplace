@@ -1,4 +1,4 @@
-const types = [
+const categories = [
   {
     id: 2,
     name: "Studio",
