@@ -1,4 +1,4 @@
-const types = [
+const categories = [
   {
     id: 2,
     name: "Studio",
@@ -17,4 +17,4 @@ const types = [
   },
 ];
 
-export default types;
+export default categories;
