@@ -97,10 +97,18 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              className={`transition hover:text-brand ${isActive('/skills') ? 'text-brand font-bold' : ''}`}
-              href="/skills"
+              className={`transition hover:text-brand ${isActive('/services') ? 'text-brand font-bold' : ''}`}
+              href="/services"
             >
-              Skills
+              Services
+            </Link>
+          </li>
+          <li>
+            <Link
+              className={`transition hover:text-brand ${isActive('/requests') ? 'text-brand font-bold' : ''}`}
+              href="/requests"
+            >
+              Requests
             </Link>
           </li>
         </ul>
