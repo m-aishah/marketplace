@@ -1,16 +1,16 @@
 import listings from "../homePageData";
 import ListingPage from "../../components/ListingPage";
 
-export default function ApartmentsPage() {
+export default function RequestsPage() {
   const filters = [
     ...new Set(listings.apartments.map((listing) => listing.type)),
   ];
 
   return (
     <ListingPage
-      listings={listings.apartments}
-      category="apartments"
-      title="Apartments"
+      listings={listings.requests}
+      category="requests"
+      title="Requests"
       filters={filters}
     />
   );
