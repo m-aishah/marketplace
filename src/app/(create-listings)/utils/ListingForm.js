@@ -1,6 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { FaChevronUp, FaChevronDown, FaUpload } from "react-icons/fa";
+import { Modal } from "@/components/Modal";
+import {
+  FaChevronUp,
+  FaChevronDown,
+  FaUpload,
+  FaTrash,
+  FaExpand,
+  FaTimes,
+} from "react-icons/fa";
 import { uploadListingImageToStorage } from "./uploadImageToStorage";
 import { addListingToFirestore } from "./addListingToFirestore";
 import { db } from "@/firebase";
@@ -10,6 +18,8 @@ import { toast } from "react-toastify";
 const ListingForm = ({ user, categories, listingType }) => {
   const [images, setImages] = useState([]);
   const [imageFile, setImageFile] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Category");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,6 +119,21 @@ const ListingForm = ({ user, categories, listingType }) => {
       file,
     }; // Replace the selected image
     setImages(updatedImages); // Update state
+  };
+
+  const handleDeleteImage = (index) => {
+    const updatedImages = images.filter((image, i) => i !== index);
+    setImages(updatedImages);
+  };
+
+  const openModal = (image) => {
+    setModalImage(image);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalImage(null);
+    setIsModalOpen(false);
   };
 
   const closeMenu = () => {
@@ -215,10 +240,11 @@ const ListingForm = ({ user, categories, listingType }) => {
 
       <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
         <div className="flex justify-between items-center flex-wrap space-y-5">
+          {/* Display the multiple images selected */}
           {images.map((image, index) => {
             return (
-              <div key={index} className="relative">
-                <div className="w-[150px] h-[150px]">
+              <div key={index} className="relative group">
+                <div className="relative w-[150px] h-[150px]">
                   <Image
                     src={image.url}
                     alt={`Upload ${index}`}
@@ -226,14 +252,28 @@ const ListingForm = ({ user, categories, listingType }) => {
                     height={150}
                     className="rounded-lg w-full h-full object-cover"
                   />
+                  <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p className="text-white text-sm">Change Image</p>
+                  </div>
                 </div>
-
                 <input
                   type="file"
                   accept="image/*"
                   className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
                   onChange={(e) => handleImageChange(e, index)}
                 />
+                <button
+                  className="absolute bottom-2 left-2 bg-brand p-2 rounded-full"
+                  onClick={() => handleDeleteImage(index)}
+                >
+                  <FaTrash className="text-white" />
+                </button>
+                <button
+                  className="absolute bottom-2 right-2 bg-brand p-2 rounded-full"
+                  onClick={() => openModal(image.url)}
+                >
+                  <FaExpand className="text-white" />
+                </button>
               </div>
             );
           })}
@@ -255,6 +295,25 @@ const ListingForm = ({ user, categories, listingType }) => {
       </div>
 
       <div className="w-full bg-[#FAFAFA] flex flex-col items-center gap-4 mb-4 p-5 rounded-lg">
+        {/* Modal to show full images */}
+        {isModalOpen && (
+          <Modal onClose={closeModal}>
+            {modalImage && (
+              <div className="flex flex-col p-6 gap-5">
+                <div onClick={closeModal} className="flex justify-end">
+                  <FaTimes className="text-lg" />
+                </div>
+                <Image
+                  src={modalImage}
+                  alt="Full image"
+                  width={0}
+                  height={0}
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            )}
+          </Modal>
+        )}
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
           <label
             htmlFor="listing-name"
