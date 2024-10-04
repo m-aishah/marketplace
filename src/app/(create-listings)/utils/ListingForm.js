@@ -8,78 +8,107 @@ import { addDoc, collection, updateDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 const ListingForm = ({ user, categories, listingType }) => {
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [imageFile, setImageFile] = useState(null);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [selectedOption, setSelectedOption] = useState("Category");
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    const menuRef = useRef(null);
-    const nameRef = useRef(null);
-    const descriptionRef = useRef(null);
-    const priceRef = useRef(null);
-    const locationRef = useRef(null);
-    const bedroomsRef = useRef(null);
-    const bathroomsRef = useRef(null);
-    const conditionRef = useRef(null);
-  
-    const getFormConfig = () => {
-      switch(listingType) {
-        case 'apartments':
-          return {
-            title: "Apartment",
-            namePlaceholder: "e.g. Cozy Studio in Downtown",
-            descriptionPlaceholder: "Describe the apartment, its features, and location",
-            pricePlaceholder: "Monthly rent",
-            priceLabel: "Rent per month*",
-            additionalFields: [
-              { ref: locationRef, label: "Location*", type: "text", placeholder: "e.g. 123 Main St, City, State" },
-              { ref: bedroomsRef, label: "Bedrooms*", type: "number", placeholder: "Number of bedrooms" },
-              { ref: bathroomsRef, label: "Bathrooms*", type: "number", placeholder: "Number of bathrooms" }
-            ]
-          };
-        case 'goods':
-          return {
-            title: "Product",
-            namePlaceholder: "e.g. Vintage Watch",
-            descriptionPlaceholder: "Describe the item, its condition, and any unique features",
-            pricePlaceholder: "Price",
-            priceLabel: "Price*",
-            additionalFields: [
-              { ref: conditionRef, label: "Condition*", type: "text", placeholder: "e.g. New, Used, Like New" }
-            ]
-          };
-        case 'skills':
-        default:
-          return {
-            title: "Skill",
-            namePlaceholder: "e.g. Web Development",
-            descriptionPlaceholder: "Describe your skill and experience",
-            pricePlaceholder: "Hourly rate or fixed price",
-            priceLabel: "Price*",
-            additionalFields: []
-          };
-      }
-    };
-  
-    const formConfig = getFormConfig();
+  const [images, setImages] = useState([]);
+  const [imageFile, setImageFile] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedOption, setSelectedOption] = useState("Category");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleImageClick = () => {
-    document.getElementById("imageInput").click();
+  const menuRef = useRef(null);
+  const nameRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const priceRef = useRef(null);
+  const locationRef = useRef(null);
+  const bedroomsRef = useRef(null);
+  const bathroomsRef = useRef(null);
+  const conditionRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const getFormConfig = () => {
+    switch (listingType) {
+      case "apartments":
+        return {
+          title: "Apartment",
+          namePlaceholder: "e.g. Cozy Studio in Downtown",
+          descriptionPlaceholder:
+            "Describe the apartment, its features, and location",
+          pricePlaceholder: "Monthly rent",
+          priceLabel: "Rent per month*",
+          additionalFields: [
+            {
+              ref: locationRef,
+              label: "Location*",
+              type: "text",
+              placeholder: "e.g. 123 Main St, City, State",
+            },
+            {
+              ref: bedroomsRef,
+              label: "Bedrooms*",
+              type: "number",
+              placeholder: "Number of bedrooms",
+            },
+            {
+              ref: bathroomsRef,
+              label: "Bathrooms*",
+              type: "number",
+              placeholder: "Number of bathrooms",
+            },
+          ],
+        };
+      case "goods":
+        return {
+          title: "Product",
+          namePlaceholder: "e.g. Vintage Watch",
+          descriptionPlaceholder:
+            "Describe the item, its condition, and any unique features",
+          pricePlaceholder: "Price",
+          priceLabel: "Price*",
+          additionalFields: [
+            {
+              ref: conditionRef,
+              label: "Condition*",
+              type: "text",
+              placeholder: "e.g. New, Used, Like New",
+            },
+          ],
+        };
+      case "skills":
+      default:
+        return {
+          title: "Skill",
+          namePlaceholder: "e.g. Web Development",
+          descriptionPlaceholder: "Describe your skill and experience",
+          pricePlaceholder: "Hourly rate or fixed price",
+          priceLabel: "Price*",
+          additionalFields: [],
+        };
+    }
   };
 
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.readyState === 2) {
-          setSelectedImage(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+  const formConfig = getFormConfig();
+
+  const triggerFileInput = () => {
+    fileInputRef.current.click(); // Programmatically trigger the hidden file input
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files); // Get selected files as an array
+    const newImages = files.map((file) => ({
+      url: URL.createObjectURL(file), // Create a local URL for the image
+      file,
+    }));
+    setImages((prevImages) => [...prevImages, ...newImages]); // Append to existing images
+  };
+
+  // Handle replacing an image
+  const handleImageChange = (e, index) => {
+    const file = e.target.files[0]; // Get the new file
+    const updatedImages = [...images]; // Copy existing images
+    updatedImages[index] = {
+      url: URL.createObjectURL(file),
+      file,
+    }; // Replace the selected image
+    setImages(updatedImages); // Update state
   };
 
   const closeMenu = () => {
@@ -118,15 +147,15 @@ const ListingForm = ({ user, categories, listingType }) => {
         description: descriptionRef.current.value,
         price: parseFloat(priceRef.current.value),
         category: selectedOption,
-        listingType: listingType
+        listingType: listingType,
       };
 
       // Add additional fields based on listing type
-      if (listingType === 'apartments') {
+      if (listingType === "apartments") {
         listingData.location = locationRef.current.value;
         listingData.bedrooms = parseInt(bedroomsRef.current.value);
         listingData.bathrooms = parseInt(bathroomsRef.current.value);
-      } else if (listingType === 'goods') {
+      } else if (listingType === "goods") {
         listingData.condition = conditionRef.current.value;
       }
 
@@ -137,20 +166,26 @@ const ListingForm = ({ user, categories, listingType }) => {
       // Now that we have the listingId, upload the image if there is one
       let imageUrl = null;
       if (imageFile) {
-        imageUrl = await uploadListingImageToStorage(imageFile, user.uid, listingId);
-        
+        imageUrl = await uploadListingImageToStorage(
+          imageFile,
+          user.uid,
+          listingId
+        );
+
         // Update the listing with the image URL
         await updateDoc(doc(db, "listings", listingId), { imageUrl: imageUrl });
       }
-      
+
       // Reset form
       nameRef.current.value = "";
       descriptionRef.current.value = "";
       priceRef.current.value = "";
-      setSelectedImage(null);
+      setSelectedImages([]);
+      document.getElementById("imageInput").value = "";
+      // setSelectedImage(null);
       setImageFile(null);
       setSelectedOption("Category");
-      formConfig.additionalFields.forEach(field => {
+      formConfig.additionalFields.forEach((field) => {
         if (field.ref.current) field.ref.current.value = "";
       });
       toast.success(`${formConfig.title} uploaded successfully`);
@@ -162,45 +197,60 @@ const ListingForm = ({ user, categories, listingType }) => {
     }
   };
 
-
   return (
     <form className="w-full" onSubmit={handleSubmit}>
-      <div className="w-full gap-6 flex flex-col p-5 bg-[#FAFAFA] mb-10 rounded-lg md:flex-row md:items-center md:gap-0">
+      <div className="w-full gap-6 flex flex-col p-5 bg-[#FAFAFA] rounded-t-lg md:flex-row md:gap-0">
         <div className="w-full md:w-[30%]">
           <p className="text-[#737373] text-base font-light md:text-lg">
             {formConfig.title} Picture
           </p>
         </div>
         <div className="w-full flex flex-col md:justify-between md:flex-row md:flex-1 md:items-center">
-          <div
-            onClick={handleImageClick}
-            className="h-[150px] w-[150px] cursor-pointer rounded-lg bg-brand/5 flex flex-col justify-center items-center transition hover:bg-gray-200 md:aspect-square md:mr-5 md:w-auto"
-          >
-            {selectedImage ? (
-              <Image
-                src={selectedImage}
-                height={150}
-                width={150}
-                alt="selected image"
-                className="h-full w-full object-cover rounded-lg"
-              />
-            ) : (
-              <>
-                <FaUpload className="text-brand text-base mb-2" />
-                <p className="text-sm text-brand">Upload image</p>
-              </>
-            )}
-          </div>
-          <input
-            type="file"
-            id="imageInput"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={handleImageChange}
-          />
           <p className="text-[#737373] text-sm font-light mt-6 md:mt-0">
-            Image must be below 1024x1024px. Use PNG or JPG format.
+            Image must be below 1024x1024px. Use PNG or JPG format. Click the
+            upload icon below to upload as many images as desired.
           </p>
+        </div>
+      </div>
+
+      <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
+        <div className="flex justify-between items-center flex-wrap space-y-5">
+          {images.map((image, index) => {
+            return (
+              <div key={index} className="relative">
+                <div className="w-[150px] h-[150px]">
+                  <Image
+                    src={image.url}
+                    alt={`Upload ${index}`}
+                    width={150}
+                    height={150}
+                    className="rounded-lg w-full h-full object-cover"
+                  />
+                </div>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={(e) => handleImageChange(e, index)}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          multiple
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
+        <div
+          className="mt-5 self-end cursor-pointer"
+          onClick={triggerFileInput}
+        >
+          <FaUpload className="text-brand text-base mb-2" />
         </div>
       </div>
 
@@ -255,7 +305,10 @@ const ListingForm = ({ user, categories, listingType }) => {
           />
         </div>
         {formConfig.additionalFields.map((field, index) => (
-          <div key={index} className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
+          <div
+            key={index}
+            className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row"
+          >
             <label
               htmlFor={`listing-${field.label.toLowerCase()}`}
               className="text-base w-full font-light tracking-tight text-[#737373] md:w-[30%] md:text-lg"
