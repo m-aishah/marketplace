@@ -17,7 +17,6 @@ import { toast } from "react-toastify";
 
 const ListingForm = ({ user, categories, listingType }) => {
   const [images, setImages] = useState([]);
-  const [imageFile, setImageFile] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,6 +33,7 @@ const ListingForm = ({ user, categories, listingType }) => {
   const conditionRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  // Define form configuration based on the listing type
   const getFormConfig = () => {
     switch (listingType) {
       case "apartments":
@@ -97,47 +97,49 @@ const ListingForm = ({ user, categories, listingType }) => {
 
   const formConfig = getFormConfig();
 
+  // Trigger the file input when upload button is clicked
   const triggerFileInput = () => {
-    fileInputRef.current.click(); // Programmatically trigger the hidden file input
+    fileInputRef.current.click();
   };
 
+  // Handle the image upload process
   const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files); // Get selected files as an array
+    const files = Array.from(e.target.files);
     const validFiles = files.filter((file) => {
       const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
       const isValidType =
-        file.type === "image/jpeg" || file.type === "image/png"; //checks if it is a jpg or png
-      if (!isValidSize) {
-        toast.error("Image must be less than 10MB");
-      }
-      if (!isValidType) {
-        toast.error("Image must be a jpg or png");
-      }
+        file.type === "image/jpeg" || file.type === "image/png";
+      if (!isValidSize) toast.error("Image must be less than 10MB");
+      if (!isValidType) toast.error("Image must be a jpg or png");
       return isValidSize && isValidType;
     });
-    const newImages = files.map((file) => ({
-      url: URL.createObjectURL(file), // Create a local URL for the image
-      validFiles,
+
+    const newImages = validFiles.map((file) => ({
+      url: URL.createObjectURL(file), // Local URL for preview
+      file,
     }));
-    setImages((prevImages) => [...prevImages, ...newImages]); // Append to existing images
+
+    setImages((prevImages) => [...prevImages, ...newImages]);
   };
 
-  // Handle replacing an image
+  // Replace an image in the list
   const handleImageChange = (e, index) => {
-    const file = e.target.files[0]; // Get the new file
-    const updatedImages = [...images]; // Copy existing images
+    const file = e.target.files[0];
+    const updatedImages = [...images];
     updatedImages[index] = {
       url: URL.createObjectURL(file),
       file,
-    }; // Replace the selected image
-    setImages(updatedImages); // Update state
-  };
-
-  const handleDeleteImage = (index) => {
-    const updatedImages = images.filter((image, i) => i !== index);
+    };
     setImages(updatedImages);
   };
 
+  // Delete an image from the list
+  const handleDeleteImage = (index) => {
+    const updatedImages = images.filter((_, i) => i !== index);
+    setImages(updatedImages);
+  };
+
+  // Open modal to show an image
   const openModal = (image) => {
     setModalImage(image);
     setIsModalOpen(true);
@@ -148,15 +150,18 @@ const ListingForm = ({ user, categories, listingType }) => {
     setIsModalOpen(false);
   };
 
+  // Close the dropdown menu
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
 
+  // Handle dropdown category selection
   const handleClickCategories = (category) => {
     closeMenu();
     setSelectedOption(category);
   };
 
+  // Handle clicks outside the dropdown to close the menu
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -170,24 +175,24 @@ const ListingForm = ({ user, categories, listingType }) => {
     };
   }, []);
 
+  // Form submission handler
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!user) return;
-
     setIsSubmitting(true);
 
     try {
-      // Prepare the initial listing data without the image URL
+      // Prepare the listing data
       const listingData = {
         userId: user.uid,
         name: nameRef.current.value,
         description: descriptionRef.current.value,
         price: parseFloat(priceRef.current.value),
         category: selectedOption,
-        listingType: listingType,
+        listingType,
       };
 
-      // Add additional fields based on listing type
+      // Add extra fields based on listing type
       if (listingType === "apartments") {
         listingData.location = locationRef.current.value;
         listingData.bedrooms = parseInt(bedroomsRef.current.value);
@@ -196,31 +201,33 @@ const ListingForm = ({ user, categories, listingType }) => {
         listingData.condition = conditionRef.current.value;
       }
 
-      // Create the listing in Firestore first
+      // Add listing to Firestore
       const docRef = await addDoc(collection(db, "listings"), listingData);
       const listingId = docRef.id;
 
-      // Now that we have the listingId, upload the image if there is one
-      let imageUrl = null;
-      if (imageFile) {
-        imageUrl = await uploadListingImageToStorage(
-          imageFile,
-          user.uid,
-          listingId
-        );
-
-        // Update the listing with the image URL
-        await updateDoc(doc(db, "listings", listingId), { imageUrl: imageUrl });
+      // Upload images if there are any
+      let imageUrls = [];
+      for (const image of images) {
+        if (image.file) {
+          const imageUrl = await uploadListingImageToStorage(
+            image.file,
+            user.uid,
+            listingId
+          );
+          imageUrls.push(imageUrl);
+        }
       }
 
-      // Reset form
+      // Update Firestore with image URLs
+      if (imageUrls.length > 0) {
+        await updateDoc(doc(db, "listings", listingId), { imageUrls });
+      }
+
+      // Reset the form after submission
       nameRef.current.value = "";
       descriptionRef.current.value = "";
       priceRef.current.value = "";
-      setSelectedImages([]);
-      document.getElementById("imageInput").value = "";
-      // setSelectedImage(null);
-      setImageFile(null);
+      setImages([]);
       setSelectedOption("Category");
       formConfig.additionalFields.forEach((field) => {
         if (field.ref.current) field.ref.current.value = "";
