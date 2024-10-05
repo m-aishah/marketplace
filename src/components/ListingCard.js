@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Pencil, Trash2, Plus } from "lucide-react";
 // import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const ListingCard = ({ listing, onDelete }) => (
+const ListingCard = ({ listing, onDelete, onEdit }) => (
   <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
     <div className="p-6">
       <h3 className="text-xl font-semibold mb-2">{listing.name}</h3>
@@ -28,12 +28,12 @@ const ListingCard = ({ listing, onDelete }) => (
           {listing.listingType}
         </span>
         <div className="flex space-x-2">
-          <Link
-            href={`/edit-listing/${listing.id}`}
+          <button
+            onClick={() => onEdit(listing.id)}
             className="text-blue-500 hover:text-blue-700"
           >
             <Pencil size={20} />
-          </Link>
+          </button>
           <button
             onClick={() => onDelete(listing.id)}
             className="text-red-500 hover:text-red-700"

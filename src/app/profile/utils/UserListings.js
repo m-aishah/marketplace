@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   collection,
   query,
@@ -17,6 +18,8 @@ import { FaPlus } from "react-icons/fa";
 export default function UserListings({ userId, onCreateListing }) {
   const [listings, setListings] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserListings = async () => {
@@ -45,6 +48,11 @@ export default function UserListings({ userId, onCreateListing }) {
     }
   };
 
+  const handleEdit = (listingId) => {
+    console.log("Editing listing with ID:", listingId);
+    router.push(`/edit-listing/${listingId}`);
+  };
+
   return (
     <div className="bg-white shadow-lg rounded-lg overflow-hidden">
       <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
@@ -71,6 +79,7 @@ export default function UserListings({ userId, onCreateListing }) {
               key={listing.id}
               listing={listing}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           ))}
         </div>
