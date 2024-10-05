@@ -210,6 +210,7 @@ const ListingForm = ({ user, categories, listingType }) => {
         price: parseFloat(priceRef.current.value),
         category: selectedOption,
         listingType,
+        createdAt: new Date().toISOString(),
       };
 
       // Add extra fields based on listing type
