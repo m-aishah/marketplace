@@ -12,13 +12,13 @@ const ListingCard = ({ listing, onDelete, onEdit }) => (
           className="text-sm font-medium px-2 py-1 rounded-full"
           style={{
             backgroundColor:
-              listing.listingType === "apartment"
+              listing.listingType === "apartments"
                 ? "rgba(59, 130, 246, 0.1)"
-                : listing.type === "skills"
+                : listing.listingType === "skills"
                 ? "rgba(16, 185, 129, 0.1)"
                 : "rgba(245, 158, 11, 0.1)",
             color:
-              listing.listingType === "apartment"
+              listing.listingType === "apartments"
                 ? "rgb(59, 130, 246)"
                 : listing.listingType === "skills"
                 ? "rgb(16, 185, 129)"

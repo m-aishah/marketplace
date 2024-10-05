@@ -50,7 +50,7 @@ export default function UserListings({ userId, onCreateListing }) {
 
   const handleEdit = (listingId) => {
     console.log("Editing listing with ID:", listingId);
-    router.push(`/edit-listing/${listingId}`);
+    router.push(`/edit-listing?listingId=${listingId}`);
   };
 
   return (
@@ -86,20 +86,24 @@ export default function UserListings({ userId, onCreateListing }) {
 
         {listings.length === 0 && (
           <p className="text-center text-gray-500 mt-4">
-            You don't have any listings yet. Create one to get started!
+            You don't have any listings yet.
           </p>
         )}
       </div>
       {/* Link to view all listings */}
+
       <div className="mt-8 text-center">
-        <Link
-          href="/all-listings"
-          className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-300"
-        >
-          See All Listings
-        </Link>
+        {listings.length > 0 && (
+          <Link
+            href="/all-listings"
+            className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-300"
+          >
+            See All Listings
+          </Link>
+        )}
       </div>
       <br />
+
       <CreateListingModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

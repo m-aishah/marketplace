@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Modal } from "@/components/Modal";
 import {
   FaChevronUp,
@@ -9,18 +10,24 @@ import {
   FaExpand,
   FaTimes,
 } from "react-icons/fa";
-import { uploadListingImageToStorage } from "./uploadImageToStorage";
-// import { addListingToFirestore } from "./addListingToFirestore"; TODO: Implement this function, and use it.
+import { uploadListingImageToStorage } from "@/utils/firestoreUtils";
 import { db } from "@/firebase";
 import { addDoc, collection, updateDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
+import { ref, deleteObject } from "firebase/storage";
+import { storage } from "@/firebase";
 
-const ListingForm = ({ user, categories, listingType }) => {
-  const [images, setImages] = useState([]);
+const ListingForm = ({ user, categories, listingType, listingData }) => {
+  const router = useRouter();
+  const [formMode, setFormMode] = useState(listingData ? "edit" : "create");
+  const [images, setImages] = useState(listingData?.imageUrls || []);
+  const [deletedImages, setDeletedImages] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState("Category");
+  const [selectedOption, setSelectedOption] = useState(
+    listingData?.category || "Category"
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const menuRef = useRef(null);
@@ -93,7 +100,6 @@ const ListingForm = ({ user, categories, listingType }) => {
         };
     }
   };
-
   const formConfig = getFormConfig();
 
   const triggerFileInput = () => {
@@ -153,13 +159,20 @@ const ListingForm = ({ user, categories, listingType }) => {
     }
   };
 
-  // Delete an image from the list
   const handleDeleteImage = (index) => {
-    const updatedImages = images.filter((_, i) => i !== index);
-    setImages(updatedImages);
+    const imageToDelete = images[index];
+
+    if (imageToDelete.file) {
+      // Remove newly uploaded image from state
+      setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+    } else {
+      // Track the URL to be deleted from Firestore Storage
+      const imageToDeleteUrl = listingData.imageUrls[index];
+      setDeletedImages((prevDeleted) => [...prevDeleted, imageToDeleteUrl]);
+      setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+    }
   };
 
-  // Open modal to show an image
   const openModal = (image) => {
     setModalImage(image);
     setIsModalOpen(true);
@@ -170,18 +183,15 @@ const ListingForm = ({ user, categories, listingType }) => {
     setIsModalOpen(false);
   };
 
-  // Close the dropdown menu
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
 
-  // Handle dropdown category selection
   const handleClickCategories = (category) => {
     closeMenu();
     setSelectedOption(category);
   };
 
-  // Handle clicks outside the dropdown to close the menu
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -195,15 +205,29 @@ const ListingForm = ({ user, categories, listingType }) => {
     };
   }, []);
 
-  // Form submission handler
+  useEffect(() => {
+    if (listingData) {
+      setFormMode("edit");
+      nameRef.current.value = listingData.name || "";
+      descriptionRef.current.value = listingData.description || "";
+      priceRef.current.value = listingData.price || "";
+      if (listingType === "apartments") {
+        locationRef.current.value = listingData.location || "";
+        bedroomsRef.current.value = listingData.bedrooms || "";
+        bathroomsRef.current.value = listingData.bathrooms || "";
+      } else if (listingType === "goods") {
+        conditionRef.current.value = listingData.condition || "";
+      }
+    }
+  }, [listingData, listingType]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!user) return;
     setIsSubmitting(true);
 
     try {
-      // Prepare the listing data
-      const listingData = {
+      const newListingData = {
         userId: user.uid,
         name: nameRef.current.value,
         description: descriptionRef.current.value,
@@ -213,50 +237,72 @@ const ListingForm = ({ user, categories, listingType }) => {
         createdAt: new Date().toISOString(),
       };
 
-      // Add extra fields based on listing type
+      // Handle apartment/goods specific fields
       if (listingType === "apartments") {
-        listingData.location = locationRef.current.value;
-        listingData.bedrooms = parseInt(bedroomsRef.current.value);
-        listingData.bathrooms = parseInt(bathroomsRef.current.value);
+        newListingData.location = locationRef.current.value;
+        newListingData.bedrooms = parseInt(bedroomsRef.current.value);
+        newListingData.bathrooms = parseInt(bathroomsRef.current.value);
       } else if (listingType === "goods") {
-        listingData.condition = conditionRef.current.value;
+        newListingData.condition = conditionRef.current.value;
       }
 
-      // Add listing to Firestore
-      const docRef = await addDoc(collection(db, "listings"), listingData);
-      const listingId = docRef.id;
+      let listingId;
 
-      // Upload images if there are any
-      let imageUrls = [];
-      for (const image of images) {
+      // Determine if we're editing or creating
+      if (formMode === "edit") {
+        listingId = listingData.id;
+        await updateDoc(doc(db, "listings", listingId), newListingData);
+      } else {
+        const docRef = await addDoc(collection(db, "listings"), newListingData);
+        listingId = docRef.id;
+      }
+
+      let imageUrls = [...(listingData?.imageUrls || [])];
+
+      // Upload new images
+      for (let index = 0; index < images.length; index++) {
+        const image = images[index];
         if (image.file) {
           const imageUrl = await uploadListingImageToStorage(
             image.file,
             user.uid,
-            listingId
+            listingId,
+            index
           );
           imageUrls.push(imageUrl);
         }
       }
 
-      // Update Firestore with image URLs
-      if (imageUrls.length > 0) {
-        await updateDoc(doc(db, "listings", listingId), { imageUrls });
+      // Delete images from Firestore Storage if needed
+      if (deletedImages.length > 0) {
+        const promises = deletedImages.map(async (imageUrl) => {
+          const imageRef = ref(storage, imageUrl);
+          await deleteObject(imageRef);
+        });
+
+        // Wait for all deletion promises to complete
+        await Promise.all(promises);
+        imageUrls = imageUrls.filter((url) => !deletedImages.includes(url));
       }
 
-      // Reset the form after submission
-      nameRef.current.value = "";
-      descriptionRef.current.value = "";
-      priceRef.current.value = "";
-      setImages([]);
-      setSelectedOption("Category");
-      formConfig.additionalFields.forEach((field) => {
-        if (field.ref.current) field.ref.current.value = "";
-      });
-      toast.success(`${formConfig.title} uploaded successfully`);
+      // Update Firestore with the new imageUrls
+      await updateDoc(doc(db, "listings", listingId), { imageUrls });
+
+      toast.success(
+        `${formConfig.title} ${
+          formMode === "edit" ? "updated" : "created"
+        } successfully`
+      );
+
+      // Handle UI after successful edit or creation
+      router.push("/profile");
     } catch (error) {
-      console.error("Error adding listing: ", error);
-      toast.error(`Error uploading ${formConfig.title.toLowerCase()}`);
+      console.error("Error saving listing: ", error);
+      toast.error(
+        `Error ${
+          formMode === "edit" ? "updating" : "creating"
+        } ${formConfig.title.toLowerCase()}`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -273,10 +319,7 @@ const ListingForm = ({ user, categories, listingType }) => {
       </div>
 
       <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
-        <div
-          className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors"
-          onClick={triggerFileInput}
-        >
+        <div className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors">
           <div className="flex gap-4 flex-wrap items-center justify-center">
             {images.length === 0 ? (
               <div className="text-center">
@@ -291,7 +334,7 @@ const ListingForm = ({ user, categories, listingType }) => {
               images.map((image, index) => (
                 <div key={index} className="relative group w-[150px] h-[150px]">
                   <Image
-                    src={image.url}
+                    src={image.file ? image.url : image}
                     alt={`Upload ${index}`}
                     width={150}
                     height={150}
@@ -469,13 +512,17 @@ const ListingForm = ({ user, categories, listingType }) => {
         </div>
       </div>
 
-      <div className="w-full flex justify-end">
+      <div className="w-full flex justify-end mt-6">
         <button
           className="w-full bg-brand text-white font-sans text-base font-normal tracking-tight py-2 px-4 rounded-lg hover:bg-brand/60 transition-colors md:w-auto"
           type="submit"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Submitting..." : "Submit"}
+          {isSubmitting
+            ? "Submitting..."
+            : formMode === "edit"
+            ? "Update"
+            : "Create"}
         </button>
       </div>
     </form>

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "@/firebase";
@@ -15,6 +16,8 @@ export default function AllListings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleteMessage, setDeleteMessage] = useState(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -65,6 +68,10 @@ export default function AllListings() {
     }
   };
 
+  const handleEdit = (listingId) => {
+    router.push(`/edit-listing?listingId=${listingId}`);
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -100,6 +107,7 @@ export default function AllListings() {
               key={listing.id}
               listing={listing}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           ))}
         </div>
