@@ -1,6 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { FaChevronUp, FaChevronDown, FaUpload } from "react-icons/fa";
+import { Modal } from "@/components/Modal";
+import {
+  FaChevronUp,
+  FaChevronDown,
+  FaUpload,
+  FaTrash,
+  FaExpand,
+  FaTimes,
+} from "react-icons/fa";
 import { uploadListingImageToStorage } from "./uploadImageToStorage";
 import { addListingToFirestore } from "./addListingToFirestore";
 import { db } from "@/firebase";
@@ -8,78 +16,136 @@ import { addDoc, collection, updateDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 const ListingForm = ({ user, categories, listingType }) => {
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [imageFile, setImageFile] = useState(null);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [selectedOption, setSelectedOption] = useState("Category");
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    const menuRef = useRef(null);
-    const nameRef = useRef(null);
-    const descriptionRef = useRef(null);
-    const priceRef = useRef(null);
-    const locationRef = useRef(null);
-    const bedroomsRef = useRef(null);
-    const bathroomsRef = useRef(null);
-    const conditionRef = useRef(null);
-  
-    const getFormConfig = () => {
-      switch(listingType) {
-        case 'apartments':
-          return {
-            title: "Apartment",
-            namePlaceholder: "e.g. Cozy Studio in Downtown",
-            descriptionPlaceholder: "Describe the apartment, its features, and location",
-            pricePlaceholder: "Monthly rent",
-            priceLabel: "Rent per month*",
-            additionalFields: [
-              { ref: locationRef, label: "Location*", type: "text", placeholder: "e.g. 123 Main St, City, State" },
-              { ref: bedroomsRef, label: "Bedrooms*", type: "number", placeholder: "Number of bedrooms" },
-              { ref: bathroomsRef, label: "Bathrooms*", type: "number", placeholder: "Number of bathrooms" }
-            ]
-          };
-        case 'goods':
-          return {
-            title: "Product",
-            namePlaceholder: "e.g. Vintage Watch",
-            descriptionPlaceholder: "Describe the item, its condition, and any unique features",
-            pricePlaceholder: "Price",
-            priceLabel: "Price*",
-            additionalFields: [
-              { ref: conditionRef, label: "Condition*", type: "text", placeholder: "e.g. New, Used, Like New" }
-            ]
-          };
-        case 'skills':
-        default:
-          return {
-            title: "Skill",
-            namePlaceholder: "e.g. Web Development",
-            descriptionPlaceholder: "Describe your skill and experience",
-            pricePlaceholder: "Hourly rate or fixed price",
-            priceLabel: "Price*",
-            additionalFields: []
-          };
-      }
-    };
-  
-    const formConfig = getFormConfig();
+  const [images, setImages] = useState([]);
+  const [imageFile, setImageFile] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedOption, setSelectedOption] = useState("Category");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleImageClick = () => {
-    document.getElementById("imageInput").click();
+  const menuRef = useRef(null);
+  const nameRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const priceRef = useRef(null);
+  const locationRef = useRef(null);
+  const bedroomsRef = useRef(null);
+  const bathroomsRef = useRef(null);
+  const conditionRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const getFormConfig = () => {
+    switch (listingType) {
+      case "apartments":
+        return {
+          title: "Apartment",
+          namePlaceholder: "e.g. Cozy Studio in Downtown",
+          descriptionPlaceholder:
+            "Describe the apartment, its features, and location",
+          pricePlaceholder: "Monthly rent",
+          priceLabel: "Rent per month*",
+          additionalFields: [
+            {
+              ref: locationRef,
+              label: "Location*",
+              type: "text",
+              placeholder: "e.g. 123 Main St, City, State",
+            },
+            {
+              ref: bedroomsRef,
+              label: "Bedrooms*",
+              type: "number",
+              placeholder: "Number of bedrooms",
+            },
+            {
+              ref: bathroomsRef,
+              label: "Bathrooms*",
+              type: "number",
+              placeholder: "Number of bathrooms",
+            },
+          ],
+        };
+      case "goods":
+        return {
+          title: "Product",
+          namePlaceholder: "e.g. Vintage Watch",
+          descriptionPlaceholder:
+            "Describe the item, its condition, and any unique features",
+          pricePlaceholder: "Price",
+          priceLabel: "Price*",
+          additionalFields: [
+            {
+              ref: conditionRef,
+              label: "Condition*",
+              type: "text",
+              placeholder: "e.g. New, Used, Like New",
+            },
+          ],
+        };
+      case "skills":
+      default:
+        return {
+          title: "Skill",
+          namePlaceholder: "e.g. Web Development",
+          descriptionPlaceholder: "Describe your skill and experience",
+          pricePlaceholder: "Hourly rate or fixed price",
+          priceLabel: "Price*",
+          additionalFields: [],
+        };
+    }
   };
 
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.readyState === 2) {
-          setSelectedImage(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+  const formConfig = getFormConfig();
+
+  const triggerFileInput = () => {
+    fileInputRef.current.click(); // Programmatically trigger the hidden file input
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files); // Get selected files as an array
+    const validFiles = files.filter((file) => {
+      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+      const isValidType =
+        file.type === "image/jpeg" || file.type === "image/png"; //checks if it is a jpg or png
+      if (!isValidSize) {
+        toast.error("Image must be less than 10MB");
+      }
+      if (!isValidType) {
+        toast.error("Image must be a jpg or png");
+      }
+      return isValidSize && isValidType;
+    });
+    const newImages = files.map((file) => ({
+      url: URL.createObjectURL(file), // Create a local URL for the image
+      validFiles,
+    }));
+    setImages((prevImages) => [...prevImages, ...newImages]); // Append to existing images
+  };
+
+  // Handle replacing an image
+  const handleImageChange = (e, index) => {
+    const file = e.target.files[0]; // Get the new file
+    const updatedImages = [...images]; // Copy existing images
+    updatedImages[index] = {
+      url: URL.createObjectURL(file),
+      file,
+    }; // Replace the selected image
+    setImages(updatedImages); // Update state
+  };
+
+  const handleDeleteImage = (index) => {
+    const updatedImages = images.filter((image, i) => i !== index);
+    setImages(updatedImages);
+  };
+
+  const openModal = (image) => {
+    setModalImage(image);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalImage(null);
+    setIsModalOpen(false);
   };
 
   const closeMenu = () => {
@@ -118,15 +184,15 @@ const ListingForm = ({ user, categories, listingType }) => {
         description: descriptionRef.current.value,
         price: parseFloat(priceRef.current.value),
         category: selectedOption,
-        listingType: listingType
+        listingType: listingType,
       };
 
       // Add additional fields based on listing type
-      if (listingType === 'apartments') {
+      if (listingType === "apartments") {
         listingData.location = locationRef.current.value;
         listingData.bedrooms = parseInt(bedroomsRef.current.value);
         listingData.bathrooms = parseInt(bathroomsRef.current.value);
-      } else if (listingType === 'goods') {
+      } else if (listingType === "goods") {
         listingData.condition = conditionRef.current.value;
       }
 
@@ -137,20 +203,26 @@ const ListingForm = ({ user, categories, listingType }) => {
       // Now that we have the listingId, upload the image if there is one
       let imageUrl = null;
       if (imageFile) {
-        imageUrl = await uploadListingImageToStorage(imageFile, user.uid, listingId);
-        
+        imageUrl = await uploadListingImageToStorage(
+          imageFile,
+          user.uid,
+          listingId
+        );
+
         // Update the listing with the image URL
         await updateDoc(doc(db, "listings", listingId), { imageUrl: imageUrl });
       }
-      
+
       // Reset form
       nameRef.current.value = "";
       descriptionRef.current.value = "";
       priceRef.current.value = "";
-      setSelectedImage(null);
+      setSelectedImages([]);
+      document.getElementById("imageInput").value = "";
+      // setSelectedImage(null);
       setImageFile(null);
       setSelectedOption("Category");
-      formConfig.additionalFields.forEach(field => {
+      formConfig.additionalFields.forEach((field) => {
         if (field.ref.current) field.ref.current.value = "";
       });
       toast.success(`${formConfig.title} uploaded successfully`);
@@ -162,49 +234,98 @@ const ListingForm = ({ user, categories, listingType }) => {
     }
   };
 
-
   return (
     <form className="w-full" onSubmit={handleSubmit}>
-      <div className="w-full gap-6 flex flex-col p-5 bg-[#FAFAFA] mb-10 rounded-lg md:flex-row md:items-center md:gap-0">
+      <div className="w-full gap-2 flex flex-col p-5 bg-[#FAFAFA] rounded-t-lg md:flex-row md:gap-0">
         <div className="w-full md:w-[30%]">
           <p className="text-[#737373] text-base font-light md:text-lg">
             {formConfig.title} Picture
           </p>
         </div>
         <div className="w-full flex flex-col md:justify-between md:flex-row md:flex-1 md:items-center">
-          <div
-            onClick={handleImageClick}
-            className="h-[150px] w-[150px] cursor-pointer rounded-lg bg-brand/5 flex flex-col justify-center items-center transition hover:bg-gray-200 md:aspect-square md:mr-5 md:w-auto"
-          >
-            {selectedImage ? (
-              <Image
-                src={selectedImage}
-                height={150}
-                width={150}
-                alt="selected image"
-                className="h-full w-full object-cover rounded-lg"
-              />
-            ) : (
-              <>
-                <FaUpload className="text-brand text-base mb-2" />
-                <p className="text-sm text-brand">Upload image</p>
-              </>
-            )}
-          </div>
-          <input
-            type="file"
-            id="imageInput"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={handleImageChange}
-          />
-          <p className="text-[#737373] text-sm font-light mt-6 md:mt-0">
-            Image must be below 1024x1024px. Use PNG or JPG format.
+          <p className="text-[#737373] text-sm font-light md:mt-0">
+            Image must be below 10MB. Use PNG or JPG format. Click the upload
+            icon below to upload as many images as desired.
           </p>
         </div>
       </div>
 
+      <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
+        <div className="flex justify-between items-center flex-wrap space-y-5">
+          {/* Display the multiple images selected */}
+          {images.map((image, index) => {
+            return (
+              <div key={index} className="relative group">
+                <div className="relative w-[150px] h-[150px]">
+                  <Image
+                    src={image.url}
+                    alt={`Upload ${index}`}
+                    width={150}
+                    height={150}
+                    className="rounded-lg w-full h-full object-cover"
+                  />
+                  <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p className="text-white text-sm">Change Image</p>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={(e) => handleImageChange(e, index)}
+                />
+                <button
+                  className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
+                  onClick={() => handleDeleteImage(index)}
+                >
+                  <FaTrash className="text-white" />
+                </button>
+                <button
+                  className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
+                  onClick={() => openModal(image.url)}
+                >
+                  <FaExpand className="text-white" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          multiple
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
+        <div
+          className="mt-5 self-end cursor-pointer"
+          onClick={triggerFileInput}
+        >
+          <FaUpload className="text-brand text-base mb-2" />
+        </div>
+      </div>
+
       <div className="w-full bg-[#FAFAFA] flex flex-col items-center gap-4 mb-4 p-5 rounded-lg">
+        {/* Modal to show full images */}
+        {isModalOpen && (
+          <Modal onClose={closeModal}>
+            {modalImage && (
+              <div className="flex flex-col p-2 gap-5 md:p-6">
+                <div onClick={closeModal} className="flex justify-end">
+                  <FaTimes className="text-lg" />
+                </div>
+                <Image
+                  src={modalImage}
+                  alt="Full image"
+                  width={0}
+                  height={0}
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            )}
+          </Modal>
+        )}
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
           <label
             htmlFor="listing-name"
@@ -255,7 +376,10 @@ const ListingForm = ({ user, categories, listingType }) => {
           />
         </div>
         {formConfig.additionalFields.map((field, index) => (
-          <div key={index} className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
+          <div
+            key={index}
+            className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row"
+          >
             <label
               htmlFor={`listing-${field.label.toLowerCase()}`}
               className="text-base w-full font-light tracking-tight text-[#737373] md:w-[30%] md:text-lg"
