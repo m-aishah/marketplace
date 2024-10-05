@@ -10,14 +10,13 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { uploadListingImageToStorage } from "./uploadImageToStorage";
-import { addListingToFirestore } from "./addListingToFirestore";
+// import { addListingToFirestore } from "./addListingToFirestore"; TODO: Implement this function, and use it.
 import { db } from "@/firebase";
 import { addDoc, collection, updateDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 const ListingForm = ({ user, categories, listingType }) => {
   const [images, setImages] = useState([]);
-  const [imageFile, setImageFile] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -98,46 +97,69 @@ const ListingForm = ({ user, categories, listingType }) => {
   const formConfig = getFormConfig();
 
   const triggerFileInput = () => {
-    fileInputRef.current.click(); // Programmatically trigger the hidden file input
+    fileInputRef.current.click();
   };
 
   const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files); // Get selected files as an array
-    const validFiles = files.filter((file) => {
-      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+    const files = Array.from(e.target.files);
+    const validFiles = [];
+    let errorMessages = "";
+
+    files.forEach((file) => {
+      const isValidSize = file.size <= 10 * 1024 * 1024;
       const isValidType =
-        file.type === "image/jpeg" || file.type === "image/png"; //checks if it is a jpg or png
+        file.type === "image/jpeg" || file.type === "image/png";
+
       if (!isValidSize) {
-        toast.error("Image must be less than 10MB");
+        errorMessages += "Image must be less than 10MB.\n";
       }
       if (!isValidType) {
-        toast.error("Image must be a jpg or png");
+        errorMessages += "Only JPEG and PNG formats are allowed.\n";
       }
-      return isValidSize && isValidType;
+
+      if (isValidSize && isValidType) {
+        validFiles.push(file);
+      }
     });
-    const newImages = files.map((file) => ({
-      url: URL.createObjectURL(file), // Create a local URL for the image
-      validFiles,
-    }));
-    setImages((prevImages) => [...prevImages, ...newImages]); // Append to existing images
+
+    if (errorMessages) {
+      toast.error(errorMessages);
+    } else {
+      const newImages = validFiles.map((file) => ({
+        url: URL.createObjectURL(file),
+        file,
+      }));
+      setImages((prevImages) => [...prevImages, ...newImages]);
+    }
   };
 
-  // Handle replacing an image
   const handleImageChange = (e, index) => {
-    const file = e.target.files[0]; // Get the new file
-    const updatedImages = [...images]; // Copy existing images
-    updatedImages[index] = {
-      url: URL.createObjectURL(file),
-      file,
-    }; // Replace the selected image
-    setImages(updatedImages); // Update state
+    const file = e.target.files[0];
+    const isValidSize = file.size <= 10 * 1024 * 1024;
+    const isValidType = file.type === "image/jpeg" || file.type === "image/png";
+
+    if (!isValidSize || !isValidType) {
+      const errorMessages = `${
+        !isValidSize ? "Image must be less than 10MB.\n" : ""
+      }${!isValidType ? "Only JPEG and PNG formats are allowed.\n" : ""}`;
+      toast.error(errorMessages);
+    } else {
+      const updatedImages = [...images];
+      updatedImages[index] = {
+        url: URL.createObjectURL(file),
+        file,
+      };
+      setImages(updatedImages);
+    }
   };
 
+  // Delete an image from the list
   const handleDeleteImage = (index) => {
-    const updatedImages = images.filter((image, i) => i !== index);
+    const updatedImages = images.filter((_, i) => i !== index);
     setImages(updatedImages);
   };
 
+  // Open modal to show an image
   const openModal = (image) => {
     setModalImage(image);
     setIsModalOpen(true);
@@ -148,15 +170,18 @@ const ListingForm = ({ user, categories, listingType }) => {
     setIsModalOpen(false);
   };
 
+  // Close the dropdown menu
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
 
+  // Handle dropdown category selection
   const handleClickCategories = (category) => {
     closeMenu();
     setSelectedOption(category);
   };
 
+  // Handle clicks outside the dropdown to close the menu
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -170,24 +195,24 @@ const ListingForm = ({ user, categories, listingType }) => {
     };
   }, []);
 
+  // Form submission handler
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!user) return;
-
     setIsSubmitting(true);
 
     try {
-      // Prepare the initial listing data without the image URL
+      // Prepare the listing data
       const listingData = {
         userId: user.uid,
         name: nameRef.current.value,
         description: descriptionRef.current.value,
         price: parseFloat(priceRef.current.value),
         category: selectedOption,
-        listingType: listingType,
+        listingType,
       };
 
-      // Add additional fields based on listing type
+      // Add extra fields based on listing type
       if (listingType === "apartments") {
         listingData.location = locationRef.current.value;
         listingData.bedrooms = parseInt(bedroomsRef.current.value);
@@ -196,31 +221,33 @@ const ListingForm = ({ user, categories, listingType }) => {
         listingData.condition = conditionRef.current.value;
       }
 
-      // Create the listing in Firestore first
+      // Add listing to Firestore
       const docRef = await addDoc(collection(db, "listings"), listingData);
       const listingId = docRef.id;
 
-      // Now that we have the listingId, upload the image if there is one
-      let imageUrl = null;
-      if (imageFile) {
-        imageUrl = await uploadListingImageToStorage(
-          imageFile,
-          user.uid,
-          listingId
-        );
-
-        // Update the listing with the image URL
-        await updateDoc(doc(db, "listings", listingId), { imageUrl: imageUrl });
+      // Upload images if there are any
+      let imageUrls = [];
+      for (const image of images) {
+        if (image.file) {
+          const imageUrl = await uploadListingImageToStorage(
+            image.file,
+            user.uid,
+            listingId
+          );
+          imageUrls.push(imageUrl);
+        }
       }
 
-      // Reset form
+      // Update Firestore with image URLs
+      if (imageUrls.length > 0) {
+        await updateDoc(doc(db, "listings", listingId), { imageUrls });
+      }
+
+      // Reset the form after submission
       nameRef.current.value = "";
       descriptionRef.current.value = "";
       priceRef.current.value = "";
-      setSelectedImages([]);
-      document.getElementById("imageInput").value = "";
-      // setSelectedImage(null);
-      setImageFile(null);
+      setImages([]);
       setSelectedOption("Category");
       formConfig.additionalFields.forEach((field) => {
         if (field.ref.current) field.ref.current.value = "";
@@ -242,21 +269,26 @@ const ListingForm = ({ user, categories, listingType }) => {
             {formConfig.title} Picture
           </p>
         </div>
-        <div className="w-full flex flex-col md:justify-between md:flex-row md:flex-1 md:items-center">
-          <p className="text-[#737373] text-sm font-light md:mt-0">
-            Image must be below 10MB. Use PNG or JPG format. Click the upload
-            icon below to upload as many images as desired.
-          </p>
-        </div>
       </div>
 
       <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
-        <div className="flex justify-between items-center flex-wrap space-y-5">
-          {/* Display the multiple images selected */}
-          {images.map((image, index) => {
-            return (
-              <div key={index} className="relative group">
-                <div className="relative w-[150px] h-[150px]">
+        <div
+          className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors"
+          onClick={triggerFileInput}
+        >
+          <div className="flex gap-4 flex-wrap items-center justify-center">
+            {images.length === 0 ? (
+              <div className="text-center">
+                <p className="text-gray-500 text-sm">
+                  Click or drag images here
+                </p>
+                <p className="text-xs text-gray-400">
+                  JPEG or PNG only (Max: 10MB)
+                </p>
+              </div>
+            ) : (
+              images.map((image, index) => (
+                <div key={index} className="relative group w-[150px] h-[150px]">
                   <Image
                     src={image.url}
                     alt={`Upload ${index}`}
@@ -267,29 +299,30 @@ const ListingForm = ({ user, categories, listingType }) => {
                   <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
                     <p className="text-white text-sm">Change Image</p>
                   </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={(e) => handleImageChange(e, index)}
+                  />
+                  <button
+                    className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
+                    onClick={() => handleDeleteImage(index)}
+                  >
+                    <FaTrash className="text-white" />
+                  </button>
+                  <button
+                    className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
+                    onClick={() => openModal(image.url)}
+                  >
+                    <FaExpand className="text-white" />
+                  </button>
                 </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={(e) => handleImageChange(e, index)}
-                />
-                <button
-                  className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
-                  onClick={() => handleDeleteImage(index)}
-                >
-                  <FaTrash className="text-white" />
-                </button>
-                <button
-                  className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
-                  onClick={() => openModal(image.url)}
-                >
-                  <FaExpand className="text-white" />
-                </button>
-              </div>
-            );
-          })}
+              ))
+            )}
+          </div>
         </div>
+
         <input
           type="file"
           ref={fileInputRef}
@@ -298,11 +331,12 @@ const ListingForm = ({ user, categories, listingType }) => {
           accept="image/*"
           onChange={handleImageUpload}
         />
-        <div
-          className="mt-5 self-end cursor-pointer"
-          onClick={triggerFileInput}
-        >
-          <FaUpload className="text-brand text-base mb-2" />
+
+        <div className="mt-5 self-end">
+          <FaUpload
+            className="text-brand text-base mb-2 cursor-pointer"
+            onClick={triggerFileInput}
+          />
         </div>
       </div>
 
@@ -326,6 +360,7 @@ const ListingForm = ({ user, categories, listingType }) => {
             )}
           </Modal>
         )}
+
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
           <label
             htmlFor="listing-name"
