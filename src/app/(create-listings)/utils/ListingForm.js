@@ -103,9 +103,21 @@ const ListingForm = ({ user, categories, listingType }) => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files); // Get selected files as an array
+    const validFiles = files.filter((file) => {
+      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+      const isValidType =
+        file.type === "image/jpeg" || file.type === "image/png"; //checks if it is a jpg or png
+      if (!isValidSize) {
+        toast.error("Image must be less than 10MB");
+      }
+      if (!isValidType) {
+        toast.error("Image must be a jpg or png");
+      }
+      return isValidSize && isValidType;
+    });
     const newImages = files.map((file) => ({
       url: URL.createObjectURL(file), // Create a local URL for the image
-      file,
+      validFiles,
     }));
     setImages((prevImages) => [...prevImages, ...newImages]); // Append to existing images
   };
@@ -224,16 +236,16 @@ const ListingForm = ({ user, categories, listingType }) => {
 
   return (
     <form className="w-full" onSubmit={handleSubmit}>
-      <div className="w-full gap-6 flex flex-col p-5 bg-[#FAFAFA] rounded-t-lg md:flex-row md:gap-0">
+      <div className="w-full gap-2 flex flex-col p-5 bg-[#FAFAFA] rounded-t-lg md:flex-row md:gap-0">
         <div className="w-full md:w-[30%]">
           <p className="text-[#737373] text-base font-light md:text-lg">
             {formConfig.title} Picture
           </p>
         </div>
         <div className="w-full flex flex-col md:justify-between md:flex-row md:flex-1 md:items-center">
-          <p className="text-[#737373] text-sm font-light mt-6 md:mt-0">
-            Image must be below 1024x1024px. Use PNG or JPG format. Click the
-            upload icon below to upload as many images as desired.
+          <p className="text-[#737373] text-sm font-light md:mt-0">
+            Image must be below 10MB. Use PNG or JPG format. Click the upload
+            icon below to upload as many images as desired.
           </p>
         </div>
       </div>
@@ -263,13 +275,13 @@ const ListingForm = ({ user, categories, listingType }) => {
                   onChange={(e) => handleImageChange(e, index)}
                 />
                 <button
-                  className="absolute bottom-2 left-2 bg-brand p-2 rounded-full"
+                  className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
                   onClick={() => handleDeleteImage(index)}
                 >
                   <FaTrash className="text-white" />
                 </button>
                 <button
-                  className="absolute bottom-2 right-2 bg-brand p-2 rounded-full"
+                  className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
                   onClick={() => openModal(image.url)}
                 >
                   <FaExpand className="text-white" />
@@ -299,7 +311,7 @@ const ListingForm = ({ user, categories, listingType }) => {
         {isModalOpen && (
           <Modal onClose={closeModal}>
             {modalImage && (
-              <div className="flex flex-col p-6 gap-5">
+              <div className="flex flex-col p-2 gap-5 md:p-6">
                 <div onClick={closeModal} className="flex justify-end">
                   <FaTimes className="text-lg" />
                 </div>
