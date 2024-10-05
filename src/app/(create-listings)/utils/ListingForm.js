@@ -10,7 +10,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { uploadListingImageToStorage } from "./uploadImageToStorage";
-import { addListingToFirestore } from "./addListingToFirestore";
+// import { addListingToFirestore } from "./addListingToFirestore"; TODO: Implement this function, and use it.
 import { db } from "@/firebase";
 import { addDoc, collection, updateDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
@@ -33,7 +33,6 @@ const ListingForm = ({ user, categories, listingType }) => {
   const conditionRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Define form configuration based on the listing type
   const getFormConfig = () => {
     switch (listingType) {
       case "apartments":
@@ -97,40 +96,61 @@ const ListingForm = ({ user, categories, listingType }) => {
 
   const formConfig = getFormConfig();
 
-  // Trigger the file input when upload button is clicked
   const triggerFileInput = () => {
     fileInputRef.current.click();
   };
 
-  // Handle the image upload process
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = files.filter((file) => {
-      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+    const validFiles = [];
+    let errorMessages = "";
+
+    files.forEach((file) => {
+      const isValidSize = file.size <= 10 * 1024 * 1024;
       const isValidType =
         file.type === "image/jpeg" || file.type === "image/png";
-      if (!isValidSize) toast.error("Image must be less than 10MB");
-      if (!isValidType) toast.error("Image must be a jpg or png");
-      return isValidSize && isValidType;
+
+      if (!isValidSize) {
+        errorMessages += "Image must be less than 10MB.\n";
+      }
+      if (!isValidType) {
+        errorMessages += "Only JPEG and PNG formats are allowed.\n";
+      }
+
+      if (isValidSize && isValidType) {
+        validFiles.push(file);
+      }
     });
 
-    const newImages = validFiles.map((file) => ({
-      url: URL.createObjectURL(file), // Local URL for preview
-      file,
-    }));
-
-    setImages((prevImages) => [...prevImages, ...newImages]);
+    if (errorMessages) {
+      toast.error(errorMessages);
+    } else {
+      const newImages = validFiles.map((file) => ({
+        url: URL.createObjectURL(file),
+        file,
+      }));
+      setImages((prevImages) => [...prevImages, ...newImages]);
+    }
   };
 
-  // Replace an image in the list
   const handleImageChange = (e, index) => {
     const file = e.target.files[0];
-    const updatedImages = [...images];
-    updatedImages[index] = {
-      url: URL.createObjectURL(file),
-      file,
-    };
-    setImages(updatedImages);
+    const isValidSize = file.size <= 10 * 1024 * 1024;
+    const isValidType = file.type === "image/jpeg" || file.type === "image/png";
+
+    if (!isValidSize || !isValidType) {
+      const errorMessages = `${
+        !isValidSize ? "Image must be less than 10MB.\n" : ""
+      }${!isValidType ? "Only JPEG and PNG formats are allowed.\n" : ""}`;
+      toast.error(errorMessages);
+    } else {
+      const updatedImages = [...images];
+      updatedImages[index] = {
+        url: URL.createObjectURL(file),
+        file,
+      };
+      setImages(updatedImages);
+    }
   };
 
   // Delete an image from the list
@@ -249,21 +269,26 @@ const ListingForm = ({ user, categories, listingType }) => {
             {formConfig.title} Picture
           </p>
         </div>
-        <div className="w-full flex flex-col md:justify-between md:flex-row md:flex-1 md:items-center">
-          <p className="text-[#737373] text-sm font-light md:mt-0">
-            Image must be below 10MB. Use PNG or JPG format. Click the upload
-            icon below to upload as many images as desired.
-          </p>
-        </div>
       </div>
 
       <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
-        <div className="flex justify-between items-center flex-wrap space-y-5">
-          {/* Display the multiple images selected */}
-          {images.map((image, index) => {
-            return (
-              <div key={index} className="relative group">
-                <div className="relative w-[150px] h-[150px]">
+        <div
+          className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors"
+          onClick={triggerFileInput}
+        >
+          <div className="flex gap-4 flex-wrap items-center justify-center">
+            {images.length === 0 ? (
+              <div className="text-center">
+                <p className="text-gray-500 text-sm">
+                  Click or drag images here
+                </p>
+                <p className="text-xs text-gray-400">
+                  JPEG or PNG only (Max: 10MB)
+                </p>
+              </div>
+            ) : (
+              images.map((image, index) => (
+                <div key={index} className="relative group w-[150px] h-[150px]">
                   <Image
                     src={image.url}
                     alt={`Upload ${index}`}
@@ -274,29 +299,30 @@ const ListingForm = ({ user, categories, listingType }) => {
                   <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
                     <p className="text-white text-sm">Change Image</p>
                   </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={(e) => handleImageChange(e, index)}
+                  />
+                  <button
+                    className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
+                    onClick={() => handleDeleteImage(index)}
+                  >
+                    <FaTrash className="text-white" />
+                  </button>
+                  <button
+                    className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
+                    onClick={() => openModal(image.url)}
+                  >
+                    <FaExpand className="text-white" />
+                  </button>
                 </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={(e) => handleImageChange(e, index)}
-                />
-                <button
-                  className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
-                  onClick={() => handleDeleteImage(index)}
-                >
-                  <FaTrash className="text-white" />
-                </button>
-                <button
-                  className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
-                  onClick={() => openModal(image.url)}
-                >
-                  <FaExpand className="text-white" />
-                </button>
-              </div>
-            );
-          })}
+              ))
+            )}
+          </div>
         </div>
+
         <input
           type="file"
           ref={fileInputRef}
@@ -305,11 +331,12 @@ const ListingForm = ({ user, categories, listingType }) => {
           accept="image/*"
           onChange={handleImageUpload}
         />
-        <div
-          className="mt-5 self-end cursor-pointer"
-          onClick={triggerFileInput}
-        >
-          <FaUpload className="text-brand text-base mb-2" />
+
+        <div className="mt-5 self-end">
+          <FaUpload
+            className="text-brand text-base mb-2 cursor-pointer"
+            onClick={triggerFileInput}
+          />
         </div>
       </div>
 
@@ -333,6 +360,7 @@ const ListingForm = ({ user, categories, listingType }) => {
             )}
           </Modal>
         )}
+
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
           <label
             htmlFor="listing-name"
