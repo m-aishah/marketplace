@@ -1,18 +1,17 @@
 "use client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { getDoc, doc } from "firebase/firestore";
 import { db, auth } from "@/firebase";
 import ListingForm from "@/components/ListingForm";
 import { useAuthState } from "react-firebase-hooks/auth";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import Link from "next/link"; // Ensure to import Link from 'next/link'
-import { ArrowLeft } from "lucide-react"; // Import your ArrowLeft icon
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 function EditListing() {
   const [user] = useAuthState(auth);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const listingId = searchParams.get("listingId");
   const [listingData, setListingData] = useState(null);
@@ -23,7 +22,6 @@ function EditListing() {
       if (listingId) {
         const listingDoc = await getDoc(doc(db, "listings", listingId));
         if (listingDoc.exists()) {
-          // Create a new object with existing data plus the id
           setListingData({ ...listingDoc.data(), id: listingId });
         } else {
           console.error("Listing not found");
