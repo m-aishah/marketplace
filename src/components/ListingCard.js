@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Pencil, Trash2, Plus } from "lucide-react";
 // import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const ListingCard = ({ listing, onDelete }) => (
+const ListingCard = ({ listing, onDelete, onEdit }) => (
   <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
     <div className="p-6">
       <h3 className="text-xl font-semibold mb-2">{listing.name}</h3>
@@ -12,13 +12,13 @@ const ListingCard = ({ listing, onDelete }) => (
           className="text-sm font-medium px-2 py-1 rounded-full"
           style={{
             backgroundColor:
-              listing.listingType === "apartment"
+              listing.listingType === "apartments"
                 ? "rgba(59, 130, 246, 0.1)"
-                : listing.type === "skills"
+                : listing.listingType === "skills"
                 ? "rgba(16, 185, 129, 0.1)"
                 : "rgba(245, 158, 11, 0.1)",
             color:
-              listing.listingType === "apartment"
+              listing.listingType === "apartments"
                 ? "rgb(59, 130, 246)"
                 : listing.listingType === "skills"
                 ? "rgb(16, 185, 129)"
@@ -28,12 +28,12 @@ const ListingCard = ({ listing, onDelete }) => (
           {listing.listingType}
         </span>
         <div className="flex space-x-2">
-          <Link
-            href={`/edit-listing/${listing.id}`}
+          <button
+            onClick={() => onEdit(listing.id)}
             className="text-blue-500 hover:text-blue-700"
           >
             <Pencil size={20} />
-          </Link>
+          </button>
           <button
             onClick={() => onDelete(listing.id)}
             className="text-red-500 hover:text-red-700"

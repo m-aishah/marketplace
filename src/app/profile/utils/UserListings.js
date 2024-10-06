@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   collection,
   query,
@@ -17,6 +18,8 @@ import { FaPlus } from "react-icons/fa";
 export default function UserListings({ userId, onCreateListing }) {
   const [listings, setListings] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserListings = async () => {
@@ -45,6 +48,11 @@ export default function UserListings({ userId, onCreateListing }) {
     }
   };
 
+  const handleEdit = (listingId) => {
+    console.log("Editing listing with ID:", listingId);
+    router.push(`/edit-listing?listingId=${listingId}`);
+  };
+
   return (
     <div className="bg-white shadow-lg rounded-lg overflow-hidden">
       <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
@@ -71,26 +79,31 @@ export default function UserListings({ userId, onCreateListing }) {
               key={listing.id}
               listing={listing}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           ))}
         </div>
 
         {listings.length === 0 && (
           <p className="text-center text-gray-500 mt-4">
-            You don't have any listings yet. Create one to get started!
+            You don't have any listings yet.
           </p>
         )}
       </div>
       {/* Link to view all listings */}
+
       <div className="mt-8 text-center">
-        <Link
-          href="/all-listings"
-          className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-300"
-        >
-          See All Listings
-        </Link>
+        {listings.length > 0 && (
+          <Link
+            href="/all-listings"
+            className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-300"
+          >
+            See All Listings
+          </Link>
+        )}
       </div>
       <br />
+
       <CreateListingModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
