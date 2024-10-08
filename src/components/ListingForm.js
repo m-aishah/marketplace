@@ -38,6 +38,9 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
   const bedroomsRef = useRef(null);
   const bathroomsRef = useRef(null);
   const conditionRef = useRef(null);
+  const serviceRef = useRef(null);
+  const serviceTitleRef = useRef(null);
+  const serviceDetailsRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const getFormConfig = () => {
@@ -92,11 +95,30 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
       default:
         return {
           title: "Skill",
-          namePlaceholder: "e.g. Web Development",
+          namePlaceholder: "e.g. Michael",
           descriptionPlaceholder: "Describe your skill and experience",
           pricePlaceholder: "Hourly rate or fixed price",
           priceLabel: "Price*",
-          additionalFields: [],
+          additionalFields: [
+            {
+              ref: serviceRef,
+              label: "Service*",
+              type: "text",
+              placeholder: "e.g. Web Development",
+            },
+            {
+              ref: serviceTitleRef,
+              label: "Title*",
+              type: "text",
+              placeholder: "e.g. Web Developer",
+            },
+            {
+              ref: serviceDetailsRef,
+              label: "Details*",
+              type: "text",
+              placeholder: "What does your service include?",
+            },
+          ],
         };
     }
   };
@@ -217,7 +239,7 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
         bathroomsRef.current.value = listingData.bathrooms || "";
       } else if (listingType === "goods") {
         conditionRef.current.value = listingData.condition || "";
-      }
+      } //add the one for skills (skills) - serviceref, servicetitleref, servicedetailsref
     }
   }, [listingData, listingType]);
 
@@ -244,7 +266,7 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
         newListingData.bathrooms = parseInt(bathroomsRef.current.value);
       } else if (listingType === "goods") {
         newListingData.condition = conditionRef.current.value;
-      }
+      } //add the one for skills (skills) - serviceref, servicetitleref, servicedetailsref
 
       let listingId;
 
