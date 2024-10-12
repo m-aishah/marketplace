@@ -1,17 +1,31 @@
-import listings from "../homePageData";
-import ListingPage from "../../components/ListingPage";
+"use client";
 
-export default function ApartmentsPage() {
-  const filters = [
-    ...new Set(listings.apartments.map((listing) => listing.type)),
-  ];
+import { useState, useEffect } from "react";
+import ListingPage from "../../components/ListingPage";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/firebase";
+
+export default function RequestsPage() {
+  const [listings, setListings] = useState([]);
+
+  useEffect(() => {
+    const fetchUserListings = async () => {
+      const listingsQuery = query(
+        collection(db, "listings"),
+        where("listingType", "==", "apartments")
+      );
+      const listingsSnapshot = await getDocs(listingsQuery);
+      const fetchedListings = listingsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setListings(fetchedListings);
+    };
+
+    fetchUserListings();
+  }, []);
 
   return (
-    <ListingPage
-      listings={listings.apartments}
-      category="apartments"
-      title="Apartments"
-      filters={filters}
-    />
+    <ListingPage listings={listings} category="apartments" title="Apartments" />
   );
 }

@@ -1,15 +1,29 @@
-import listings from "../homePageData";
+"use client";
+
+import { useState, useEffect } from "react";
 import ListingPage from "../../components/ListingPage";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/firebase";
 
-export default function GoodsPage() {
-  const filters = [...new Set(listings.goods.map((listing) => listing.type))];
+export default function RequestsPage() {
+  const [listings, setListings] = useState([]);
 
-  return (
-    <ListingPage
-      listings={listings.goods}
-      category="goods"
-      title="Goods"
-      filters={filters}
-    />
-  );
+  useEffect(() => {
+    const fetchUserListings = async () => {
+      const listingsQuery = query(
+        collection(db, "listings"),
+        where("listingType", "==", "goods")
+      );
+      const listingsSnapshot = await getDocs(listingsQuery);
+      const fetchedListings = listingsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setListings(fetchedListings);
+    };
+
+    fetchUserListings();
+  }, []);
+
+  return <ListingPage listings={listings} category="goods" title="Goods" />;
 }
