@@ -91,12 +91,13 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
             },
           ],
         };
-      case "skills":
+      case "services":
       default:
         return {
-          title: "Skill",
-          namePlaceholder: "e.g. Michael",
-          descriptionPlaceholder: "Describe your skill and experience",
+          title: "Service",
+          namePlaceholder: "e.g. Web Development",
+          descriptionPlaceholder: "Describe your service and experience",
+
           pricePlaceholder: "Hourly rate or fixed price",
           priceLabel: "Price*",
           additionalFields: [

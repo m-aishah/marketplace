@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,15 @@ import { Card, CardContent } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { FiSearch } from "react-icons/fi";
 import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
-import homePageData from "./homePageData";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+} from "firebase/firestore";
+import { db } from "@/firebase";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,16 +27,39 @@ export default function HomePage() {
     services: 0,
     requests: 0,
   });
+  const [listings, setListings] = useState({
+    apartments: [],
+    goods: [],
+    services: [],
+    requests: [],
+  });
   const itemsPerPage = 3;
   const router = useRouter();
 
-  const listings = (() => {
-    const temp = {};
-    for (const category of Object.keys(homePageData)) {
-      temp[category] = homePageData[category].slice(0, 9);
-    }
-    return temp;
-  })();
+  useEffect(() => {
+    const fetchUserListings = async (listingType) => {
+      const listingsQuery = query(
+        collection(db, "listings"),
+        where("listingType", "==", listingType),
+        orderBy("createdAt", "desc"),
+        limit(9)
+      );
+      const listingsSnapshot = await getDocs(listingsQuery);
+      const fetchedListings = listingsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setListings((prev) => ({
+        ...prev,
+        [listingType]: fetchedListings,
+      }));
+    };
+
+    fetchUserListings("apartments");
+    fetchUserListings("goods");
+    fetchUserListings("services");
+    fetchUserListings("requests");
+  }, []);
 
   const handleNext = (category) => {
     setCurrentPage((prev) => ({
@@ -56,59 +87,78 @@ export default function HomePage() {
     return listings[category].slice(start, end);
   };
 
-  const renderSection = (category, title) => (
-    <section className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <Link href={`/${category.toLowerCase()}`}>
-          <h2 className="text-2xl font-semibold">{title}</h2>
-        </Link>
-        <Link href={`/${category.toLowerCase()}`}>
-          <Button className="bg-blue-400 hover:bg-blue-600 text-white p-2 rounded-full">
-            View More
-          </Button>
-        </Link>
-      </div>
+  const renderSection = (category, title) => {
+    const paginated = paginatedListings(category);
 
-      <div className="relative flex items-center justify-between">
-        <Button
-          onClick={() => handlePrev(category)}
-          className="absolute left-0 bg-blue-400 hover:bg-blue-600 text-white p-2 rounded-full opacity-75 w-6"
-        >
-          <MdArrowBackIos className="h-6 w-6 transform -translate-x-1.5" />
-        </Button>
+    if (paginated.length === 0) return null;
 
-        <div className="grid grid-cols-3 gap-4 mx-auto">
-          {paginatedListings(category).map((listing) => (
-            <Link href={`/listing/${listing.id}`} key={listing.id}>
-              <Card>
-                <CardContent className="p-4">
-                  <Image
-                    src={listing.image}
-                    alt={listing.title}
-                    width={400}
-                    height={300}
-                    className="w-full h-40 object-cover mb-2"
-                  />
-                  <h3 className="font-semibold">{listing.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {listing.type}
-                  </p>
-                  <p className="font-medium mt-2">{listing.price}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+    return (
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <Link href={`/${category.toLowerCase()}`}>
+            <h2 className="text-2xl font-semibold">{title}</h2>
+          </Link>
+          <Link href={`/${category.toLowerCase()}`}>
+            <Button className="bg-blue-400 hover:bg-blue-600 text-white p-2 rounded-full">
+              View More
+            </Button>
+          </Link>
         </div>
 
-        <Button
-          onClick={() => handleNext(category)}
-          className="absolute right-0 bg-blue-400 hover:bg-blue-600 text-white p-2 rounded-full opacity-75 w-6"
-        >
-          <MdArrowForwardIos className="h-6 w-6 transform -translate-x-2.5" />
-        </Button>
-      </div>
-    </section>
-  );
+        <div className="relative flex items-center justify-between">
+          <Button
+            onClick={() => handlePrev(category)}
+            className="absolute left-0 bg-blue-400 hover:bg-blue-600 text-white p-2 rounded-full opacity-75 w-6"
+          >
+            <MdArrowBackIos className="h-6 w-6 transform -translate-x-1.5" />
+          </Button>
+
+          <div
+            className={`grid grid-cols-${
+              paginated.length < 3 ? paginated.length : 3
+            } gap-4 mx-auto justify-items-center`}
+          >
+            {paginated.map((listing) => (
+              <Link
+                href={`/${category.toLowerCase()}/${listing.id}`}
+                key={listing.id}
+              >
+                <Card>
+                  <CardContent className="p-4 w-64">
+                    {listing.imageUrls.length > 0 ? (
+                      <Image
+                        src={listing.imageUrls[0]}
+                        alt={listing.name}
+                        width={400}
+                        height={300}
+                        className="w-full h-40 object-cover mb-2"
+                      />
+                    ) : (
+                      <div className="w-full h-40 bg-gray-200 flex items-center justify-center mb-2">
+                        <span>No Image Available</span>
+                      </div>
+                    )}
+                    <h3 className="font-semibold">{listing.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {listing.category}
+                    </p>
+                    <p className="font-medium mt-2">${listing.price}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+
+          <Button
+            onClick={() => handleNext(category)}
+            className="absolute right-0 bg-blue-400 hover:bg-blue-600 text-white p-2 rounded-full opacity-75 w-6"
+          >
+            <MdArrowForwardIos className="h-6 w-6 transform -translate-x-2.5" />
+          </Button>
+        </div>
+      </section>
+    );
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
