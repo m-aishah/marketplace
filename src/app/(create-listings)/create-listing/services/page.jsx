@@ -15,15 +15,15 @@ function CreateListing() {
         <div className="w-full h-full p-4 flex flex-col items-center md:w-[700px] md:p-10">
           <div className="mb-10 self-start">
             <h1 className="text-black text-xl md:text-3xl font-semibold tracking-tight mb-2">
-              Add Skill
+              Add Service
             </h1>
             <p className="text-gray-500 text-sm md:text-base font-light tracking-normal">
-              Add details about your skill and click the submit button to
+              Add details about your Service and click the submit button to
               upload.
             </p>
           </div>
 
-          <ListingForm user={user} categories={categories} listingType="skills" />
+          <ListingForm user={user} categories={categories} listingType="services" />
         </div>
       </div>
     </ProtectedRoute>
