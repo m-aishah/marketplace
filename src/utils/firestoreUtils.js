@@ -108,13 +108,13 @@ export const getListingFromFirestore = async (listingId) => {
     const listingRef = doc(db, "listings", listingId);
     const listing = await getDoc(listingRef);
     if (listing.exists()) {
-      return { id: listing.id, ...listing.data() };
+      return { listing: { id: listing.id, ...listing.data() } };
     } else {
       throw new Error("Listing not found");
     }
   } catch (error) {
     console.error("Error fetching listing: ", error);
-    throw error;
+    return { error: error };
   }
 };
 

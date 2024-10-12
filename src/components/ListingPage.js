@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,24 +9,78 @@ import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import { RiFilter2Fill } from "react-icons/ri";
 import { Modal } from "@/components/Modal";
 
-export default function ListingPage({ listings, category, title, filters }) {
+const isPriceInRange = (price, minPrice, maxPrice) => {
+  if (minPrice === "" && maxPrice === "") return true;
+  if (minPrice === "") return price <= Number(maxPrice);
+  if (maxPrice === "") return price >= Number(minPrice);
+  return price >= Number(minPrice) && price <= Number(maxPrice);
+};
+
+const excludedFields = [
+  "id",
+  "listingType",
+  "createdAt",
+  "price",
+  "userId",
+  "description",
+];
+
+export default function ListingPage({ listings, category, title }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(9);
-  const [selectedFilter, setSelectedFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const filteredListings = useMemo(() => {
-    return listings
-      .filter((listing) => {
-        return listing.title.toLowerCase().includes(searchQuery.toLowerCase());
-      })
-      .filter((listing) => {
-        return selectedFilter
-          ? listing.type.toLowerCase() === selectedFilter.toLowerCase()
-          : true;
+  const dynamicFilters = useMemo(() => {
+    const filterOptions = {};
+    listings.forEach((listing) => {
+      Object.entries(listing).forEach(([key, value]) => {
+        if (
+          !excludedFields.includes(key) &&
+          (typeof value === "string" || typeof value === "number")
+        ) {
+          if (!filterOptions[key]) filterOptions[key] = new Set();
+          filterOptions[key].add(value);
+        }
       });
-  }, [listings, searchQuery, selectedFilter]);
+    });
+    return Object.fromEntries(
+      Object.entries(filterOptions).map(([key, values]) => [
+        key,
+        Array.from(values),
+      ])
+    );
+  }, [listings]);
+
+  const initialFilters = {
+    ...Object.fromEntries(
+      Object.keys(dynamicFilters).map((key) => [key, "all"])
+    ),
+    minPrice: "",
+    maxPrice: "",
+  };
+
+  const [filters, setFilters] = useState(initialFilters);
+  const [tempFilters, setTempFilters] = useState(initialFilters);
+
+  const filteredListings = useMemo(() => {
+    return listings.filter((listing) => {
+      const matchesSearch = listing.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesFilters = Object.entries(filters).every(([key, value]) => {
+        if (key === "minPrice" || key === "maxPrice") {
+          return isPriceInRange(
+            listing.price,
+            filters.minPrice,
+            filters.maxPrice
+          );
+        }
+        return value === "all" || listing[key] === value;
+      });
+      return matchesSearch && matchesFilters;
+    });
+  }, [listings, searchQuery, filters]);
 
   const totalPages = Math.ceil(filteredListings.length / itemsPerPage);
 
@@ -52,6 +104,21 @@ export default function ListingPage({ listings, category, title, filters }) {
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
+    setTempFilters(filters);
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    setTempFilters((prev) => ({ ...prev, [filterType]: value }));
+  };
+
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    setIsModalOpen(false);
+    setCurrentPage(0);
+  };
+
+  const handleResetFilters = () => {
+    setTempFilters(initialFilters);
   };
 
   useEffect(() => {
@@ -81,7 +148,7 @@ export default function ListingPage({ listings, category, title, filters }) {
           <h1 className="text-2xl font-semibold text-center mb-4">{title}</h1>
 
           <div className="flex items-center justify-between mb-4">
-            {category != "search-results" ? (
+            {category !== "search-results" && (
               <div className="relative flex-grow mr-4">
                 <Input
                   type="text"
@@ -92,8 +159,6 @@ export default function ListingPage({ listings, category, title, filters }) {
                 />
                 <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
               </div>
-            ) : (
-              []
             )}
             <div className="flex items-center">
               <Button onClick={toggleModal} className="flex items-center ml-2">
@@ -111,18 +176,24 @@ export default function ListingPage({ listings, category, title, filters }) {
               >
                 <Card>
                   <CardContent className="p-4">
-                    <Image
-                      src={listing.image}
-                      alt={listing.title}
-                      width={400}
-                      height={300}
-                      className="w-full h-40 object-cover mb-2"
-                    />
-                    <h3 className="font-semibold">{listing.title}</h3>
+                    {listing.imageUrls && listing.imageUrls.length > 0 ? (
+                      <Image
+                        src={listing.imageUrls[0]}
+                        alt={listing.name}
+                        width={400}
+                        height={300}
+                        className="w-full h-40 object-cover mb-2"
+                      />
+                    ) : (
+                      <div className="w-full h-40 bg-gray-200 flex items-center justify-center mb-2">
+                        <span>No Image Available</span>
+                      </div>
+                    )}
+                    <h3 className="font-semibold">{listing.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {listing.type}
+                      {listing.category}
                     </p>
-                    <p className="font-medium mt-2">{listing.price}</p>
+                    <p className="font-medium mt-2">${listing.price}</p>
                   </CardContent>
                 </Card>
               </Link>
@@ -158,7 +229,7 @@ export default function ListingPage({ listings, category, title, filters }) {
             </div>
 
             <div className="flex items-center">
-              <span className="mr-2 text-black">Items per page :</span>
+              <span className="mr-2 text-black">Items per page:</span>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
@@ -175,25 +246,69 @@ export default function ListingPage({ listings, category, title, filters }) {
           {isModalOpen && (
             <Modal onClose={toggleModal}>
               <div className="p-4">
-                <h2 className="text-xl font-semibold">Filter Options</h2>
-                <select
-                  value={selectedFilter}
-                  onChange={(e) => setSelectedFilter(e.target.value)}
-                  className="border border-gray-300 rounded-lg p-2 mt-4"
-                >
-                  <option value="">All</option>
-                  {filters.map((filter) => (
-                    <option key={filter} value={filter}>
-                      {filter}
-                    </option>
+                <h2 className="text-xl font-semibold mb-4">Filter Options</h2>
+                <div className="space-y-4">
+                  {Object.entries(dynamicFilters).map(([key, values]) => (
+                    <div key={key}>
+                      <label className="block mb-2 capitalize">{key}:</label>
+                      <select
+                        value={tempFilters[key]}
+                        onChange={(e) =>
+                          handleFilterChange(key, e.target.value)
+                        }
+                        className="w-full border border-gray-300 rounded-lg p-2"
+                      >
+                        <option value="all">All</option>
+                        {values.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   ))}
-                </select>
-                <div className="flex justify-end mt-4">
+                  <div>
+                    <label className="block mb-2">Price Range:</label>
+                    <div className="flex space-x-2">
+                      <Input
+                        type="number"
+                        placeholder="Min Price"
+                        value={tempFilters.minPrice}
+                        onChange={(e) =>
+                          handleFilterChange("minPrice", e.target.value)
+                        }
+                        className="w-1/2"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Max Price"
+                        value={tempFilters.maxPrice}
+                        onChange={(e) =>
+                          handleFilterChange("maxPrice", e.target.value)
+                        }
+                        className="w-1/2"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-6 space-x-2">
                   <Button
-                    onClick={toggleModal}
+                    onClick={handleResetFilters}
+                    className="bg-gray-500 hover:bg-gray-400 text-black p-2 rounded"
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    onClick={handleApplyFilters}
                     className="bg-blue-400 hover:bg-blue-600 text-white p-2 rounded"
                   >
-                    Close
+                    Apply
+                  </Button>
+                  <Button
+                    onClick={toggleModal}
+                    className="bg-red-400 hover:bg-red-600 text-white p-2 rounded"
+                  >
+                    Cancel
                   </Button>
                 </div>
               </div>
