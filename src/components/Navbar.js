@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { usePathname } from 'next/navigation';
+import { usePathname } from "next/navigation";
 import { FiMenu, FiX, FiUser } from "react-icons/fi";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 
@@ -67,13 +67,19 @@ const Navbar = () => {
           onClick={() => setIsMenuOpen((prev) => !prev)}
           className="md:hidden"
         >
-          {isMenuOpen ? <FiX className="relative z-50 w-5 h-5" /> : <FiMenu className="relative z-50 w-5 h-5" />}
+          {isMenuOpen ? (
+            <FiX className="relative z-50 w-5 h-5" />
+          ) : (
+            <FiMenu className="relative z-50 w-5 h-5" />
+          )}
         </div>
 
         <ul className="hidden gap-5 md:flex">
           <li>
             <Link
-              className={`transition hover:text-brand ${isActive('/') ? 'text-brand font-bold' : ''}`}
+              className={`transition hover:text-brand ${
+                isActive("/") ? "text-brand font-bold" : ""
+              }`}
               href="/"
             >
               Home
@@ -81,7 +87,9 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              className={`transition hover:text-brand ${isActive('/apartments') ? 'text-brand font-bold' : ''}`}
+              className={`transition hover:text-brand ${
+                isActive("/apartments") ? "text-brand font-bold" : ""
+              }`}
               href="/apartments"
             >
               Apartments
@@ -89,7 +97,9 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              className={`transition hover:text-brand ${isActive('/goods') ? 'text-brand font-bold' : ''}`}
+              className={`transition hover:text-brand ${
+                isActive("/goods") ? "text-brand font-bold" : ""
+              }`}
               href="/goods"
             >
               Goods
@@ -97,7 +107,9 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              className={`transition hover:text-brand ${isActive('/services') ? 'text-brand font-bold' : ''}`}
+              className={`transition hover:text-brand ${
+                isActive("/services") ? "text-brand font-bold" : ""
+              }`}
               href="/services"
             >
               Services
@@ -105,7 +117,9 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              className={`transition hover:text-brand ${isActive('/requests') ? 'text-brand font-bold' : ''}`}
+              className={`transition hover:text-brand ${
+                isActive("/requests") ? "text-brand font-bold" : ""
+              }`}
               href="/requests"
             >
               Requests
@@ -167,26 +181,43 @@ const Navbar = () => {
 
               <ul className="flex flex-col gap-3 items-center">
                 <li onClick={closeMenu}>
-                  <Link className={`transition active:text-brand ${isActive('/') ? 'text-brand font-bold' : ''}`} href="/">
+                  <Link
+                    className={`transition active:text-brand ${
+                      isActive("/") ? "text-brand font-bold" : ""
+                    }`}
+                    href="/"
+                  >
                     Home
                   </Link>
                 </li>
                 <li onClick={closeMenu}>
                   <Link
-                    className={`transition active:text-brand ${isActive('/apartments') ? 'text-brand font-bold' : ''}`}
+                    className={`transition active:text-brand ${
+                      isActive("/apartments") ? "text-brand font-bold" : ""
+                    }`}
                     href="/apartments"
                   >
                     Apartments
                   </Link>
                 </li>
                 <li onClick={closeMenu}>
-                  <Link className={`transition active:text-brand ${isActive('/goods') ? 'text-brand font-bold' : ''}`} href="/goods">
+                  <Link
+                    className={`transition active:text-brand ${
+                      isActive("/goods") ? "text-brand font-bold" : ""
+                    }`}
+                    href="/goods"
+                  >
                     Goods
                   </Link>
                 </li>
                 <li onClick={closeMenu}>
-                  <Link className={`transition active:text-brand ${isActive('/skills') ? 'text-brand font-bold' : ''}`} href="/skills">
-                    Skills
+                  <Link
+                    className={`transition active:text-brand ${
+                      isActive("/services") ? "text-brand font-bold" : ""
+                    }`}
+                    href="/services"
+                  >
+                    Services
                   </Link>
                 </li>
               </ul>

@@ -23,7 +23,7 @@ export default function CreateListingModal({ isOpen, onClose }) {
     {
       name: "Service",
       icon: FaTools,
-      path: "/create-listing/skills",
+      path: "/create-listing/services",
       color: "text-yellow-500",
     },
   ];
