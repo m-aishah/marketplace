@@ -1,30 +1,59 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import homePageData from "../homePageData";
 import ListingPage from "../../components/ListingPage";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+} from "firebase/firestore";
+import { db } from "@/firebase";
 
 export default function RequestsPage() {
+  const [listings, setListings] = useState({
+    apartments: [],
+    goods: [],
+    services: [],
+    requests: [],
+  });
+
+  useEffect(() => {
+    const fetchUserListings = async (listingType) => {
+      const listingsQuery = query(
+        collection(db, "listings"),
+        where("listingType", "==", listingType),
+        orderBy("createdAt", "desc"),
+        limit(9)
+      );
+      const listingsSnapshot = await getDocs(listingsQuery);
+      const fetchedListings = listingsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setListings((prev) => ({
+        ...prev,
+        [listingType]: fetchedListings,
+      }));
+    };
+
+    fetchUserListings("apartments");
+    fetchUserListings("goods");
+    fetchUserListings("services");
+    fetchUserListings("requests");
+  }, []);
+
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
-  const filteredListings = Object.keys(homePageData).reduce((acc, category) => {
-    const categoryListings = homePageData[category].filter((listing) =>
-      listing.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredListings = Object.keys(listings).reduce((acc, category) => {
+    const categoryListings = listings[category].filter((listing) =>
+      listing.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
     return acc.concat(categoryListings);
   }, []);
-
-  const filters = [];
-
-  for (const category of Object.keys(homePageData)) {
-    const uniqueTypes = new Set(
-      homePageData[category].map((listing) => listing.type)
-    );
-    const filteredTypes = [...uniqueTypes].filter((type) =>
-      filteredListings.some((listing) => listing.type === type)
-    );
-    filters.push(...filteredTypes);
-  }
 
   if (!filteredListings.length)
     return (
@@ -37,8 +66,7 @@ export default function RequestsPage() {
     <ListingPage
       listings={filteredListings}
       category="search-results"
-      title="Search Results"
-      filters={filters}
+      title={'Search Results for "' + searchQuery + '"'}
     />
   );
 }

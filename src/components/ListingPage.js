@@ -28,7 +28,7 @@ const excludedFields = [
 export default function ListingPage({ listings, category, title }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(9);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const dynamicFilters = useMemo(() => {
@@ -129,9 +129,9 @@ export default function ListingPage({ listings, category, title }) {
     setCurrentPage(0);
   }, [filteredListings]);
 
-  const generateOptions = (upperLimit) => {
+  const generateOptions = (n, upperLimit) => {
     const options = [];
-    for (let i = 6; i <= upperLimit; i += 3) {
+    for (let i = n; i <= upperLimit; i += n) {
       options.push(
         <option key={i} value={i}>
           {i}
@@ -147,35 +147,38 @@ export default function ListingPage({ listings, category, title }) {
         <div className="max-w-3xl mx-auto space-y-8">
           <h1 className="text-2xl font-semibold text-center mb-4">{title}</h1>
 
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-4 space-y-4 sm:space-y-0">
             {category !== "search-results" && (
-              <div className="relative flex-grow mr-4">
+              <div className="relative flex-grow w-full sm:w-auto sm:mr-4">
                 <Input
                   type="text"
                   placeholder={`Search for ${category}...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-4 pr-4 py-2 text-xl"
+                  className="w-full pl-4 pr-10 py-2 text-xl"
                 />
                 <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
               </div>
             )}
-            <div className="flex items-center">
-              <Button onClick={toggleModal} className="flex items-center ml-2">
+            <div className="flex items-center w-full sm:w-auto">
+              <Button
+                onClick={toggleModal}
+                className="flex items-center w-full sm:w-auto justify-center"
+              >
                 <RiFilter2Fill className="h-6 w-6" />
                 <span className="ml-1">Filter</span>
               </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {paginatedListings.map((listing) => (
               <Link
                 href={`/${category.toLowerCase()}/${listing.id}`}
                 key={listing.id}
               >
-                <Card>
-                  <CardContent className="p-4">
+                <Card className="h-full">
+                  <CardContent className="p-4 flex flex-col h-full">
                     {listing.imageUrls && listing.imageUrls.length > 0 ? (
                       <Image
                         src={listing.imageUrls[0]}
@@ -193,15 +196,15 @@ export default function ListingPage({ listings, category, title }) {
                     <p className="text-sm text-muted-foreground">
                       {listing.category}
                     </p>
-                    <p className="font-medium mt-2">${listing.price}</p>
+                    <p className="font-medium mt-2 mt-auto">${listing.price}</p>
                   </CardContent>
                 </Card>
               </Link>
             ))}
           </div>
 
-          <div className="flex items-center justify-between my-4">
-            <div className="flex items-center">
+          <div className="flex flex-col sm:flex-row items-center justify-between my-4 space-y-4 sm:space-y-0">
+            <div className="flex items-center w-full sm:w-auto justify-between sm:justify-start">
               <Button
                 onClick={handlePrev}
                 disabled={currentPage === 0}
@@ -228,7 +231,7 @@ export default function ListingPage({ listings, category, title }) {
               </Button>
             </div>
 
-            <div className="flex items-center">
+            <div className="flex items-center w-full sm:w-auto justify-center sm:justify-end">
               <span className="mr-2 text-black">Items per page:</span>
               <select
                 value={itemsPerPage}
@@ -238,7 +241,7 @@ export default function ListingPage({ listings, category, title }) {
                 }}
                 className="border border-gray-300 rounded-lg p-2"
               >
-                {generateOptions(30)}
+                {generateOptions(5, 30)}
               </select>
             </div>
           </div>
@@ -269,7 +272,7 @@ export default function ListingPage({ listings, category, title }) {
                   ))}
                   <div>
                     <label className="block mb-2">Price Range:</label>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                       <Input
                         type="number"
                         placeholder="Min Price"
@@ -277,7 +280,7 @@ export default function ListingPage({ listings, category, title }) {
                         onChange={(e) =>
                           handleFilterChange("minPrice", e.target.value)
                         }
-                        className="w-1/2"
+                        className="w-full sm:w-1/2"
                       />
                       <Input
                         type="number"
@@ -286,27 +289,27 @@ export default function ListingPage({ listings, category, title }) {
                         onChange={(e) =>
                           handleFilterChange("maxPrice", e.target.value)
                         }
-                        className="w-1/2"
+                        className="w-full sm:w-1/2"
                       />
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end mt-6 space-x-2">
+                <div className="flex flex-col sm:flex-row justify-end mt-6 space-y-2 sm:space-y-0 sm:space-x-2">
                   <Button
                     onClick={handleResetFilters}
-                    className="bg-gray-500 hover:bg-gray-400 text-black p-2 rounded"
+                    className="bg-gray-500 hover:bg-gray-400 text-black p-2 rounded w-full sm:w-auto"
                   >
                     Reset
                   </Button>
                   <Button
                     onClick={handleApplyFilters}
-                    className="bg-blue-400 hover:bg-blue-600 text-white p-2 rounded"
+                    className="bg-blue-400 hover:bg-blue-600 text-white p-2 rounded w-full sm:w-auto"
                   >
                     Apply
                   </Button>
                   <Button
                     onClick={toggleModal}
-                    className="bg-red-400 hover:bg-red-600 text-white p-2 rounded"
+                    className="bg-red-400 hover:bg-red-600 text-white p-2 rounded w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
