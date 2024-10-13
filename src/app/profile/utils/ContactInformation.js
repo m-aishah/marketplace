@@ -173,7 +173,7 @@ export default function ContactInformation({ userId }) {
 
         {contacts.length === 0 && (
           <p className="text-center text-gray-500 mt-4">
-            You don't have any contact information yet.
+            You don&apos;t have any contact information yet.
           </p>
         )}
 
