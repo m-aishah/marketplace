@@ -240,7 +240,11 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
         bathroomsRef.current.value = listingData.bathrooms || "";
       } else if (listingType === "goods") {
         conditionRef.current.value = listingData.condition || "";
-      } //add the one for skills (skills) - serviceref, servicetitleref, servicedetailsref
+      } else if (listingType === "services") {
+        serviceRef.current.value = listingData.service || "";
+        serviceTitleRef.current.value = listingData.serviceTitle || "";
+        serviceDetailsRef.current.value = listingData.serviceDetails || "";
+      }
     }
   }, [listingData, listingType]);
 
@@ -267,7 +271,11 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
         newListingData.bathrooms = parseInt(bathroomsRef.current.value);
       } else if (listingType === "goods") {
         newListingData.condition = conditionRef.current.value;
-      } //add the one for skills (skills) - serviceref, servicetitleref, servicedetailsref
+      } else if (listingType === "services") {
+        newListingData.service = serviceRef.current.value;
+        newListingData.serviceTitle = serviceTitleRef.current.value;
+        newListingData.serviceDetails = serviceDetailsRef.current.value;
+      }
 
       let listingId;
 
