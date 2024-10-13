@@ -49,6 +49,12 @@ function Signup() {
                 username,
                 email,
             });
+            
+            await addDoc(collection(db, 'contacts'), {
+            userId: user.uid,
+            type: 'email',
+            value: email
+            });
             router.push('/');
         } catch (error) {
             switch (error.code) {
