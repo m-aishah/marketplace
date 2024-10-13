@@ -105,7 +105,7 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="relative flex items-center justify-between">
+        <div className="relative flex items-center justify-center">
           <Button
             onClick={() => handlePrev(category)}
             className="absolute left-0 bg-blue-400 hover:bg-blue-600 text-white p-2 rounded-full opacity-75 w-6"
@@ -113,18 +113,14 @@ export default function HomePage() {
             <MdArrowBackIos className="h-6 w-6 transform -translate-x-1.5" />
           </Button>
 
-          <div
-            className={`grid grid-cols-${
-              paginated.length < 3 ? paginated.length : 3
-            } gap-4 mx-auto justify-items-center`}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mx-auto justify-center">
             {paginated.map((listing) => (
               <Link
                 href={`/${category.toLowerCase()}/${listing.id}`}
                 key={listing.id}
               >
-                <Card>
-                  <CardContent className="p-4 w-64">
+                <Card className="w-full sm:w-full md:w-full">
+                  <CardContent className="p-4">
                     {listing.imageUrls.length > 0 ? (
                       <Image
                         src={listing.imageUrls[0]}
