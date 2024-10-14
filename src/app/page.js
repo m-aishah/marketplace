@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/Input";
 import { Card, CardContent } from "@/components/Card";
 import { Button } from "@/components/Button";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiPlus } from "react-icons/fi";
 import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import {
   collection,
@@ -16,8 +16,10 @@ import {
   orderBy,
   limit,
   getDocs,
+  addDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase";
+import CreateListingModal from "../app/profile/utils/CreateListingModal";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,6 +35,7 @@ export default function HomePage() {
     services: [],
     requests: [],
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const itemsPerPage = 3;
   const router = useRouter();
 
@@ -121,7 +124,7 @@ export default function HomePage() {
               >
                 <Card className="w-full sm:w-full md:w-full">
                   <CardContent className="p-4">
-                    {listing.imageUrls.length > 0 ? (
+                    {listing.imageUrls && listing.imageUrls.length > 0 ? (
                       <Image
                         src={listing.imageUrls[0]}
                         alt={listing.name}
@@ -139,6 +142,9 @@ export default function HomePage() {
                       {listing.category}
                     </p>
                     <p className="font-medium mt-2">${listing.price}</p>
+                    <p className="text-sm mt-2 line-clamp-2">
+                      {listing.description}
+                    </p>
                   </CardContent>
                 </Card>
               </Link>
@@ -169,13 +175,23 @@ export default function HomePage() {
     }
   };
 
+  const handleCreateListing = () => {
+    router.push("/create-listing");
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto space-y-8">
-          <h1 className="text-2xl text-center font-semibold mb-4">
-            Featured Products
-          </h1>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-semibold">Featured Products</h1>
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-full flex items-center"
+            >
+              <FiPlus className="mr-2" /> Create Listing
+            </Button>
+          </div>
           <div className="relative">
             <div onClick={handleSearch}>
               <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6 cursor-pointer" />
@@ -195,6 +211,11 @@ export default function HomePage() {
           {renderSection("requests", "Requests")}
         </div>
       </main>
+      <CreateListingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onCreateListing={handleCreateListing}
+      />
     </div>
   );
 }

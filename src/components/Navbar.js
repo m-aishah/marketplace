@@ -220,6 +220,16 @@ const Navbar = () => {
                     Services
                   </Link>
                 </li>
+                <li onClick={closeMenu}>
+                  <Link
+                    className={`transition active:text-brand ${
+                      isActive("/requests") ? "text-brand font-bold" : ""
+                    }`}
+                    href="/requests"
+                  >
+                    Requests
+                  </Link>
+                </li>
               </ul>
 
               <div className="flex gap-5">
