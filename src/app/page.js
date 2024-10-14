@@ -16,7 +16,6 @@ import {
   orderBy,
   limit,
   getDocs,
-  addDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import CreateListingModal from "../app/profile/utils/CreateListingModal";
