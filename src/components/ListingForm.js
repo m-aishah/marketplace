@@ -350,7 +350,10 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
       </div>
 
       <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
-        <div className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors">
+        <div
+          className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors"
+          onClick={triggerFileInput}
+        >
           <div className="flex gap-4 flex-wrap items-center justify-center">
             {images.length === 0 ? (
               <div className="text-center">
