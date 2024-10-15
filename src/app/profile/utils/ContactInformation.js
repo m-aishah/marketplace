@@ -120,7 +120,7 @@ export default function ContactInformation({ userId }) {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+    <div className="bg-white shadow-lg shadow-brand/20 rounded-lg p-6 mb-6 w-full max-w-[1400px] mx-auto overflow-hidden">
       <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
         <div>
           <h3 className="text-lg leading-6 font-medium text-gray-900">
