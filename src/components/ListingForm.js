@@ -370,15 +370,12 @@ const ListingForm = ({
       </div>
 
       <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
-        <div
-          className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors"
-          onClick={triggerFileInput}
-        >
+        <div className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors">
           <div className="flex gap-4 flex-wrap items-center justify-center">
             {images.length === 0 ? (
               <div className="text-center">
                 <p className="text-gray-500 text-sm">
-                  Click or drag images here
+                  Click the upload icon or drag images here
                 </p>
                 <p className="text-xs text-gray-400">
                   JPEG or PNG only (Max: 10MB)
@@ -393,6 +390,7 @@ const ListingForm = ({
                     width={150}
                     height={150}
                     className="rounded-lg w-full h-full object-cover"
+                    onClick={triggerFileInput}
                   />
                   <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
                     <p className="text-white text-sm">Change Image</p>
@@ -441,22 +439,22 @@ const ListingForm = ({
       <div className="w-full bg-[#FAFAFA] flex flex-col items-center gap-4 mb-4 p-5 rounded-lg">
         {/* Modal to show full images */}
         {isModalOpen && (
-          <Modal onClose={closeModal}>
+          <div className="fixed w-full top-0 left-0 min-h-screen bg-black/95 z-50 flex flex-col justify-center items-center">
             {modalImage && (
-              <div className="flex flex-col p-2 gap-5 md:p-6">
+              <div className="flex flex-col gap-2 max-w-[1000px] w-full p-4">
                 <div onClick={closeModal} className="flex justify-end">
-                  <FaTimes className="text-lg" />
+                  <FaTimes className="text-lg cursor-pointer text-white" />
                 </div>
                 <Image
                   src={modalImage}
                   alt="Full image"
                   width={0}
                   height={0}
-                  className="w-full h-auto object-contain"
+                  className="w-full h-auto object-cover rounded-lg shadow-lg shadow-white/10"
                 />
               </div>
             )}
-          </Modal>
+          </div>
         )}
 
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
