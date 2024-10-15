@@ -15,7 +15,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("contact");
+  const [activeTab, setActiveTab] = useState("listings");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -81,7 +81,7 @@ function Profile() {
             <nav className="-mb-px flex">
               <button
                 className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "lisitngs"
+                  activeTab === "listings"
                     ? "border-blue-500 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
@@ -113,13 +113,13 @@ function Profile() {
           </div>
         </div>
 
-        {activeTab === "contact" && <ContactInformation userId={user.id} />}
-
         {activeTab === "listings" && <UserListings userId={user.id} />}
 
         {activeTab === "transactions" && (
           <TransactionHistory userId={user.id} />
         )}
+
+        {activeTab === "contact" && <ContactInformation userId={user.id} />}
       </div>
     </ProtectedRoute>
   );
