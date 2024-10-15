@@ -95,7 +95,7 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
       default:
         return {
           title: "Service",
-          namePlaceholder: "e.g. Web Development",
+          namePlaceholder: "e.g. Aishah",
           descriptionPlaceholder: "Describe your service and experience",
 
           pricePlaceholder: "Hourly rate or fixed price",
