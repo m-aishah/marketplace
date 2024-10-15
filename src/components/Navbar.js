@@ -48,7 +48,7 @@ const Navbar = () => {
     <header
       className={`${
         isScrolled
-          ? "fixed top-0 shadow-lg shadow-brand/20 z-20"
+          ? "sticky top-0 shadow-lg shadow-brand/20 z-20"
           : "relative shadow"
       } w-full p-2 sm:p-4 flex justify-center bg-white transition-all duration-300`}
     >
