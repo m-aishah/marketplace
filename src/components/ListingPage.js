@@ -1,13 +1,16 @@
+"use client";
+
 import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Input } from "@/components/Input";
 import { Card, CardContent } from "@/components/Card";
 import { Button } from "@/components/Button";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiPlus } from "react-icons/fi";
 import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import { RiFilter2Fill } from "react-icons/ri";
-import { Modal } from "@/components/Modal";
+import FilterModal from "@/components/FilterModal";
+import CreateListingModal from "../app/profile/utils/CreateListingModal";
 
 const isPriceInRange = (price, minPrice, maxPrice) => {
   if (minPrice === "" && maxPrice === "") return true;
@@ -29,7 +32,8 @@ export default function ListingPage({ listings, category, title }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const dynamicFilters = useMemo(() => {
     const filterOptions = {};
@@ -96,24 +100,24 @@ export default function ListingPage({ listings, category, title }) {
     }
   };
 
+  const handleCreateListing = () => {
+    router.push("/create-listing");
+  };
+
   const paginatedListings = useMemo(() => {
     const start = currentPage * itemsPerPage;
     const end = start + itemsPerPage;
     return filteredListings.slice(start, end);
   }, [currentPage, itemsPerPage, filteredListings]);
 
-  const toggleModal = () => {
-    setIsModalOpen(!isModalOpen);
+  const toggleFilterModal = () => {
+    setIsFilterModalOpen(!isFilterModalOpen);
     setTempFilters(filters);
-  };
-
-  const handleFilterChange = (filterType, value) => {
-    setTempFilters((prev) => ({ ...prev, [filterType]: value }));
   };
 
   const handleApplyFilters = () => {
     setFilters(tempFilters);
-    setIsModalOpen(false);
+    setIsFilterModalOpen(false);
     setCurrentPage(0);
   };
 
@@ -145,11 +149,20 @@ export default function ListingPage({ listings, category, title }) {
     <div className="min-h-screen flex flex-col">
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto space-y-8">
-          <h1 className="text-2xl font-semibold text-center mb-4">{title}</h1>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-semibold">{title}</h1>
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white"
+            >
+              <FiPlus className="h-6 w-6 mr-2" />
+              <span>Create Listing</span>
+            </Button>
+          </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-4 space-y-4 sm:space-y-0">
+          <div className="flex items-center justify-between mb-4 space-x-2">
             {category !== "search-results" && (
-              <div className="relative flex-grow w-full sm:w-auto sm:mr-4">
+              <div className="relative flex-grow">
                 <Input
                   type="text"
                   placeholder={`Search for ${category}...`}
@@ -160,15 +173,13 @@ export default function ListingPage({ listings, category, title }) {
                 <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
               </div>
             )}
-            <div className="flex items-center w-full sm:w-auto">
-              <Button
-                onClick={toggleModal}
-                className="flex items-center w-full sm:w-auto justify-center"
-              >
-                <RiFilter2Fill className="h-6 w-6" />
-                <span className="ml-1">Filter</span>
-              </Button>
-            </div>
+            <Button
+              onClick={toggleFilterModal}
+              className="flex items-center justify-center whitespace-nowrap"
+            >
+              <RiFilter2Fill className="h-6 w-6 mr-2" />
+              <span>Filter</span>
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -196,7 +207,10 @@ export default function ListingPage({ listings, category, title }) {
                     <p className="text-sm text-muted-foreground">
                       {listing.category}
                     </p>
-                    <p className="font-medium mt-2 mt-auto">${listing.price}</p>
+                    <p className="font-medium mt-2">${listing.price}</p>
+                    <p className="text-sm mt-2 line-clamp-3">
+                      {listing.description}
+                    </p>
                   </CardContent>
                 </Card>
               </Link>
@@ -246,77 +260,21 @@ export default function ListingPage({ listings, category, title }) {
             </div>
           </div>
 
-          {isModalOpen && (
-            <Modal onClose={toggleModal}>
-              <div className="p-4">
-                <h2 className="text-xl font-semibold mb-4">Filter Options</h2>
-                <div className="space-y-4">
-                  {Object.entries(dynamicFilters).map(([key, values]) => (
-                    <div key={key}>
-                      <label className="block mb-2 capitalize">{key}:</label>
-                      <select
-                        value={tempFilters[key]}
-                        onChange={(e) =>
-                          handleFilterChange(key, e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded-lg p-2"
-                      >
-                        <option value="all">All</option>
-                        {values.map((value) => (
-                          <option key={value} value={value}>
-                            {value}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
-                  <div>
-                    <label className="block mb-2">Price Range:</label>
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                      <Input
-                        type="number"
-                        placeholder="Min Price"
-                        value={tempFilters.minPrice}
-                        onChange={(e) =>
-                          handleFilterChange("minPrice", e.target.value)
-                        }
-                        className="w-full sm:w-1/2"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Max Price"
-                        value={tempFilters.maxPrice}
-                        onChange={(e) =>
-                          handleFilterChange("maxPrice", e.target.value)
-                        }
-                        className="w-full sm:w-1/2"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col sm:flex-row justify-end mt-6 space-y-2 sm:space-y-0 sm:space-x-2">
-                  <Button
-                    onClick={handleResetFilters}
-                    className="bg-gray-500 hover:bg-gray-400 text-black p-2 rounded w-full sm:w-auto"
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    onClick={handleApplyFilters}
-                    className="bg-blue-400 hover:bg-blue-600 text-white p-2 rounded w-full sm:w-auto"
-                  >
-                    Apply
-                  </Button>
-                  <Button
-                    onClick={toggleModal}
-                    className="bg-red-400 hover:bg-red-600 text-white p-2 rounded w-full sm:w-auto"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </Modal>
-          )}
+          <FilterModal
+            isOpen={isFilterModalOpen}
+            onClose={toggleFilterModal}
+            filters={filters}
+            tempFilters={tempFilters}
+            setTempFilters={setTempFilters}
+            dynamicFilters={dynamicFilters}
+            handleApplyFilters={handleApplyFilters}
+            handleResetFilters={handleResetFilters}
+          />
+          <CreateListingModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onCreateListing={handleCreateListing}
+          />
         </div>
       </main>
     </div>
