@@ -221,25 +221,11 @@ function Login() {
                     </div>
                 )}
 
-                <div className="mt-6">
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white text-gray-500">
-                                Don&apos;t have an account?
-                            </span>
-                        </div>
-                    </div>
-                    <div className="mt-6">
-                        <Link
-                            href="/signup"
-                            className="transition w-full flex justify-center bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100"
-                        >
-                            Sign up
-                        </Link>
-                    </div>
+                <div className="mt-2 text-center text-sm text-gray-600">
+                    Don&apos;t have an account?{' '}
+                    <Link href="/signup" className="font-medium text-brand hover:text-brand-light">
+                        Sign Up
+                    </Link>
                 </div>
             </div>
         </div>

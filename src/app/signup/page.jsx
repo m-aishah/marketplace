@@ -262,7 +262,7 @@ function Signup() {
                 </form>
                 <div className="mt-2 text-center text-sm text-gray-600">
                     Already have an account?{' '}
-                    <Link href="/signin" className="font-medium text-brand hover:text-brand-light">
+                    <Link href="/login" className="font-medium text-brand hover:text-brand-light">
                         Sign In
                     </Link>
                 </div>
