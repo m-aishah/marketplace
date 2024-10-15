@@ -4,11 +4,11 @@ import ListingForm from "@/components/ListingForm";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/firebase";
 import categories from "./categories";
+import currencies from "../currencyOptions";
 
 function CreateListing() {
   const [user] = useAuthState(auth);
 
-  
   return (
     <ProtectedRoute>
       <div className="w-full h-full flex justify-center items-center pb-28">
@@ -23,7 +23,12 @@ function CreateListing() {
             </p>
           </div>
 
-          <ListingForm user={user} categories={categories} listingType="services" />
+          <ListingForm
+            user={user}
+            categories={categories}
+            currencies={currencies}
+            listingType="services"
+          />
         </div>
       </div>
     </ProtectedRoute>

@@ -4,6 +4,7 @@ import ListingForm from "@/components/ListingForm";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/firebase";
 import categories from "./categories";
+import currencies from "../currencyOptions";
 
 function CreateListing() {
   const [user] = useAuthState(auth);
@@ -21,7 +22,12 @@ function CreateListing() {
               upload.
             </p>
           </div>
-            <ListingForm user={user} categories={categories} listingType="goods" />
+          <ListingForm
+            user={user}
+            categories={categories}
+            currencies={currencies}
+            listingType="goods"
+          />
         </div>
       </div>
     </ProtectedRoute>

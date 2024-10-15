@@ -17,17 +17,28 @@ import { toast } from "react-toastify";
 import { ref, deleteObject } from "firebase/storage";
 import { storage } from "@/firebase";
 
-const ListingForm = ({ user, categories, listingType, listingData }) => {
+const ListingForm = ({
+  user,
+  categories,
+  currencies,
+  listingType,
+  listingData,
+}) => {
   const router = useRouter();
   const [formMode, setFormMode] = useState(listingData ? "edit" : "create");
   const [images, setImages] = useState(listingData?.imageUrls || []);
+  const [videos, setVideos] = useState(listingData?.videoUrls || []); //confirm this code
   const [deletedImages, setDeletedImages] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCurrencyMenuOpen, setIsCurrencyMenuOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(
     listingData?.category || "Category"
   );
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    listingData?.currency || "Currency"
+  ); //confirm this code
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const menuRef = useRef(null);
@@ -210,9 +221,18 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
     setIsMenuOpen(false);
   };
 
+  const closeMenuCurrency = () => {
+    setIsCurrencyMenuOpen(false);
+  };
+
   const handleClickCategories = (category) => {
     closeMenu();
     setSelectedOption(category);
+  };
+
+  const handleClickCurrencies = (currency) => {
+    closeMenuCurrency();
+    setSelectedCurrency(currency);
   };
 
   useEffect(() => {
@@ -469,6 +489,41 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
             required
             placeholder={formConfig.descriptionPlaceholder}
           ></textarea>
+        </div>
+        <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
+          <label
+            htmlFor="listing-category"
+            className="text-base font-light tracking-tight text-[#737373] w-[30%] md:text-lg"
+          >
+            Currency*
+          </label>
+          <div className="relative w-full md:flex-1">
+            <button
+              id="listing-category"
+              type="button"
+              className="w-full flex justify-between items-center ring-2 ring-gray-300 rounded-md bg-white text-left p-2 shadow text-base active:ring-brand active:ring-opacity-60 active:shadow-lg active:shadow-brand/10"
+              onClick={() => setIsCurrencyMenuOpen((prev) => !prev)}
+            >
+              {selectedCurrency}
+              {isCurrencyMenuOpen ? <FaChevronUp /> : <FaChevronDown />}
+            </button>
+            {isCurrencyMenuOpen && (
+              <div
+                ref={menuRef}
+                className="absolute w-full rounded shadow-lg top-10 text-base bg-white mt-3 z-10"
+              >
+                {currencies.map((currency) => (
+                  <div
+                    key={currency.id}
+                    className="cursor-pointer hover:bg-gray-100 p-2 active:bg-brand active:text-white"
+                    onClick={() => handleClickCurrencies(currency.name)}
+                  >
+                    <p>{currency.name}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
           <label
