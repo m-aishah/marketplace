@@ -155,7 +155,7 @@ export default function ListingPage({ listings, category, title }) {
               onClick={() => setIsCreateModalOpen(true)}
               className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white"
             >
-              <FiPlus className="h-6 w-6 mr-2" />
+              <FiPlus className="mr-2" />
               <span>Create Listing</span>
             </Button>
           </div>
