@@ -39,7 +39,16 @@ function Login() {
         setIsLoading(true);
         setError(null);
         try {
-            await signInWithPopup(auth, provider);
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+
+            const existingUser = await fetchSignInMethodsForEmail(auth, user.email);
+            
+            if (existingUser.includes('password')) {
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                await linkWithCredential(user, credential);
+            }
+
             router.push('/');
         } catch (error) {
             setError('Failed to log in with Google. Please try again.');
@@ -48,7 +57,7 @@ function Login() {
         }
     };
 
-    const handleLogin = async (e) => {
+    const handleEmailLogin = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
@@ -137,7 +146,7 @@ function Login() {
                         </div>
                     </div>
                 ) : (
-                    <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+                    <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
                         <div className="rounded-md shadow-sm -space-y-px">
                             <div>
                                 <label htmlFor="email" className="sr-only">Email address</label>
