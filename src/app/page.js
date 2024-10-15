@@ -19,6 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import CreateListingModal from "../app/profile/utils/CreateListingModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,10 +36,12 @@ export default function HomePage() {
     requests: [],
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 3;
   const router = useRouter();
 
   useEffect(() => {
+    setLoading(true);
     const fetchUserListings = async (listingType) => {
       const listingsQuery = query(
         collection(db, "listings"),
@@ -61,6 +64,7 @@ export default function HomePage() {
     fetchUserListings("goods");
     fetchUserListings("services");
     fetchUserListings("requests");
+    setLoading(false);
   }, []);
 
   const handleNext = (category) => {
@@ -188,7 +192,7 @@ export default function HomePage() {
               onClick={() => setIsModalOpen(true)}
               className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-full flex items-center"
             >
-              <FiPlus className="mr-2" /> Create Listing
+              <FiPlus className="mr-2" /> New Listing
             </Button>
           </div>
           <div className="relative">
@@ -204,10 +208,18 @@ export default function HomePage() {
               className="w-full pl-4 pr-4 py-2 text-xl"
             />
           </div>
-          {renderSection("apartments", "Apartments")}
-          {renderSection("goods", "Goods")}
-          {renderSection("services", "Services")}
-          {renderSection("requests", "Requests")}
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <>
+              {renderSection("apartments", "Apartments")}
+              {renderSection("goods", "Goods")}
+              {renderSection("services", "Services")}
+              {renderSection("requests", "Requests")}
+            </>
+          )}
         </div>
       </main>
       <CreateListingModal

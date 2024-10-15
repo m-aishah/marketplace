@@ -8,6 +8,10 @@ import {
   getDocs,
   query,
   where,
+  orderBy,
+  limit,
+  startAfter,
+  getCountFromServer,
 } from "firebase/firestore";
 import {
   ref,
@@ -157,4 +161,49 @@ export const uploadListingImageToStorage = async (
   const storageRef = ref(storage, `${userId}/listings/${listingId}/${index}`);
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
+};
+
+export const fetchPaginatedListingsByListingType = async (
+  listingType,
+  limitCount = 9,
+  lastVisible = null
+) => {
+  try {
+    let listingsQuery = query(
+      collection(db, "listings"),
+      where("listingType", "==", listingType),
+      orderBy("createdAt", "desc")
+      //limit(limitCount)
+    );
+
+    //if (lastVisible) {
+    //  listingsQuery = query(listingsQuery, startAfter(lastVisible));
+    //}
+
+    const listingsSnapshot = await getDocs(listingsQuery);
+    const fetchedListings = listingsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    //const lastDoc = listingsSnapshot.docs[listingsSnapshot.docs.length - 1];
+
+    //return { listings: fetchedListings, lastVisible: lastDoc };
+    return { listings: fetchedListings, lastVisible: null };
+  } catch (error) {
+    console.error("Error fetching listings:", error);
+    return { listings: [], lastVisible: null };
+  }
+};
+
+export const getDocumentCount = async (collectionName) => {
+  try {
+    const collectionRef = collection(db, collectionName);
+    const snapshot = await getCountFromServer(collectionRef);
+    console.log(snapshot.data().count);
+    return snapshot.data().count;
+  } catch (error) {
+    console.error("Error getting document count:", error);
+    return 0;
+  }
 };
