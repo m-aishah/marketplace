@@ -1,6 +1,6 @@
 "use client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { getDoc, doc } from "firebase/firestore";
 import { db, auth } from "@/firebase";
@@ -10,7 +10,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-function EditListing() {
+function EditListingContent() {
   const [user] = useAuthState(auth);
   const searchParams = useSearchParams();
   const listingId = searchParams.get("listingId");
@@ -79,4 +79,10 @@ function EditListing() {
   );
 }
 
-export default EditListing;
+export default function EditListing() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <EditListingContent />
+    </Suspense>
+  );
+}

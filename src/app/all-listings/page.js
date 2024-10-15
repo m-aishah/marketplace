@@ -32,7 +32,7 @@ export default function AllListings() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!userId) return;

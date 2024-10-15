@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import ListingPage from "../../components/ListingPage";
 import {
@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase";
 
-export default function RequestsPage() {
+function RequestsPageContent() {
   const [listings, setListings] = useState({
     apartments: [],
     goods: [],
@@ -58,7 +58,7 @@ export default function RequestsPage() {
   if (!filteredListings.length)
     return (
       <p className="text-center m-20">
-        No listings found for the query "{searchQuery}".
+        No listings found for the query &quot;{searchQuery}&quot;.
       </p>
     );
 
@@ -68,5 +68,13 @@ export default function RequestsPage() {
       category="search-results"
       title={'Search Results for "' + searchQuery + '"'}
     />
+  );
+}
+
+export default function RequestsPage() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <RequestsPageContent />
+    </Suspense>
   );
 }
