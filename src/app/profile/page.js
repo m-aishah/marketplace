@@ -11,11 +11,13 @@ import UserListings from "./utils/UserListings";
 import TransactionHistory from "./utils/TransactionHistory";
 import ContactInformation from "./utils/ContactInformation";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useRouter } from "next/navigation";
 
 function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("listings");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -46,20 +48,7 @@ function Profile() {
   }
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-          role="alert"
-        >
-          <strong className="font-bold">Error:</strong>
-          <span className="block sm:inline">
-            {" "}
-            Unable to load user data. Please try again.
-          </span>
-        </div>
-      </div>
-    );
+    return router.push("/login");
   }
 
   return (
