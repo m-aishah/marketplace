@@ -9,7 +9,10 @@ import {
   FaExpand,
   FaTimes,
 } from "react-icons/fa";
-import { uploadListingImageToStorage } from "@/utils/firestoreUtils";
+import {
+  uploadListingImageToStorage,
+  uploadListingVideoToStorage,
+} from "@/utils/firestoreUtils";
 import { db } from "@/firebase";
 import { addDoc, collection, updateDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
@@ -26,7 +29,7 @@ const ListingForm = ({
   const router = useRouter();
   const [formMode, setFormMode] = useState(listingData ? "edit" : "create");
   const [images, setImages] = useState(listingData?.imageUrls || []);
-  const [videos, setVideos] = useState(listingData?.videoUrls || []); //confirm this code
+  const [videos, setVideos] = useState(listingData?.videoUrls || []);
   const [deletedVideos, setDeletedVideos] = useState([]);
   const [deletedImages, setDeletedImages] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -371,11 +374,11 @@ const ListingForm = ({
         description: descriptionRef.current.value,
         price: parseFloat(priceRef.current.value),
         category: selectedOption,
+        currency: selectedCurrency,
         listingType,
         createdAt: new Date().toISOString(),
       };
 
-      // Handle apartment/goods specific fields
       if (listingType === "apartments") {
         newListingData.location = locationRef.current.value;
         newListingData.bedrooms = parseInt(bedroomsRef.current.value);
@@ -390,7 +393,6 @@ const ListingForm = ({
 
       let listingId;
 
-      // Determine if we're editing or creating
       if (formMode === "edit") {
         listingId = listingData.id;
         await updateDoc(doc(db, "listings", listingId), newListingData);
@@ -400,9 +402,8 @@ const ListingForm = ({
       }
 
       let imageUrls = [...(listingData?.imageUrls || [])];
-      let videoUrls = [...(listingData?.videoUrls || [])]; //confirm this code
+      let videoUrls = [...(listingData?.videoUrls || [])];
 
-      // Upload new images
       for (let index = 0; index < images.length; index++) {
         const image = images[index];
         if (image.file) {
@@ -412,7 +413,20 @@ const ListingForm = ({
             listingId,
             index
           );
-          imageUrls.push(imageUrl);
+          if (imageUrl) imageUrls.push(imageUrl);
+        }
+      }
+
+      for (let index = 0; index < videos.length; index++) {
+        const video = videos[index];
+        if (video.file) {
+          const videoUrl = await uploadListingVideoToStorage(
+            video.file,
+            user.uid,
+            listingId,
+            index
+          );
+          if (videoUrl) videoUrls.push(videoUrl);
         }
       }
 
@@ -423,24 +437,23 @@ const ListingForm = ({
           await deleteObject(imageRef);
         });
 
-        // Wait for all deletion promises to complete
         await Promise.all(promises);
         imageUrls = imageUrls.filter((url) => !deletedImages.includes(url));
       }
 
+      // Delete videos from Firestore Storage if needed
       if (deletedVideos.length > 0) {
         const promises = deletedVideos.map(async (videoUrl) => {
           const videoRef = ref(storage, videoUrl);
           await deleteObject(videoRef);
         });
 
-        // Wait for all deletion promises to complete
         await Promise.all(promises);
         videoUrls = videoUrls.filter((url) => !deletedVideos.includes(url));
       }
 
-      // Update Firestore with the new imageUrls
-      await updateDoc(doc(db, "listings", listingId), { imageUrls });
+      // Update Firestore with the new imageUrls and videoUrls
+      await updateDoc(doc(db, "listings", listingId), { imageUrls, videoUrls });
 
       toast.success(
         `${formConfig.title} ${
