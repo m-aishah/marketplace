@@ -30,7 +30,10 @@ const ContactModal = ({ isOpen, onClose, contacts }) => {
   const [user] = useAuthState(auth);
 
   const handleContactClick = (contact) => {
-    if (user && contact.value === user.email) {
+    if (
+      user &&
+      contacts.some((contactItem) => contactItem.value === user.email)
+    ) {
       toast.error("You cannot contact yourself.");
     } else {
       window.open(getContactLink(contact), "_blank", "noopener noreferrer");
