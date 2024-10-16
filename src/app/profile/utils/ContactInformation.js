@@ -26,7 +26,7 @@ const contactTypes = [
   { value: "instagram", label: "Instagram", icon: FaInstagram },
 ];
 
-export default function ContactInformation({ userId }) {
+export default function ContactInformation({ userId, isOwnProfile }) {
   const [contacts, setContacts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newContactType, setNewContactType] = useState("whatsapp");
@@ -80,6 +80,7 @@ export default function ContactInformation({ userId }) {
 
   const handleAddContact = async (e) => {
     e.preventDefault();
+    if (!isOwnProfile) return;
     if (!validateContact()) return;
 
     const value =
@@ -106,6 +107,7 @@ export default function ContactInformation({ userId }) {
   };
 
   const handleDeleteContact = async (contactId) => {
+    if (!isOwnProfile) return;
     if (contacts.length > 1) {
       try {
         await deleteDoc(doc(db, "contacts", contactId));
@@ -117,6 +119,7 @@ export default function ContactInformation({ userId }) {
     } else {
       setError("You must have at least one contact method.");
     }
+
   };
 
   return (
@@ -127,16 +130,18 @@ export default function ContactInformation({ userId }) {
             Contact Information
           </h3>
           <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Manage your contact details.
+            {isOwnProfile ? "Manage your contact details." : "Contact details."}
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
-          aria-label="Add New Contact"
-        >
-          <FaPlus className="w-5 h-5" />
-        </button>
+        {isOwnProfile && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+            aria-label="Add New Contact"
+          >
+            <FaPlus className="w-5 h-5" />
+          </button>
+        )}
       </div>
       <div className="border-t border-gray-200">
         <div className="grid grid-cols-1 gap-4 p-4">
@@ -158,7 +163,7 @@ export default function ContactInformation({ userId }) {
                     <p className="text-gray-600">{contact.value}</p>
                   </div>
                 </div>
-                {contacts.length > 1 && (
+                {isOwnProfile && contacts.length > 1 && (
                   <button
                     onClick={() => handleDeleteContact(contact.id)}
                     className="text-red-500 hover:text-red-700 transition-colors"
@@ -171,21 +176,26 @@ export default function ContactInformation({ userId }) {
           })}
         </div>
 
+
         {contacts.length === 0 && (
           <p className="text-center text-gray-500 mt-4">
-            You don&apos;t have any contact information yet.
+            {isOwnProfile
+              ? "You don't have any contact information yet."
+              : "No contact information available."}
           </p>
         )}
 
         {error && <p className="text-center text-red-500 mt-4">{error}</p>}
       </div>
 
-      <Transition appear show={isModalOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-10"
-          onClose={() => setIsModalOpen(false)}
-        >
+
+      {isOwnProfile && (
+        <Transition appear show={isModalOpen} as={Fragment}>
+          <Dialog
+            as="div"
+            className="relative z-10"
+            onClose={() => setIsModalOpen(false)}
+          >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -283,6 +293,7 @@ export default function ContactInformation({ userId }) {
           </div>
         </Dialog>
       </Transition>
+      )}
     </div>
   );
 }

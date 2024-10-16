@@ -15,7 +15,7 @@ import ListingCard from "@/components/ListingCard";
 import CreateListingModal from "./CreateListingModal";
 import { FaPlus } from "react-icons/fa";
 
-export default function UserListings({ userId, onCreateListing }) {
+export default function UserListings({ userId, isOwnProfile }) {
   const [listings, setListings] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -23,12 +23,16 @@ export default function UserListings({ userId, onCreateListing }) {
 
   useEffect(() => {
     const fetchUserListings = async () => {
-      const listingsQuery = query(
+      
+      let listingsQuery = query(
         collection(db, "listings"),
         where("userId", "==", userId),
-        orderBy("createdAt", "desc"),
-        limit(3)
+        orderBy("createdAt", "desc")
       );
+
+      if (isOwnProfile) {
+        listingsQuery = query(listingsQuery, limit(3));
+      }
       const listingsSnapshot = await getDocs(listingsQuery);
       setListings(
         listingsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
@@ -36,9 +40,10 @@ export default function UserListings({ userId, onCreateListing }) {
     };
 
     fetchUserListings();
-  }, [userId]);
+  }, [userId, isOwnProfile]);
 
   const handleDelete = async (listingId) => {
+    if (!isOwnProfile) return;
     try {
       await deleteListingFromFirestore(listingId);
       setListings(listings.filter((listing) => listing.id !== listingId));
@@ -49,6 +54,7 @@ export default function UserListings({ userId, onCreateListing }) {
   };
 
   const handleEdit = (listingId) => {
+    if (!isOwnProfile) return;
     console.log("Editing listing with ID:", listingId);
     router.push(`/edit-listing?listingId=${listingId}`);
   };
@@ -58,19 +64,23 @@ export default function UserListings({ userId, onCreateListing }) {
       <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
         <div>
           <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Your Listings
+            {isOwnProfile ? "Your Listings" : "User Listings"}
           </h3>
           <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Manage your current listings or create a new one.
+            {isOwnProfile
+              ? "Manage your current listings or create a new one."
+              : "View this user's listings."}
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
-          aria-label="Create New Listing"
-        >
-          <FaPlus className="w-5 h-5" />
-        </button>
+        {isOwnProfile && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+            aria-label="Create New Listing"
+          >
+            <FaPlus className="w-5 h-5" />
+          </button>
+        )}
       </div>
       <div className="border-t border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
@@ -78,36 +88,40 @@ export default function UserListings({ userId, onCreateListing }) {
             <ListingCard
               key={listing.id}
               listing={listing}
-              onDelete={handleDelete}
-              onEdit={handleEdit}
+              onDelete={isOwnProfile ? handleDelete : undefined}
+              onEdit={isOwnProfile ? handleEdit : undefined}
             />
           ))}
         </div>
 
         {listings.length === 0 && (
           <p className="text-center text-gray-500 mt-4">
-            You don&apos;t have any listings yet.
+            {isOwnProfile
+              ? "You don't have any listings yet."
+              : "This user doesn't have any listings yet."}
           </p>
         )}
       </div>
-      {/* Link to view all listings */}
-
-      <div className="mt-8 text-center">
+      {isOwnProfile && (  
+        <div className="mt-8 text-center">
         {listings.length > 0 && (
           <Link
-            href="/all-listings"
+            href={isOwnProfile ? "/all-listings" : `/all-listings/${userId}`}
             className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-300"
           >
             See All Listings
           </Link>
         )}
-      </div>
+        </div>
+      )}
       <br />
 
-      <CreateListingModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      {isOwnProfile && (
+        <CreateListingModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -27,7 +27,8 @@ const ListingCard = ({ listing, onDelete, onEdit }) => (
         >
           {listing.listingType}
         </span>
-        <div className="flex space-x-2">
+
+        {onEdit && ( <div className="flex space-x-2">
           <button
             onClick={() => onEdit(listing.id)}
             className="text-blue-500 hover:text-blue-700"
@@ -40,7 +41,8 @@ const ListingCard = ({ listing, onDelete, onEdit }) => (
           >
             <Trash2 size={20} />
           </button>
-        </div>
+        </div>)}
+       
       </div>
     </div>
   </div>
