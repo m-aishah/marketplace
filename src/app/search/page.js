@@ -12,6 +12,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db } from "@/firebase";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 function RequestsPageContent() {
   const [listings, setListings] = useState({
@@ -20,8 +21,10 @@ function RequestsPageContent() {
     services: [],
     requests: [],
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     const fetchUserListings = async (listingType) => {
       const listingsQuery = query(
         collection(db, "listings"),
@@ -44,6 +47,7 @@ function RequestsPageContent() {
     fetchUserListings("goods");
     fetchUserListings("services");
     fetchUserListings("requests");
+    setLoading(false);
   }, []);
 
   const searchParams = useSearchParams();
@@ -63,17 +67,25 @@ function RequestsPageContent() {
     );
 
   return (
-    <ListingPage
-      listings={filteredListings}
-      category="search-results"
-      title={'Search Results for "' + searchQuery + '"'}
-    />
+    <>
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <ListingPage
+          listingsArray={filteredListings}
+          category="search-results"
+          title={'Search Results for "' + searchQuery + '"'}
+        />
+      )}
+    </>
   );
 }
 
 export default function RequestsPage() {
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense fallback={<LoadingSpinner />}>
       <RequestsPageContent />
     </Suspense>
   );
