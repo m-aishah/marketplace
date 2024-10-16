@@ -43,11 +43,12 @@ function RequestsPageContent() {
       }));
     };
 
-    fetchUserListings("apartments");
-    fetchUserListings("goods");
-    fetchUserListings("services");
-    fetchUserListings("requests");
-    setLoading(false);
+    Promise.all([
+      fetchUserListings("apartments"),
+      fetchUserListings("goods"),
+      fetchUserListings("services"),
+      fetchUserListings("requests"),
+    ]).then(() => setLoading(false));
   }, []);
 
   const searchParams = useSearchParams();

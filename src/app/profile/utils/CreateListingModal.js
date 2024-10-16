@@ -1,6 +1,12 @@
 import React, { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { FaHome, FaBox, FaTools, FaTimes } from "react-icons/fa";
+import {
+  FaHome,
+  FaBox,
+  FaTools,
+  FaTimes,
+  FaRegQuestionCircle,
+} from "react-icons/fa";
 import Link from "next/link";
 
 const options = [
@@ -21,6 +27,12 @@ const options = [
     icon: FaTools,
     path: "/create-listing/services",
     color: "text-yellow-500",
+  },
+  {
+    name: "Request",
+    icon: FaRegQuestionCircle,
+    path: "/create-listing/requests",
+    color: "text-orange-500",
   },
 ];
 
