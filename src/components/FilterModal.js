@@ -17,6 +17,18 @@ export default function FilterModal({
     setTempFilters((prev) => ({ ...prev, [filterType]: value }));
   };
 
+  const orderFiltersByName = (filters) => {
+    const sortedFilters = Object.keys(filters)
+     .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+    return sortedFilters.reduce((acc, filter) => {
+      acc[filter] = filters[filter];
+      return acc;
+    }, {});
+  }
+
+  const orderedFilters = orderFiltersByName(dynamicFilters);
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={onClose}>
@@ -57,25 +69,6 @@ export default function FilterModal({
                   </button>
                 </Dialog.Title>
                 <div className="mt-4 space-y-4">
-                  {Object.entries(dynamicFilters).map(([key, values]) => (
-                    <div key={key}>
-                      <label className="block mb-2 capitalize">{key}:</label>
-                      <select
-                        value={tempFilters[key]}
-                        onChange={(e) =>
-                          handleFilterChange(key, e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded-lg p-2"
-                      >
-                        <option value="all">All</option>
-                        {values.map((value) => (
-                          <option key={value} value={value}>
-                            {value}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
                   <div>
                     <label className="block mb-2">Price Range:</label>
                     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
@@ -99,6 +92,25 @@ export default function FilterModal({
                       />
                     </div>
                   </div>
+                  {Object.entries(orderedFilters).map(([key, values]) => (
+                    <div key={key}>
+                      <label className="block mb-2 capitalize">{key}:</label>
+                      <select
+                        value={tempFilters[key]}
+                        onChange={(e) =>
+                          handleFilterChange(key, e.target.value)
+                        }
+                        className="w-full border border-gray-300 rounded-lg p-2"
+                      >
+                        <option value="all">All</option>
+                        {values.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
                 </div>
                 <div className="flex justify-end mt-6 space-x-2">
                   <Button
