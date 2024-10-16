@@ -35,7 +35,6 @@ const ListingForm = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMedia, setModalMedia] = useState(null);
   const [modalMediaType, setModalMediaType] = useState(null);
-  const [modalImage, setModalImage] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCurrencyMenuOpen, setIsCurrencyMenuOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(
@@ -58,7 +57,6 @@ const ListingForm = ({
   const serviceTitleRef = useRef(null);
   const serviceDetailsRef = useRef(null);
   const fileInputRef = useRef(null);
-  const requestTypeRef = useRef(null);
 
   const getFormConfig = () => {
     switch (listingType) {
@@ -71,12 +69,6 @@ const ListingForm = ({
           pricePlaceholder: "Monthly rent",
           priceLabel: "Rent per month*",
           additionalFields: [
-            {
-              ref: locationRef,
-              label: "Location*",
-              type: "text",
-              placeholder: "e.g. 123 Main St, City, State",
-            },
             {
               ref: bedroomsRef,
               label: "Bedrooms*",
@@ -298,13 +290,11 @@ const ListingForm = ({
     const videoToDelete = videos[index];
 
     if (videoToDelete.file) {
-      // Remove newly uploaded video from state
-      setVideos((prevImages) => prevImages.filter((_, i) => i !== index));
+      setVideos((prevVideos) => prevVideos.filter((_, i) => i !== index));
     } else {
-      // Track the URL to be deleted from Firestore Storage
-      const videoToDeleteUrl = listingData.videoUrls[index]; //confirm this code
+      const videoToDeleteUrl = listingData.videoUrls[index];
       setDeletedVideos((prevDeleted) => [...prevDeleted, videoToDeleteUrl]);
-      setVideos((prevImages) => prevImages.filter((_, i) => i !== index));
+      setVideos((prevVideos) => prevVideos.filter((_, i) => i !== index));
     }
   };
 
@@ -315,7 +305,6 @@ const ListingForm = ({
   };
 
   const closeModal = () => {
-    // setModalImage(null);
     setModalMedia(null);
     setModalMediaType(null);
     setIsModalOpen(false);
@@ -358,8 +347,8 @@ const ListingForm = ({
       nameRef.current.value = listingData.name || "";
       descriptionRef.current.value = listingData.description || "";
       priceRef.current.value = listingData.price || "";
+      locationRef.current.value = listingData.location || "";
       if (listingType === "apartments") {
-        locationRef.current.value = listingData.location || "";
         bedroomsRef.current.value = listingData.bedrooms || "";
         bathroomsRef.current.value = listingData.bathrooms || "";
       } else if (listingType === "goods") {
@@ -375,6 +364,13 @@ const ListingForm = ({
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!user) return;
+
+    // Verify that currency and category are selected
+    if (selectedCurrency === "Currency" || selectedOption === "Category") {
+      toast.error("Please select both a currency and a category.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -386,11 +382,11 @@ const ListingForm = ({
         category: selectedOption,
         currency: selectedCurrency,
         listingType,
+        location: locationRef.current.value,
         createdAt: new Date().toISOString(),
       };
 
       if (listingType === "apartments") {
-        newListingData.location = locationRef.current.value;
         newListingData.bedrooms = parseInt(bedroomsRef.current.value);
         newListingData.bathrooms = parseInt(bathroomsRef.current.value);
       } else if (listingType === "goods") {
@@ -670,6 +666,22 @@ const ListingForm = ({
             required
             placeholder={formConfig.descriptionPlaceholder}
           ></textarea>
+        </div>
+        <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
+          <label
+            htmlFor="listing-location"
+            className="text-base w-full font-light tracking-tight text-[#737373] md:w-[30%] md:text-lg"
+          >
+            Location*
+          </label>
+          <input
+            className="w-full rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
+            id="listing-location"
+            ref={locationRef}
+            required
+            type="text"
+            placeholder="e.g. 123 Main St, City, State"
+          />
         </div>
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
           <label
