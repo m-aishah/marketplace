@@ -5,6 +5,7 @@ import Image from "next/image";
 import ContactModal from "./ContactModal";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
+import ContactProfileButton from "./ContactProfileButtons";
 
 const ApartmentListingPage = ({ apartment }) => {
   const [currentImage, setCurrentImage] = useState(0);
@@ -103,12 +104,7 @@ const ApartmentListingPage = ({ apartment }) => {
           <QuickView quickViewData={apartment} />
         </div>
         <div className="mt-6">
-          <button
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 focus:outline-none"
-            onClick={() => setIsContactModalOpen(true)}
-          >
-            Contact Advertiser
-          </button>
+          <ContactProfileButton listing={apartment} setIsContactModalOpen={setIsContactModalOpen}/>
         </div>
       </div>
       <ContactModal

@@ -7,7 +7,7 @@ import  {getListingFromFirestore } from '../../../utils/firestoreUtils'
 // TODO: Do we want the lisitng page to only be accessible to logged in user? or it is if user tries add to cart or whatever that the user should be promptd to login?
 const ListingPage = ({ params }) => {
   const { id } = params;
-
+  console.log("INside goods", params);
   const [listing, setListing] = useState(null);
 
   useEffect(() => {
@@ -25,9 +25,9 @@ const ListingPage = ({ params }) => {
   }, [id])
   return (
     // TODO: Pass the listing to the component and display it there
-    <ProtectedRoute>
+  
       <GoodsListingPage listing={listing}/>
-    </ProtectedRoute>
+
   );
 };
 

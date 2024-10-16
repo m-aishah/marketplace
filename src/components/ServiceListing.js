@@ -6,7 +6,7 @@ import Image from "next/image";
 import ContactModal from "./ContactModal";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
-
+import ContactProfileButton from "./ContactProfileButtons";
 const FreelancerServicePage = ({ skill }) => {
   const [contacts, setContacts] = useState([]);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -96,16 +96,7 @@ const FreelancerServicePage = ({ skill }) => {
       )}
 
       <div className="mt-6">
-        <h2 className="text-xl font-semibold mb-3 text-gray-800">
-          Contact Me:
-        </h2>
-        <button
-          onClick={() => setIsContactModalOpen(true)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center shadow-lg transition-all duration-300"
-        >
-          <FaUserAlt className="mr-2" />
-          Contact Advertiser
-        </button>
+      <ContactProfileButton listing={skill} setIsContactModalOpen={setIsContactModalOpen}/>
       </div>
 
       <ContactModal

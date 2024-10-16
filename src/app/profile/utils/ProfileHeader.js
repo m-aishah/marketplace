@@ -9,7 +9,7 @@ import {
 } from "firebase/storage";
 import { db, storage } from "@/firebase";
 
-export default function ProfileHeader({ user, onUpdate }) {
+export default function ProfileHeader({ user, onUpdate, isOwnProfile }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [username, setUsername] = useState(user.username);
@@ -27,6 +27,7 @@ export default function ProfileHeader({ user, onUpdate }) {
   };
 
   const handleSave = async () => {
+    if (!isOwnProfile) return;
     setIsSaving(true);
     const userRef = doc(db, "users", user.id);
     let updateData = { username, bio };
@@ -54,6 +55,7 @@ export default function ProfileHeader({ user, onUpdate }) {
   };
 
   const handleDeleteProfilePic = async () => {
+    if (!isOwnProfile) return;
     if (user.profilePicUrl) {
       const profilePicRef = ref(storage, `${user.id}/profile_pic`);
       await deleteObject(profilePicRef);
@@ -74,7 +76,7 @@ export default function ProfileHeader({ user, onUpdate }) {
             alt="Profile"
             className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
           />
-          {isEditing && (
+          {isOwnProfile && isEditing && (
             <div className="absolute -bottom-2 -right-2 flex space-x-1">
               <button
                 onClick={() => fileInputRef.current.click()}
@@ -92,16 +94,18 @@ export default function ProfileHeader({ user, onUpdate }) {
               )}
             </div>
           )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            onChange={handleFileChange}
-            accept="image/*"
-          />
+          {isOwnProfile && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleFileChange}
+              accept="image/*"
+            />
+          )}
         </div>
         <div className="flex-1 text-center sm:text-left">
-          {isEditing ? (
+          {isOwnProfile && isEditing ? (
             <input
               type="text"
               value={username}
@@ -112,7 +116,7 @@ export default function ProfileHeader({ user, onUpdate }) {
             <h2 className="text-2xl font-bold mb-2">{user.username}</h2>
           )}
           <p className="text-sm text-gray-500 mb-2">{user.email}</p>
-          {isEditing ? (
+          {isOwnProfile && isEditing ? (
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
@@ -127,39 +131,41 @@ export default function ProfileHeader({ user, onUpdate }) {
           )}
         </div>
       </div>
-      <div className="mt-4 flex justify-end space-x-4">
-        {isEditing ? (
-          <>
+      {isOwnProfile && (
+        <div className="mt-4 flex justify-end space-x-4">
+          {isEditing ? (
+            <>
+              <button
+                onClick={handleCancel}
+                className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 flex items-center"
+              >
+                <FiX className="mr-2" /> Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className={`transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 flex items-center ${
+                  isSaving ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-white rounded-full"></div>
+                ) : (
+                  <FiCheck className="mr-2" />
+                )}
+                {isSaving ? "Saving..." : "Save"}
+              </button>
+            </>
+          ) : (
             <button
-              onClick={handleCancel}
+              onClick={() => setIsEditing(true)}
               className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 flex items-center"
             >
-              <FiX className="mr-2" /> Cancel
+              <FiEdit2 className="mr-2" /> Edit Profile
             </button>
-            <button
-              onClick={handleSave}
-              className={`transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 flex items-center ${
-                isSaving ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-white rounded-full"></div>
-              ) : (
-                <FiCheck className="mr-2" />
-              )}
-              {isSaving ? "Saving..." : "Save"}
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 flex items-center"
-          >
-            <FiEdit2 className="mr-2" /> Edit Profile
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
