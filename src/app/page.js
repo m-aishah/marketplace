@@ -167,7 +167,7 @@ export default function HomePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="w-full pl-12 pr-4 py-2 text-xl"
+                className="w-full pl-12 pr-4 py-2"
               />
             </div>
             <Button

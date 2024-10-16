@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Input } from "@/components/Input";
 import { Card, CardContent } from "@/components/Card";
 import { Button } from "@/components/Button";
-import { FiSearch, FiPlus } from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
 import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import { RiFilter2Fill } from "react-icons/ri";
 import FilterModal from "@/components/FilterModal";
@@ -183,7 +183,7 @@ export default function ListingPage({ listingsArray, category, title }) {
                   placeholder={`     Search for ${category}...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-4 pr-10 py-2 text-xl"
+                  className="w-full pl-4 pr-10 py-2"
                 />
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
               </div>
@@ -192,7 +192,7 @@ export default function ListingPage({ listingsArray, category, title }) {
               onClick={toggleFilterModal}
               className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
             >
-              <RiFilter2Fill className="h-6 w-6 mr-2" />
+              <RiFilter2Fill className="lg:h-6 lg:w-6 mr-2" />
               <span>Filter</span>
             </Button>
           </div>

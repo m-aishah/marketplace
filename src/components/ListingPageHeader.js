@@ -9,7 +9,7 @@ const Header = ({ title, setIsCreateModalOpen }) => {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 407);
+      setIsMobile(window.innerWidth <= 600);
     };
 
     handleResize();
@@ -22,7 +22,7 @@ const Header = ({ title, setIsCreateModalOpen }) => {
 
   return (
     <>
-      {isMobile && <BackButton isMobile />}
+      {isMobile && <BackButton />}
       <div className="flex items-center justify-between mb-4 space-x-4">
         {!isMobile && <BackButton />}
         <h1
@@ -44,17 +44,15 @@ const Header = ({ title, setIsCreateModalOpen }) => {
   );
 };
 
-const BackButton = ({ isMobile }) => {
+const BackButton = () => {
   return (
-    <div className={isMobile ? "flex justify-center w-full mb-4" : ""}>
-      <Link
-        href="/"
-        className="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        <span className="text-sm font-medium">Back to Home</span>
-      </Link>
-    </div>
+    <Link
+      href="/"
+      className="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
+    >
+      <ArrowLeft className="mr-2 h-4 w-4" />
+      <span className="text-sm font-medium">Back to Home</span>
+    </Link>
   );
 };
 
