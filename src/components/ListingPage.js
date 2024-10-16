@@ -13,6 +13,7 @@ import FilterModal from "@/components/FilterModal";
 import CreateListingModal from "../app/profile/utils/CreateListingModal";
 import { fetchPaginatedListingsByListingType } from "@/utils/firestoreUtils";
 import LoadingSpinner from "./LoadingSpinner";
+import ListingPageHeader from "./ListingPageHeader";
 
 const isPriceInRange = (price, minPrice, maxPrice) => {
   if (minPrice === "" && maxPrice === "") return true;
@@ -147,7 +148,7 @@ export default function ListingPage({ listingsArray, category, title }) {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [currentPage]);
+  }, [currentPage, filteredListings]);
 
   useEffect(() => {
     setCurrentPage(0);
@@ -168,41 +169,35 @@ export default function ListingPage({ listingsArray, category, title }) {
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto space-y-8">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-semibold">{title}</h1>
-            <Button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white"
-            >
-              <FiPlus className="mr-2" />
-              <span>New Listing</span>
-            </Button>
-          </div>
+        <div className="max-w-4xl mx-auto space-y-8">
+          <ListingPageHeader
+            title={title}
+            setIsCreateModalOpen={setIsCreateModalOpen}
+          />
 
           <div className="flex items-center justify-between mb-4 space-x-2">
             {category !== "search-results" && (
               <div className="relative flex-grow">
                 <Input
                   type="text"
-                  placeholder={`Search for ${category}...`}
+                  placeholder={`     Search for ${category}...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-4 pr-10 py-2 text-xl"
                 />
-                <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
+                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
               </div>
             )}
             <Button
               onClick={toggleFilterModal}
-              className="flex items-center justify-center whitespace-nowrap"
+              className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
             >
               <RiFilter2Fill className="h-6 w-6 mr-2" />
               <span>Filter</span>
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
               <LoadingSpinner />
             ) : (
@@ -210,30 +205,42 @@ export default function ListingPage({ listingsArray, category, title }) {
                 <Link
                   href={`/${category.toLowerCase()}/${listing.id}`}
                   key={listing.id}
+                  className="group"
                 >
-                  <Card className="h-full">
-                    <CardContent className="p-4 flex flex-col h-full">
-                      {listing.imageUrls && listing.imageUrls.length > 0 ? (
-                        <Image
-                          src={listing.imageUrls[0]}
-                          alt={listing.name}
-                          width={400}
-                          height={300}
-                          className="w-full h-40 object-cover mb-2"
-                        />
-                      ) : (
-                        <div className="w-full h-40 bg-gray-200 flex items-center justify-center mb-2">
-                          <span>No Image Available</span>
-                        </div>
-                      )}
-                      <h3 className="font-semibold">{listing.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {listing.category}
-                      </p>
-                      <p className="font-medium mt-2">${listing.price}</p>
-                      <p className="text-sm mt-2 line-clamp-3">
-                        {listing.description}
-                      </p>
+                  <Card className="overflow-hidden transition-shadow hover:shadow-lg">
+                    <CardContent className="p-0">
+                      <div className="p-4">
+                        {listing.imageUrls && listing.imageUrls.length > 0 ? (
+                          <div className="relative h-48 w-full">
+                            <Image
+                              src={listing.imageUrls[0]}
+                              alt={listing.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-48 bg-muted bg-gray-200 flex items-center justify-center">
+                            <span className="text-muted-foreground">
+                              No Image
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                          {listing.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {listing.category}
+                        </p>
+                        <p className="font-bold text-lg mb-2">
+                          ${listing.price}
+                        </p>
+                        <p className="text-sm line-clamp-2 h-10 text-muted-foreground">
+                          {listing.description}
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 </Link>
@@ -246,7 +253,7 @@ export default function ListingPage({ listingsArray, category, title }) {
               <Button
                 onClick={handlePrev}
                 disabled={currentPage === 0}
-                className={`flex items-center space-x-1 ${
+                className={`transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center ${
                   currentPage === 0 ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
@@ -261,7 +268,7 @@ export default function ListingPage({ listingsArray, category, title }) {
               <Button
                 onClick={handleNext}
                 disabled={currentPage >= totalPages - 1}
-                className={`flex items-center space-x-1 ${
+                className={`transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center ${
                   currentPage >= totalPages - 1
                     ? "opacity-50 cursor-not-allowed"
                     : ""
@@ -293,9 +300,10 @@ export default function ListingPage({ listingsArray, category, title }) {
         <FilterModal
           isOpen={isFilterModalOpen}
           onClose={toggleFilterModal}
-          filters={tempFilters}
-          onApply={handleApplyFilters}
-          onReset={handleResetFilters}
+          filters={filters}
+          tempFilters={tempFilters}
+          handleApplyFilters={handleApplyFilters}
+          handleResetFilters={handleResetFilters}
           dynamicFilters={dynamicFilters}
           setTempFilters={setTempFilters}
         />
