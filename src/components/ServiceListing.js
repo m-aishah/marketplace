@@ -6,7 +6,7 @@ import Image from "next/image";
 import ContactModal from "./ContactModal";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
-import ContactProfileButton from "./ContactProfileButtons";
+import ContactProfileButtons from "./ContactProfileButtons";
 import LoadingSpinner from "./LoadingSpinner";
 
 const FreelancerServicePage = ({ skill }) => {
@@ -111,7 +111,7 @@ const FreelancerServicePage = ({ skill }) => {
       )}
 
       <div className="mt-6">
-        <ContactProfileButton
+        <ContactProfileButtons
           listing={skill}
           setIsContactModalOpen={setIsContactModalOpen}
         />

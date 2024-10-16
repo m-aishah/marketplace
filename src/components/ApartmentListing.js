@@ -5,7 +5,7 @@ import Image from "next/image";
 import ContactModal from "./ContactModal";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
-import ContactProfileButton from "./ContactProfileButtons";
+import ContactProfileButtons from "./ContactProfileButtons";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const ApartmentListingPage = ({ apartment }) => {
@@ -124,7 +124,7 @@ const ApartmentListingPage = ({ apartment }) => {
           <QuickView quickViewData={apartment} />
         </div>
         <div className="mt-6">
-          <ContactProfileButton
+          <ContactProfileButtons
             listing={apartment}
             setIsContactModalOpen={setIsContactModalOpen}
           />
