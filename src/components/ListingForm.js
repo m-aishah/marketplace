@@ -58,6 +58,7 @@ const ListingForm = ({
   const serviceTitleRef = useRef(null);
   const serviceDetailsRef = useRef(null);
   const fileInputRef = useRef(null);
+  const requestTypeRef = useRef(null);
 
   const getFormConfig = () => {
     switch (listingType) {
@@ -108,7 +109,6 @@ const ListingForm = ({
           ],
         };
       case "services":
-      default:
         return {
           title: "Service",
           namePlaceholder: "e.g. Aishah",
@@ -136,6 +136,16 @@ const ListingForm = ({
               placeholder: "What does your service include?",
             },
           ],
+        };
+      case "requests":
+      default:
+        return {
+          title: "Request",
+          namePlaceholder: "e.g. Laptop, Tutor",
+          descriptionPlaceholder: "Describe what you're looking for in detail",
+          pricePlaceholder: "Your budget (optional)",
+          priceLabel: "Budget (optional)",
+          additionalFields: [],
         };
     }
   };
@@ -707,7 +717,7 @@ const ListingForm = ({
             className="w-full rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
             id="listing-price"
             ref={priceRef}
-            required
+            required={listingType !== "requests"}
             type="number"
             step="0.01"
             min="0"
