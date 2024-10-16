@@ -8,7 +8,6 @@ import { Input } from "@/components/Input";
 import { Card, CardContent } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { FiSearch, FiPlus } from "react-icons/fi";
-import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import {
   collection,
   query,
@@ -19,15 +18,10 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import CreateListingModal from "../app/profile/utils/CreateListingModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState({
-    apartments: 0,
-    goods: 0,
-    services: 0,
-    requests: 0,
-  });
   const [listings, setListings] = useState({
     apartments: [],
     goods: [],
@@ -35,16 +29,18 @@ export default function HomePage() {
     requests: [],
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 3;
   const router = useRouter();
 
   useEffect(() => {
+    setLoading(true);
     const fetchUserListings = async (listingType) => {
       const listingsQuery = query(
         collection(db, "listings"),
         where("listingType", "==", listingType),
         orderBy("createdAt", "desc"),
-        limit(9)
+        limit(itemsPerPage)
       );
       const listingsSnapshot = await getDocs(listingsQuery);
       const fetchedListings = listingsSnapshot.docs.map((doc) => ({
@@ -57,105 +53,79 @@ export default function HomePage() {
       }));
     };
 
-    fetchUserListings("apartments");
-    fetchUserListings("goods");
-    fetchUserListings("services");
-    fetchUserListings("requests");
+    Promise.all([
+      fetchUserListings("apartments"),
+      fetchUserListings("goods"),
+      fetchUserListings("services"),
+      fetchUserListings("requests"),
+    ]).then(() => setLoading(false));
   }, []);
 
-  const handleNext = (category) => {
-    setCurrentPage((prev) => ({
-      ...prev,
-      [category]:
-        (prev[category] + 1) %
-        Math.ceil(listings[category].length / itemsPerPage),
-    }));
-  };
-
-  const handlePrev = (category) => {
-    setCurrentPage((prev) => ({
-      ...prev,
-      [category]:
-        (prev[category] -
-          1 +
-          Math.ceil(listings[category].length / itemsPerPage)) %
-        Math.ceil(listings[category].length / itemsPerPage),
-    }));
-  };
-
-  const paginatedListings = (category) => {
-    const start = currentPage[category] * itemsPerPage;
-    const end = start + itemsPerPage;
-    return listings[category].slice(start, end);
+  const getListings = (category) => {
+    return listings[category].slice(0, itemsPerPage);
   };
 
   const renderSection = (category, title) => {
-    const paginated = paginatedListings(category);
+    const categoryListings = getListings(category);
 
-    if (paginated.length === 0) return null;
+    if (categoryListings.length === 0) return null;
 
     return (
-      <section className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <Link href={`/${category.toLowerCase()}`}>
-            <h2 className="text-2xl font-semibold">{title}</h2>
+      <section className="mb-12">
+        <div className="flex items-center justify-between mb-6">
+          <Link href={`/${category.toLowerCase()}`} className="group">
+            <h2 className="text-2xl font-bold group-hover:text-primary transition-colors">
+              {title}
+            </h2>
           </Link>
           <Link href={`/${category.toLowerCase()}`}>
-            <Button className="bg-blue-400 hover:bg-blue-600 text-white p-2 rounded-full">
+            <Button className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center">
               View More
             </Button>
           </Link>
         </div>
 
-        <div className="relative flex items-center justify-center">
-          <Button
-            onClick={() => handlePrev(category)}
-            className="absolute left-0 bg-blue-400 hover:bg-blue-600 text-white p-2 rounded-full opacity-75 w-6"
-          >
-            <MdArrowBackIos className="h-6 w-6 transform -translate-x-1.5" />
-          </Button>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mx-auto justify-center">
-            {paginated.map((listing) => (
-              <Link
-                href={`/${category.toLowerCase()}/${listing.id}`}
-                key={listing.id}
-              >
-                <Card className="w-full sm:w-full md:w-full">
-                  <CardContent className="p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {categoryListings.map((listing) => (
+            <Link
+              href={`/${category.toLowerCase()}/${listing.id}`}
+              key={listing.id}
+              className="group"
+            >
+              <Card className="overflow-hidden transition-shadow hover:shadow-lg">
+                <CardContent className="p-0">
+                  <div className="p-4">
                     {listing.imageUrls && listing.imageUrls.length > 0 ? (
-                      <Image
-                        src={listing.imageUrls[0]}
-                        alt={listing.name}
-                        width={400}
-                        height={300}
-                        className="w-full h-40 object-cover mb-2"
-                      />
+                      <div className="relative h-48 w-full">
+                        <Image
+                          src={listing.imageUrls[0]}
+                          alt={listing.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                     ) : (
-                      <div className="w-full h-40 bg-gray-200 flex items-center justify-center mb-2">
-                        <span>No Image Available</span>
+                      <div className="h-48 bg-muted bg-gray-200 flex items-center justify-center">
+                        <span className="text-muted-foreground">No Image</span>
                       </div>
                     )}
-                    <h3 className="font-semibold">{listing.name}</h3>
-                    <p className="text-sm text-muted-foreground">
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                      {listing.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-2">
                       {listing.category}
                     </p>
-                    <p className="font-medium mt-2">${listing.price}</p>
-                    <p className="text-sm mt-2 line-clamp-2">
+                    <p className="font-bold text-lg mb-2">${listing.price}</p>
+                    <p className="text-sm line-clamp-2 h-10 text-muted-foreground">
                       {listing.description}
                     </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-
-          <Button
-            onClick={() => handleNext(category)}
-            className="absolute right-0 bg-blue-400 hover:bg-blue-600 text-white p-2 rounded-full opacity-75 w-6"
-          >
-            <MdArrowForwardIos className="h-6 w-6 transform -translate-x-2.5" />
-          </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
       </section>
     );
@@ -174,46 +144,66 @@ export default function HomePage() {
     }
   };
 
-  const handleCreateListing = () => {
-    router.push("/create-listing");
-  };
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto space-y-8">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-semibold">Featured Products</h1>
+    <div className="min-h-screen bg-background">
+      <main className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto space-y-12">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-4">Find What You Need</h1>
+            <p className="text-xl text-muted-foreground mb-8">
+              Discover apartments, goods, services, and more in your community
+            </p>
+          </div>
+
+          <div className="relative flex items-center w-full space-x-3">
+            <div className="relative w-full">
+              <FiSearch
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6 cursor-pointer"
+                onClick={handleSearch}
+              />
+              <Input
+                type="text"
+                placeholder="Search for apartments, goods, services, or requests..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="w-full pl-12 pr-4 py-2"
+              />
+            </div>
             <Button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-full flex items-center"
+              onClick={handleSearch}
+              className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
             >
-              <FiPlus className="mr-2" /> Create Listing
+              Search
             </Button>
           </div>
-          <div className="relative">
-            <div onClick={handleSearch}>
-              <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6 cursor-pointer" />
-            </div>
-            <Input
-              type="text"
-              placeholder="Search for apartments, goods, services, or requests..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="w-full pl-4 pr-4 py-2 text-xl"
-            />
+
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-bold">Featured Listings</h2>
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="transition font-medium text-sm rounded-full text-center bg-transparent text-black ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
+            >
+              <FiPlus className="mr-2 lg:h-5 lg:w-5 text-black" />
+              <span className="text-black">New Listing</span>
+            </Button>
           </div>
-          {renderSection("apartments", "Apartments")}
-          {renderSection("goods", "Goods")}
-          {renderSection("services", "Services")}
-          {renderSection("requests", "Requests")}
+
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            <>
+              {renderSection("apartments", "Apartments")}
+              {renderSection("goods", "Goods")}
+              {renderSection("services", "Services")}
+              {renderSection("requests", "Requests")}
+            </>
+          )}
         </div>
       </main>
       <CreateListingModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onCreateListing={handleCreateListing}
       />
     </div>
   );

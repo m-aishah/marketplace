@@ -6,11 +6,14 @@ import Link from "next/link";
 import { Input } from "@/components/Input";
 import { Card, CardContent } from "@/components/Card";
 import { Button } from "@/components/Button";
-import { FiSearch, FiPlus } from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
 import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import { RiFilter2Fill } from "react-icons/ri";
 import FilterModal from "@/components/FilterModal";
 import CreateListingModal from "../app/profile/utils/CreateListingModal";
+import { fetchPaginatedListingsByListingType } from "@/utils/firestoreUtils";
+import LoadingSpinner from "./LoadingSpinner";
+import ListingPageHeader from "./ListingPageHeader";
 
 const isPriceInRange = (price, minPrice, maxPrice) => {
   if (minPrice === "" && maxPrice === "") return true;
@@ -28,12 +31,33 @@ const excludedFields = [
   "description",
 ];
 
-export default function ListingPage({ listings, category, title }) {
+export default function ListingPage({ listingsArray, category, title }) {
+  const [listings, setListings] = useState(listingsArray || []);
+  const [loading, setLoading] = useState(listingsArray ? false : true);
+  const [lastVisibleListing, setLastVisible] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!listingsArray) {
+      const fetchListings = async () => {
+        setLoading(true);
+        const result = await fetchPaginatedListingsByListingType(
+          category,
+          itemsPerPage,
+          lastVisibleListing
+        );
+        setListings(result.listings);
+        setLastVisible(result.lastVisible);
+        setLoading(false);
+      };
+
+      fetchListings();
+    }
+  }, [category, itemsPerPage]);
 
   const dynamicFilters = useMemo(() => {
     const filterOptions = {};
@@ -91,6 +115,7 @@ export default function ListingPage({ listings, category, title }) {
   const handleNext = () => {
     if (currentPage < totalPages - 1) {
       setCurrentPage((prev) => prev + 1);
+      setLastVisible(listings[currentPage * itemsPerPage + itemsPerPage - 1]);
     }
   };
 
@@ -98,10 +123,6 @@ export default function ListingPage({ listings, category, title }) {
     if (currentPage > 0) {
       setCurrentPage((prev) => prev - 1);
     }
-  };
-
-  const handleCreateListing = () => {
-    router.push("/create-listing");
   };
 
   const paginatedListings = useMemo(() => {
@@ -127,7 +148,7 @@ export default function ListingPage({ listings, category, title }) {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [currentPage]);
+  }, [currentPage, filteredListings]);
 
   useEffect(() => {
     setCurrentPage(0);
@@ -148,73 +169,83 @@ export default function ListingPage({ listings, category, title }) {
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto space-y-8">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-semibold">{title}</h1>
-            <Button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white"
-            >
-              <FiPlus className="mr-2" />
-              <span>Create Listing</span>
-            </Button>
-          </div>
+        <div className="max-w-4xl mx-auto space-y-8">
+          <ListingPageHeader
+            title={title}
+            setIsCreateModalOpen={setIsCreateModalOpen}
+          />
 
           <div className="flex items-center justify-between mb-4 space-x-2">
             {category !== "search-results" && (
               <div className="relative flex-grow">
                 <Input
                   type="text"
-                  placeholder={`Search for ${category}...`}
+                  placeholder={`     Search for ${category}...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-4 pr-10 py-2 text-xl"
+                  className="w-full pl-4 pr-10 py-2"
                 />
-                <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
+                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
               </div>
             )}
             <Button
               onClick={toggleFilterModal}
-              className="flex items-center justify-center whitespace-nowrap"
+              className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
             >
-              <RiFilter2Fill className="h-6 w-6 mr-2" />
+              <RiFilter2Fill className="lg:h-6 lg:w-6 mr-2" />
               <span>Filter</span>
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {paginatedListings.map((listing) => (
-              <Link
-                href={`/${category.toLowerCase()}/${listing.id}`}
-                key={listing.id}
-              >
-                <Card className="h-full">
-                  <CardContent className="p-4 flex flex-col h-full">
-                    {listing.imageUrls && listing.imageUrls.length > 0 ? (
-                      <Image
-                        src={listing.imageUrls[0]}
-                        alt={listing.name}
-                        width={400}
-                        height={300}
-                        className="w-full h-40 object-cover mb-2"
-                      />
-                    ) : (
-                      <div className="w-full h-40 bg-gray-200 flex items-center justify-center mb-2">
-                        <span>No Image Available</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loading ? (
+              <LoadingSpinner />
+            ) : (
+              paginatedListings.map((listing) => (
+                <Link
+                  href={`/${category.toLowerCase()}/${listing.id}`}
+                  key={listing.id}
+                  className="group"
+                >
+                  <Card className="overflow-hidden transition-shadow hover:shadow-lg">
+                    <CardContent className="p-0">
+                      <div className="p-4">
+                        {listing.imageUrls && listing.imageUrls.length > 0 ? (
+                          <div className="relative h-48 w-full">
+                            <Image
+                              src={listing.imageUrls[0]}
+                              alt={listing.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-48 bg-muted bg-gray-200 flex items-center justify-center">
+                            <span className="text-muted-foreground">
+                              No Image
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    <h3 className="font-semibold">{listing.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {listing.category}
-                    </p>
-                    <p className="font-medium mt-2">${listing.price}</p>
-                    <p className="text-sm mt-2 line-clamp-3">
-                      {listing.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+                      <div className="p-4">
+                        <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                          {listing.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {listing.category}
+                        </p>
+                        <p className="font-bold text-lg mb-2">
+                          ${listing.price}
+                        </p>
+                        <p className="text-sm line-clamp-2 h-10 text-muted-foreground">
+                          {listing.description}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between my-4 space-y-4 sm:space-y-0">
@@ -222,61 +253,68 @@ export default function ListingPage({ listings, category, title }) {
               <Button
                 onClick={handlePrev}
                 disabled={currentPage === 0}
-                className={`flex items-center bg-blue-400 ${
-                  currentPage === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-blue-600"
-                } text-white p-2 rounded-full mr-2`}
+                className={`transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center ${
+                  currentPage === 0 ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                <MdArrowBackIos className="h-6 w-6 mr-1" />
-                <p>Previous</p>
+                <MdArrowBackIos />
+                <span>Previous</span>
               </Button>
+              <span className="mx-4">
+                {totalPages
+                  ? "Page " + (currentPage + 1) + " of " + totalPages
+                  : "Page 0 of 0"}
+              </span>
               <Button
                 onClick={handleNext}
                 disabled={currentPage >= totalPages - 1}
-                className={`flex items-center bg-blue-400 ${
+                className={`transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center ${
                   currentPage >= totalPages - 1
                     ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-blue-600"
-                } text-white p-2 rounded-full ml-2`}
+                    : ""
+                }`}
               >
-                <p>Next</p>
-                <MdArrowForwardIos className="h-6 w-6 ml-1" />
+                <span>Next</span>
+                <MdArrowForwardIos />
               </Button>
             </div>
-
-            <div className="flex items-center w-full sm:w-auto justify-center sm:justify-end">
-              <span className="mr-2 text-black">Items per page:</span>
+            <div className="flex items-center space-x-2">
+              <label htmlFor="itemsPerPage">Items per page:</label>
               <select
+                id="itemsPerPage"
                 value={itemsPerPage}
                 onChange={(e) => {
+                  setLastVisible(null);
                   setItemsPerPage(Number(e.target.value));
-                  setCurrentPage(0);
                 }}
-                className="border border-gray-300 rounded-lg p-2"
+                className="border p-1"
               >
-                {generateOptions(5, 30)}
+                {generateOptions(5, 20)}
               </select>
             </div>
           </div>
-
-          <FilterModal
-            isOpen={isFilterModalOpen}
-            onClose={toggleFilterModal}
-            filters={filters}
-            tempFilters={tempFilters}
-            setTempFilters={setTempFilters}
-            dynamicFilters={dynamicFilters}
-            handleApplyFilters={handleApplyFilters}
-            handleResetFilters={handleResetFilters}
-          />
-          <CreateListingModal
-            isOpen={isCreateModalOpen}
-            onClose={() => setIsCreateModalOpen(false)}
-            onCreateListing={handleCreateListing}
-          />
         </div>
       </main>
+
+      {isFilterModalOpen && (
+        <FilterModal
+          isOpen={isFilterModalOpen}
+          onClose={toggleFilterModal}
+          filters={filters}
+          tempFilters={tempFilters}
+          handleApplyFilters={handleApplyFilters}
+          handleResetFilters={handleResetFilters}
+          dynamicFilters={dynamicFilters}
+          setTempFilters={setTempFilters}
+        />
+      )}
+
+      {isCreateModalOpen && (
+        <CreateListingModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
