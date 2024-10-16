@@ -65,6 +65,19 @@ export default function HomePage() {
     return listings[category].slice(0, itemsPerPage);
   };
 
+  const getCurrency = (cuurency) => {
+    switch (cuurency) {
+      case "TL":
+        return "₺";
+      case "USD":
+        return "$";
+      case "EUR":
+        return "€";
+      default:
+        return "";
+    }
+  };
+
   const renderSection = (category, title) => {
     const categoryListings = getListings(category);
 
@@ -117,7 +130,10 @@ export default function HomePage() {
                     <p className="text-sm text-muted-foreground mb-2">
                       {listing.category}
                     </p>
-                    <p className="font-bold text-lg mb-2">${listing.price}</p>
+                    <p className="font-bold text-lg mb-2">
+                      {listing?.price || "N/A"}
+                      {" " + getCurrency(listing.currency)}
+                    </p>
                     <p className="text-sm line-clamp-2 h-10 text-muted-foreground">
                       {listing.description}
                     </p>
