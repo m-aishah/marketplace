@@ -6,6 +6,7 @@ import {
   FaPhone,
   FaEnvelope,
   FaInstagram,
+  FaExternalLinkAlt,
 } from "react-icons/fa";
 
 const contactIcons = {
@@ -13,6 +14,13 @@ const contactIcons = {
   call: FaPhone,
   email: FaEnvelope,
   instagram: FaInstagram,
+};
+
+const contactLabels = {
+  whatsapp: "Chat on WhatsApp",
+  call: "Make a call",
+  email: "Send an email",
+  instagram: "Visit Instagram profile",
 };
 
 const ContactModal = ({ isOpen, onClose, contacts }) => {
@@ -30,7 +38,6 @@ const ContactModal = ({ isOpen, onClose, contacts }) => {
         >
           <div className="fixed inset-0 bg-black bg-opacity-25" />
         </Transition.Child>
-
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
             <Transition.Child
@@ -45,7 +52,7 @@ const ContactModal = ({ isOpen, onClose, contacts }) => {
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                 <Dialog.Title
                   as="h3"
-                  className="text-lg font-medium leading-6 text-gray-900 flex justify-between items-center"
+                  className="text-xl font-semibold leading-6 text-gray-900 flex justify-between items-center mb-4"
                 >
                   Contact Options
                   <button
@@ -64,14 +71,28 @@ const ContactModal = ({ isOpen, onClose, contacts }) => {
                         href={getContactLink(contact)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                        className="flex items-center justify-between p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors group"
                       >
-                        <Icon className="mr-3 text-blue-600" />
-                        <span className="text-gray-800">{contact.value}</span>
+                        <div className="flex items-center">
+                          <Icon className="mr-3 text-blue-600 text-xl" />
+                          <div className="flex flex-col">
+                            <span className="text-blue-700 font-medium">
+                              {contactLabels[contact.type]}
+                            </span>
+                            <span className="text-gray-600 text-sm">
+                              {contact.value}
+                            </span>
+                          </div>
+                        </div>
+                        <FaExternalLinkAlt className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </a>
                     );
                   })}
-                  {!Object.keys(contacts).length && <div className="text-center text-gray-800">User Has No Contact Info</div>}
+                  {!contacts.length && (
+                    <div className="text-center text-gray-800 py-4">
+                      User Has No Contact Info
+                    </div>
+                  )}
                 </div>
               </Dialog.Panel>
             </Transition.Child>
