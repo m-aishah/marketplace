@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Modal } from "@/components/Modal";
 import {
   FaChevronUp,
   FaChevronDown,
@@ -17,17 +16,31 @@ import { toast } from "react-toastify";
 import { ref, deleteObject } from "firebase/storage";
 import { storage } from "@/firebase";
 
-const ListingForm = ({ user, categories, listingType, listingData }) => {
+const ListingForm = ({
+  user,
+  categories,
+  currencies,
+  listingType,
+  listingData,
+}) => {
   const router = useRouter();
   const [formMode, setFormMode] = useState(listingData ? "edit" : "create");
   const [images, setImages] = useState(listingData?.imageUrls || []);
+  const [videos, setVideos] = useState(listingData?.videoUrls || []); //confirm this code
+  const [deletedVideos, setDeletedVideos] = useState([]);
   const [deletedImages, setDeletedImages] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMedia, setModalMedia] = useState(null);
+  const [modalMediaType, setModalMediaType] = useState(null);
   const [modalImage, setModalImage] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCurrencyMenuOpen, setIsCurrencyMenuOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(
     listingData?.category || "Category"
   );
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    listingData?.currency || "Currency"
+  ); //confirm this code
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const menuRef = useRef(null);
@@ -129,7 +142,59 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
     fileInputRef.current.click();
   };
 
+  const handleVideoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const validFiles = [];
+    let errorMessages = "";
+
+    files.forEach((file) => {
+      const isValidSize = file.size <= 50 * 1024 * 1024;
+      const isValidType =
+        file.type === "video/mp4" || file.type === "video/avi";
+
+      if (!isValidSize) {
+        errorMessages += "Video must be less than 50MB.\n";
+      }
+      if (!isValidType) {
+        errorMessages += "Only MP4 and AVI formats are allowed.\n";
+      }
+
+      if (isValidSize && isValidType) {
+        validFiles.push(file);
+      }
+    });
+
+    if (errorMessages) {
+      toast.error(errorMessages);
+    } else {
+      const newVideos = validFiles.map((file) => ({
+        url: URL.createObjectURL(file),
+        file,
+      }));
+      setVideos((prevImages) => [...prevImages, ...newVideos]);
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    const imageFiles = selectedFiles.filter((file) =>
+      file.type.startsWith("image/")
+    );
+    const videoFiles = selectedFiles.filter((file) =>
+      file.type.startsWith("video/")
+    );
+
+    if (imageFiles.length > 0) {
+      handleImageUpload(e);
+    }
+
+    if (videoFiles.length > 0) {
+      handleVideoUpload(e);
+    }
+  };
+
   const handleImageUpload = (e) => {
+    // console.log(images);
     const files = Array.from(e.target.files);
     const validFiles = [];
     let errorMessages = "";
@@ -182,6 +247,26 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
     }
   };
 
+  const handleVideoChange = (e, index) => {
+    const file = e.target.files[0];
+    const isValidSize = file.size <= 50 * 1024 * 1024;
+    const isValidType = file.type === "video/mp4" || file.type === "video/avi";
+
+    if (!isValidSize || !isValidType) {
+      const errorMessages = `${
+        !isValidSize ? "Video must be less than 50MB.\n" : ""
+      }${!isValidType ? "Only MP4 and AVI formats are allowed.\n" : ""}`;
+      toast.error(errorMessages);
+    } else {
+      const updatedVideos = [...videos];
+      updatedVideos[index] = {
+        url: URL.createObjectURL(file),
+        file,
+      };
+      setVideos(updatedVideos);
+    }
+  };
+
   const handleDeleteImage = (index) => {
     const imageToDelete = images[index];
 
@@ -196,13 +281,30 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
     }
   };
 
-  const openModal = (image) => {
-    setModalImage(image);
+  const handleDeleteVideo = (index) => {
+    const videoToDelete = videos[index];
+
+    if (videoToDelete.file) {
+      // Remove newly uploaded video from state
+      setVideos((prevImages) => prevImages.filter((_, i) => i !== index));
+    } else {
+      // Track the URL to be deleted from Firestore Storage
+      const videoToDeleteUrl = listingData.videoUrls[index]; //confirm this code
+      setDeletedVideos((prevDeleted) => [...prevDeleted, videoToDeleteUrl]);
+      setVideos((prevImages) => prevImages.filter((_, i) => i !== index));
+    }
+  };
+
+  const openModal = (media, type) => {
+    setModalMedia(media);
+    setModalMediaType(type);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
-    setModalImage(null);
+    // setModalImage(null);
+    setModalMedia(null);
+    setModalMediaType(null);
     setIsModalOpen(false);
   };
 
@@ -210,9 +312,18 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
     setIsMenuOpen(false);
   };
 
+  const closeMenuCurrency = () => {
+    setIsCurrencyMenuOpen(false);
+  };
+
   const handleClickCategories = (category) => {
     closeMenu();
     setSelectedOption(category);
+  };
+
+  const handleClickCurrencies = (currency) => {
+    closeMenuCurrency();
+    setSelectedCurrency(currency);
   };
 
   useEffect(() => {
@@ -289,6 +400,7 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
       }
 
       let imageUrls = [...(listingData?.imageUrls || [])];
+      let videoUrls = [...(listingData?.videoUrls || [])]; //confirm this code
 
       // Upload new images
       for (let index = 0; index < images.length; index++) {
@@ -314,6 +426,17 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
         // Wait for all deletion promises to complete
         await Promise.all(promises);
         imageUrls = imageUrls.filter((url) => !deletedImages.includes(url));
+      }
+
+      if (deletedVideos.length > 0) {
+        const promises = deletedVideos.map(async (videoUrl) => {
+          const videoRef = ref(storage, videoUrl);
+          await deleteObject(videoRef);
+        });
+
+        // Wait for all deletion promises to complete
+        await Promise.all(promises);
+        videoUrls = videoUrls.filter((url) => !deletedVideos.includes(url));
       }
 
       // Update Firestore with the new imageUrls
@@ -342,61 +465,104 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
   return (
     <form className="w-full" onSubmit={handleSubmit}>
       <div className="w-full gap-2 flex flex-col p-5 bg-[#FAFAFA] rounded-t-lg md:flex-row md:gap-0">
-        <div className="w-full md:w-[30%]">
+        <div className="w-full">
           <p className="text-[#737373] text-base font-light md:text-lg">
-            {formConfig.title} Picture
+            {formConfig.title} Picture and (or) Video
           </p>
         </div>
       </div>
 
       <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
-        <div
-          className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors"
-          onClick={triggerFileInput}
-        >
+        <div className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors">
           <div className="flex gap-4 flex-wrap items-center justify-center">
-            {images.length === 0 ? (
+            {images.length === 0 && videos.length === 0 ? (
               <div className="text-center">
                 <p className="text-gray-500 text-sm">
-                  Click or drag images here
+                  Click the icon to upload images and videos here.
                 </p>
                 <p className="text-xs text-gray-400">
-                  JPEG or PNG only (Max: 10MB)
+                  JPEG or PNG only (Max: 10MB) MP4 or AVI only (Max: 50MB)
                 </p>
               </div>
             ) : (
-              images.map((image, index) => (
-                <div key={index} className="relative group w-[150px] h-[150px]">
-                  <Image
-                    src={image.file ? image.url : image}
-                    alt={`Upload ${index}`}
-                    width={150}
-                    height={150}
-                    className="rounded-lg w-full h-full object-cover"
-                  />
-                  <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-white text-sm">Change Image</p>
+              <>
+                {images.map((image, index) => (
+                  <div
+                    key={index}
+                    className="relative group w-[150px] h-[150px]"
+                  >
+                    <Image
+                      src={image.file ? image.url : image}
+                      alt={`Upload ${index}`}
+                      width={150}
+                      height={150}
+                      className="rounded-lg w-full h-full object-cover"
+                      onClick={triggerFileInput}
+                    />
+                    <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white text-sm">Change Image</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => handleImageChange(e, index)}
+                    />
+                    <button
+                      className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
+                      onClick={() => handleDeleteImage(index)}
+                    >
+                      <FaTrash className="text-white" />
+                    </button>
+                    <button
+                      className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
+                      onClick={() => openModal(image.url, "image")}
+                    >
+                      <FaExpand className="text-white" />
+                    </button>
                   </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-                    onChange={(e) => handleImageChange(e, index)}
-                  />
-                  <button
-                    className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
-                    onClick={() => handleDeleteImage(index)}
+                ))}
+
+                {videos.map((video, index) => (
+                  <div
+                    key={index}
+                    className="relative group w-[150px] h-[150px]"
                   >
-                    <FaTrash className="text-white" />
-                  </button>
-                  <button
-                    className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
-                    onClick={() => openModal(image.url)}
-                  >
-                    <FaExpand className="text-white" />
-                  </button>
-                </div>
-              ))
+                    <video
+                      autoPlay
+                      muted
+                      loop
+                      src={video.file ? video.url : video}
+                      alt={`Upload ${index}`}
+                      width={150}
+                      height={150}
+                      className="rounded-lg w-full h-full object-cover"
+                      onClick={triggerFileInput}
+                    />
+                    <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white text-sm">Change Video</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => handleVideoChange(e, index)}
+                    />
+                    <button
+                      className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
+                      onClick={() => handleDeleteVideo(index)}
+                    >
+                      <FaTrash className="text-white" />
+                    </button>
+                    <button
+                      className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
+                      onClick={() => openModal(video.url, "video")}
+                    >
+                      <FaExpand className="text-white" />
+                    </button>
+                  </div>
+                ))}
+              </>
             )}
           </div>
         </div>
@@ -406,8 +572,8 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
           ref={fileInputRef}
           className="hidden"
           multiple
-          accept="image/*"
-          onChange={handleImageUpload}
+          accept="image/*, video/*"
+          onChange={handleFileUpload}
         />
 
         <div className="mt-5 self-end">
@@ -421,22 +587,34 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
       <div className="w-full bg-[#FAFAFA] flex flex-col items-center gap-4 mb-4 p-5 rounded-lg">
         {/* Modal to show full images */}
         {isModalOpen && (
-          <Modal onClose={closeModal}>
-            {modalImage && (
-              <div className="flex flex-col p-2 gap-5 md:p-6">
+          <div className="fixed w-full top-0 left-0 min-h-screen bg-black/95 z-50 flex flex-col justify-center items-center">
+            {modalMedia && (
+              <div className="flex flex-col gap-2 max-w-[1000px] w-full p-4">
                 <div onClick={closeModal} className="flex justify-end">
-                  <FaTimes className="text-lg" />
+                  <FaTimes className="text-lg cursor-pointer text-white" />
                 </div>
-                <Image
-                  src={modalImage}
-                  alt="Full image"
-                  width={0}
-                  height={0}
-                  className="w-full h-auto object-contain"
-                />
+                {modalMediaType === "image" ? (
+                  <Image
+                    src={modalMedia}
+                    alt="Full image"
+                    width={0}
+                    height={0}
+                    className="w-full h-auto object-cover rounded-lg shadow-lg shadow-white/10"
+                  />
+                ) : (
+                  <video
+                    controls
+                    autoPlay
+                    muted
+                    loop
+                    src={modalMedia}
+                    alt="Full videos"
+                    className="w-full h-auto object-cover rounded-lg shadow-white/10"
+                  />
+                )}
               </div>
             )}
-          </Modal>
+          </div>
         )}
 
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
@@ -469,6 +647,41 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
             required
             placeholder={formConfig.descriptionPlaceholder}
           ></textarea>
+        </div>
+        <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
+          <label
+            htmlFor="listing-category"
+            className="text-base font-light tracking-tight text-[#737373] w-[30%] md:text-lg"
+          >
+            Currency*
+          </label>
+          <div className="relative w-full md:flex-1">
+            <button
+              id="listing-category"
+              type="button"
+              className="w-full flex justify-between items-center ring-2 ring-gray-300 rounded-md bg-white text-left p-2 shadow text-base active:ring-brand active:ring-opacity-60 active:shadow-lg active:shadow-brand/10"
+              onClick={() => setIsCurrencyMenuOpen((prev) => !prev)}
+            >
+              {selectedCurrency}
+              {isCurrencyMenuOpen ? <FaChevronUp /> : <FaChevronDown />}
+            </button>
+            {isCurrencyMenuOpen && (
+              <div
+                ref={menuRef}
+                className="absolute w-full rounded shadow-lg top-10 text-base bg-white mt-3 z-10"
+              >
+                {currencies.map((currency) => (
+                  <div
+                    key={currency.id}
+                    className="cursor-pointer hover:bg-gray-100 p-2 active:bg-brand active:text-white"
+                    onClick={() => handleClickCurrencies(currency.name)}
+                  >
+                    <p>{currency.name}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
           <label
