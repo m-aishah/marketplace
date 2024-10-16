@@ -11,6 +11,7 @@ import { db, storage } from "@/firebase";
 
 export default function ProfileHeader({ user, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [username, setUsername] = useState(user.username);
   const [bio, setBio] = useState(user.bio || "");
   const [profilePic, setProfilePic] = useState(null);
@@ -26,6 +27,7 @@ export default function ProfileHeader({ user, onUpdate }) {
   };
 
   const handleSave = async () => {
+    setIsSaving(true);
     const userRef = doc(db, "users", user.id);
     let updateData = { username, bio };
 
@@ -40,6 +42,7 @@ export default function ProfileHeader({ user, onUpdate }) {
     onUpdate(updateData);
     setIsEditing(false);
     setPreviewUrl(null);
+    setIsSaving(false);
   };
 
   const handleCancel = () => {
@@ -135,9 +138,17 @@ export default function ProfileHeader({ user, onUpdate }) {
             </button>
             <button
               onClick={handleSave}
-              className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 flex items-center"
+              className={`transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 flex items-center ${
+                isSaving ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={isSaving}
             >
-              <FiCheck className="mr-2" /> Save
+              {isSaving ? (
+                <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-white rounded-full"></div>
+              ) : (
+                <FiCheck className="mr-2" />
+              )}
+              {isSaving ? "Saving..." : "Save"}
             </button>
           </>
         ) : (

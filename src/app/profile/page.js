@@ -15,7 +15,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("contact");
+  const [activeTab, setActiveTab] = useState("listings");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -45,82 +45,69 @@ function Profile() {
     return <LoadingSpinner />;
   }
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-          role="alert"
-        >
-          <strong className="font-bold">Error:</strong>
-          <span className="block sm:inline">
-            {" "}
-            Unable to load user data. Please try again.
-          </span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <ProtectedRoute>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <Link
-            href="/"
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            <span className="text-sm font-medium">Back</span>
-          </Link>
-        </div>
-        <ProfileHeader user={user} onUpdate={handleProfileUpdate} />
-
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex">
-              <button
-                className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "lisitngs"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-                onClick={() => setActiveTab("listings")}
-              >
-                Listings
-              </button>
-              <button
-                className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "transactions"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-                onClick={() => setActiveTab("transactions")}
-              >
-                Transactions
-              </button>
-              <button
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "contact"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-                onClick={() => setActiveTab("contact")}
-              >
-                Contact Details
-              </button>
-            </nav>
+      {user ? (
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <Link
+              href="/"
+              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span className="text-sm font-medium">Back</span>
+            </Link>
           </div>
+          <ProfileHeader user={user} onUpdate={handleProfileUpdate} />
+
+          <div className="mb-6">
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex">
+                <button
+                  className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "listings"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                  onClick={() => setActiveTab("listings")}
+                >
+                  Listings
+                </button>
+                <button
+                  className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "transactions"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                  onClick={() => setActiveTab("transactions")}
+                >
+                  Transactions
+                </button>
+                <button
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "contact"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                  onClick={() => setActiveTab("contact")}
+                >
+                  Contact Details
+                </button>
+              </nav>
+            </div>
+          </div>
+
+          {activeTab === "listings" && <UserListings userId={user.id} />}
+
+          {activeTab === "transactions" && (
+            <TransactionHistory userId={user.id} />
+          )}
+
+          {activeTab === "contact" && <ContactInformation userId={user.id} />}
         </div>
-
-        {activeTab === "contact" && <ContactInformation userId={user.id} />}
-
-        {activeTab === "listings" && <UserListings userId={user.id} />}
-
-        {activeTab === "transactions" && (
-          <TransactionHistory userId={user.id} />
-        )}
-      </div>
+      ) : (
+        <LoadingSpinner />
+      )}
     </ProtectedRoute>
   );
 }

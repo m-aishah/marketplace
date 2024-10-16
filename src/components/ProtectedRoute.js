@@ -1,8 +1,8 @@
 "use client";
 
 import { useAuth } from "@/app/AuthContext";
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const LoadingSpinner = () => (
   <div className="fixed inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-50">
@@ -17,21 +17,16 @@ const LoadingSpinner = () => (
 export function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login');
-      } else {
-        setIsReady(true);
-      }
+    if (!loading && !user) {
+      router.push("/login");
     }
   }, [user, loading, router]);
 
-  if (loading || !isReady) {
+  if (loading) {
     return <LoadingSpinner />;
   }
 
-  return children;
+  return user ? children : null;
 }

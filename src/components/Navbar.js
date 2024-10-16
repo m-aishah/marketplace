@@ -14,19 +14,12 @@ const Navbar = () => {
   const pathname = usePathname();
   const auth = getAuth();
 
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
+  const closeMenu = () => setIsMenuOpen(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
-    };
-
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    const handleScroll = () => setIsScrolled(window.scrollY > 0);
     window.addEventListener("scroll", handleScroll);
     return () => {
       unsubscribe();
@@ -44,63 +37,53 @@ const Navbar = () => {
 
   const isActive = (path) => pathname === path;
 
+  const navItems = [
+    { href: "/", text: "Home" },
+    { href: "/apartments", text: "Apartments" },
+    { href: "/goods", text: "Goods" },
+    { href: "/services", text: "Services" },
+    { href: "/requests", text: "Requests" },
+  ];
+
   return (
     <header
       className={`${
         isScrolled
-          ? "fixed top-0 shadow-lg shadow-brand/20 z-20"
+          ? "sticky top-0 shadow-lg shadow-brand/20 z-20"
           : "relative shadow"
-      } w-full p-2 sm:p-4 flex justify-center bg-white transition-all duration-300`}
+      } w-full p-4 flex justify-center bg-white transition-all duration-300`}
     >
-      <nav className="max-w-[1400px] flex flex-wrap justify-between items-center w-full">
+      <nav className="max-w-[1400px] flex justify-between items-center w-full">
         <Link href="/" className="flex items-center">
-          <Image
-            src="/images/logo.svg"
-            alt="Logo"
-            width={32}
-            height={32}
-            className="sm:w-10 sm:h-10"
-          />
+          <Image src="/images/logo.svg" alt="Logo" width={40} height={40} />
           <div className="flex items-baseline">
-            <h1 className="ml-2 text-base leading-tight font-bold tracking-tighter sm:text-lg md:text-3xl">
+            <h1 className="ml-2 text-lg leading-tight font-bold tracking-tighter md:text-3xl">
               Marketplace
             </h1>
-            <div className="ml-1 w-1 h-1 rounded-full bg-gradient-to-r from-[#FF7F50] to-[#98FF98] sm:w-1.5 sm:h-1.5 md:w-2 md:h-2"></div>
+            <div className="ml-1 w-1 h-1 rounded-full bg-gradient-to-r from-[#FF7F50] to-[#98FF98] md:w-2 md:h-2"></div>
           </div>
         </Link>
 
-        <div
-          onClick={() => setIsMenuOpen((prev) => !prev)}
-          className="lg:hidden"
-        >
+        <button onClick={toggleMenu} className="lg:hidden z-50">
           {isMenuOpen ? (
-            <FiX className="relative z-50 w-5 h-5" />
+            <FiX className="w-5 h-5" />
           ) : (
-            <FiMenu className="relative z-50 w-5 h-5" />
+            <FiMenu className="w-5 h-5" />
           )}
-        </div>
+        </button>
 
-        <ul className="hidden lg:flex gap-5">
-          <NavItem href="/" text="Home" isActive={isActive("/")} />
-          <NavItem
-            href="/apartments"
-            text="Apartments"
-            isActive={isActive("/apartments")}
-          />
-          <NavItem href="/goods" text="Goods" isActive={isActive("/goods")} />
-          <NavItem
-            href="/services"
-            text="Services"
-            isActive={isActive("/services")}
-          />
-          <NavItem
-            href="/requests"
-            text="Requests"
-            isActive={isActive("/requests")}
-          />
+        <ul className="hidden gap-5 lg:flex">
+          {navItems.map((item) => (
+            <NavItem
+              key={item.href}
+              href={item.href}
+              text={item.text}
+              isActive={isActive(item.href)}
+            />
+          ))}
         </ul>
 
-        <div className="hidden lg:flex gap-5">
+        <div className="hidden gap-5 lg:flex">
           {user ? (
             <>
               <NavButton
@@ -119,58 +102,21 @@ const Navbar = () => {
         </div>
 
         {isMenuOpen && (
-          <div className="fixed top-0 left-0 w-full h-full bg-gray-200 z-40 p-4 overflow-y-auto lg:hidden">
-            <nav className="flex flex-col items-center gap-6 sm:gap-10">
-              <div
-                onClick={closeMenu}
-                className="self-start flex w-full justify-between items-center"
-              >
-                <Link href="/">
-                  <Image
-                    src="/images/logo.svg"
-                    alt="Logo"
-                    width={32}
-                    height={32}
-                    className="sm:w-10 sm:h-10"
-                  />
-                </Link>
-                <FiX className="z-50 w-5 h-5" />
-              </div>
-
+          <div className="fixed inset-0 bg-gray-200 z-40 p-4">
+            <nav className="flex flex-col items-center gap-10 pt-16">
               <ul className="flex flex-col gap-3 items-center">
-                <NavItem
-                  href="/"
-                  text="Home"
-                  isActive={isActive("/")}
-                  onClick={closeMenu}
-                />
-                <NavItem
-                  href="/apartments"
-                  text="Apartments"
-                  isActive={isActive("/apartments")}
-                  onClick={closeMenu}
-                />
-                <NavItem
-                  href="/goods"
-                  text="Goods"
-                  isActive={isActive("/goods")}
-                  onClick={closeMenu}
-                />
-                <NavItem
-                  href="/services"
-                  text="Services"
-                  isActive={isActive("/services")}
-                  onClick={closeMenu}
-                />
-                <NavItem
-                  href="/requests"
-                  text="Requests"
-                  isActive={isActive("/requests")}
-                  onClick={closeMenu}
-                />
+                {navItems.map((item) => (
+                  <NavItem
+                    key={item.href}
+                    href={item.href}
+                    text={item.text}
+                    isActive={isActive(item.href)}
+                    onClick={closeMenu}
+                  />
+                ))}
               </ul>
 
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 w-full sm:w-auto">
+              <div className="flex gap-5">
                 {user ? (
                   <>
                     <NavButton
