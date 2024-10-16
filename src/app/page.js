@@ -144,6 +144,10 @@ export default function HomePage() {
     }
   };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-12">
@@ -154,7 +158,6 @@ export default function HomePage() {
               Discover apartments, goods, services, and more in your community
             </p>
           </div>
-
           <div className="relative flex items-center w-full space-x-3">
             <div className="relative w-full">
               <FiSearch
@@ -177,7 +180,6 @@ export default function HomePage() {
               Search
             </Button>
           </div>
-
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold">Featured Listings</h2>
             <Button
@@ -188,17 +190,10 @@ export default function HomePage() {
               <span className="text-black">New Listing</span>
             </Button>
           </div>
-
-          {loading ? (
-            <LoadingSpinner />
-          ) : (
-            <>
-              {renderSection("apartments", "Apartments")}
-              {renderSection("goods", "Goods")}
-              {renderSection("services", "Services")}
-              {renderSection("requests", "Requests")}
-            </>
-          )}
+          {renderSection("apartments", "Apartments")}
+          {renderSection("goods", "Goods")}
+          {renderSection("services", "Services")}
+          {renderSection("requests", "Requests")}
         </div>
       </main>
       <CreateListingModal
