@@ -158,7 +158,25 @@ export const uploadListingImageToStorage = async (
   index
 ) => {
   if (!file) return null;
-  const storageRef = ref(storage, `${userId}/listings/${listingId}/${index}`);
+  const storageRef = ref(
+    storage,
+    `${userId}/listings/${listingId}/images/${index}`
+  );
+  await uploadBytes(storageRef, file);
+  return getDownloadURL(storageRef);
+};
+
+export const uploadListingVideoToStorage = async (
+  file,
+  userId,
+  listingId,
+  index
+) => {
+  if (!file) return null;
+  const storageRef = ref(
+    storage,
+    `${userId}/listings/${listingId}/videos/${index}`
+  );
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
 };
