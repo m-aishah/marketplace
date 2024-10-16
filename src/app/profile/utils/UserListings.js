@@ -14,10 +14,14 @@ import Link from "next/link";
 import ListingCard from "@/components/ListingCard";
 import CreateListingModal from "./CreateListingModal";
 import { FaPlus } from "react-icons/fa";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import { toast } from "react-toastify";
 
 export default function UserListings({ userId, isOwnProfile }) {
   const [listings, setListings] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState(null);
 
   const router = useRouter();
 
@@ -41,15 +45,25 @@ export default function UserListings({ userId, isOwnProfile }) {
     fetchUserListings();
   }, [userId, isOwnProfile]);
 
-  const handleDelete = async (listingId) => {
-    if (!isOwnProfile) return;
+  const handleDelete = async () => {
+    if (!isOwnProfile || !listingToDelete) return;
     try {
-      await deleteListingFromFirestore(listingId);
-      setListings(listings.filter((listing) => listing.id !== listingId));
-      console.log("Listing successfully deleted");
+      await deleteListingFromFirestore(listingToDelete.id);
+      setListings(
+        listings.filter((listing) => listing.id !== listingToDelete.id)
+      );
+      toast.success("Listing successfully deleted");
     } catch (error) {
       console.error("Error deleting listing:", error);
+    } finally {
+      setIsConfirmOpen(false);
+      setListingToDelete(null);
     }
+  };
+
+  const openConfirmModal = (listing) => {
+    setListingToDelete(listing);
+    setIsConfirmOpen(true);
   };
 
   const handleEdit = (listingId) => {
@@ -84,18 +98,12 @@ export default function UserListings({ userId, isOwnProfile }) {
       <div className="border-t border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
           {listings.map((listing) => (
-            <Link
-              href={`/${listing.listingType.toLowerCase()}/${listing.id}`}
+            <ListingCard
               key={listing.id}
-              className="group"
-            >
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                onDelete={isOwnProfile ? handleDelete : undefined}
-                onEdit={isOwnProfile ? handleEdit : undefined}
-              />
-            </Link>
+              listing={listing}
+              onDelete={() => openConfirmModal(listing)}
+              onEdit={isOwnProfile ? handleEdit : undefined}
+            />
           ))}
         </div>
 
@@ -127,6 +135,13 @@ export default function UserListings({ userId, isOwnProfile }) {
           onClose={() => setIsModalOpen(false)}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        listingTitle={listingToDelete ? listingToDelete.name : ""}
+      />
     </div>
   );
 }
