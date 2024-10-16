@@ -1,12 +1,16 @@
 import React from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/firebase";
 import {
   FaTimes,
   FaWhatsapp,
   FaPhone,
   FaEnvelope,
   FaInstagram,
+  FaExternalLinkAlt,
 } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const contactIcons = {
   whatsapp: FaWhatsapp,
@@ -15,7 +19,24 @@ const contactIcons = {
   instagram: FaInstagram,
 };
 
+const contactLabels = {
+  whatsapp: "Chat on WhatsApp",
+  call: "Make a call",
+  email: "Send an email",
+  instagram: "Visit Instagram profile",
+};
+
 const ContactModal = ({ isOpen, onClose, contacts }) => {
+  const [user] = useAuthState(auth);
+
+  const handleContactClick = (contact) => {
+    if (user && contact.value === user.email) {
+      toast.error("You cannot contact yourself.");
+    } else {
+      window.open(getContactLink(contact), "_blank", "noopener noreferrer");
+    }
+  };
+
   return (
     <Transition appear show={isOpen} as={React.Fragment}>
       <Dialog as="div" className="relative z-10" onClose={onClose}>
@@ -30,7 +51,6 @@ const ContactModal = ({ isOpen, onClose, contacts }) => {
         >
           <div className="fixed inset-0 bg-black bg-opacity-25" />
         </Transition.Child>
-
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
             <Transition.Child
@@ -45,7 +65,7 @@ const ContactModal = ({ isOpen, onClose, contacts }) => {
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                 <Dialog.Title
                   as="h3"
-                  className="text-lg font-medium leading-6 text-gray-900 flex justify-between items-center"
+                  className="text-xl font-semibold leading-6 text-gray-900 flex justify-between items-center mb-4"
                 >
                   Contact Options
                   <button
@@ -55,24 +75,42 @@ const ContactModal = ({ isOpen, onClose, contacts }) => {
                     <FaTimes className="w-5 h-5" />
                   </button>
                 </Dialog.Title>
-                <div className="mt-4 space-y-4">
-                  {contacts.map((contact) => {
-                    const Icon = contactIcons[contact.type] || FaEnvelope;
-                    return (
-                      <a
-                        key={contact.id}
-                        href={getContactLink(contact)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                      >
-                        <Icon className="mr-3 text-blue-600" />
-                        <span className="text-gray-800">{contact.value}</span>
-                      </a>
-                    );
-                  })}
-                  {!Object.keys(contacts).length && <div className="text-center text-gray-800">User Has No Contact Info</div>}
-                </div>
+                {user ? (
+                  <div className="mt-4 space-y-4">
+                    {contacts.map((contact) => {
+                      const Icon = contactIcons[contact.type] || FaEnvelope;
+                      return (
+                        <div
+                          key={contact.id}
+                          onClick={() => handleContactClick(contact)}
+                          className="flex items-center justify-between p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors group cursor-pointer"
+                        >
+                          <div className="flex items-center">
+                            <Icon className="mr-3 text-blue-600 text-xl" />
+                            <div className="flex flex-col">
+                              <span className="text-blue-700 font-medium">
+                                {contactLabels[contact.type]}
+                              </span>
+                              <span className="text-gray-600 text-sm">
+                                {contact.value}
+                              </span>
+                            </div>
+                          </div>
+                          <FaExternalLinkAlt className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      );
+                    })}
+                    {!contacts.length && (
+                      <div className="text-center text-gray-800 py-4">
+                        User Has No Contact Info
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-800 py-4">
+                    Please log in to view contact options.
+                  </div>
+                )}
               </Dialog.Panel>
             </Transition.Child>
           </div>

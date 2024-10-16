@@ -1,16 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
 import FreelancerServicePage from "../../../components/ServiceListing";
 import { getListingFromFirestore } from "../../../utils/firestoreUtils";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
-// TODO: Do we want the lisitng page to only be accessible to logged in user? or it is if user tries add to cart or whatever that the user should be promptd to login?
 const ListingPage = ({ params }) => {
   const { id } = params;
-
   const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     const fetchSkill = async () => {
       try {
         const skill = await getListingFromFirestore(id);
@@ -21,14 +21,12 @@ const ListingPage = ({ params }) => {
     };
 
     fetchSkill();
+    setLoading(false);
   }, [id]);
 
-  return (
-    // TODO: Handle loading and erros
-    <ProtectedRoute>
-      <FreelancerServicePage skill={listing} />
-    </ProtectedRoute>
-  );
+  if (loading) return <LoadingSpinner />;
+
+  return <FreelancerServicePage skill={listing} />;
 };
 
 export default ListingPage;

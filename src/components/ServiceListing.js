@@ -6,12 +6,16 @@ import Image from "next/image";
 import ContactModal from "./ContactModal";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
-import ContactProfileButton from "./ContactProfileButtons";
+import ContactProfileButtons from "./ContactProfileButtons";
+import LoadingSpinner from "./LoadingSpinner";
+
 const FreelancerServicePage = ({ skill }) => {
   const [contacts, setContacts] = useState([]);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     const fetchContacts = async () => {
       if (skill && skill.userId) {
         try {
@@ -30,14 +34,24 @@ const FreelancerServicePage = ({ skill }) => {
     };
 
     fetchContacts();
+    setLoading(false);
   }, [skill]);
 
-  if (!skill) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
+  const getCurrency = (cuurency) => {
+    switch (cuurency) {
+      case "TL":
+        return "₺";
+      case "USD":
+        return "$";
+      case "EUR":
+        return "€";
+      default:
+        return "";
+    }
+  };
+
+  if (!skill || loading) {
+    return <LoadingSpinner />;
   }
 
   return (
@@ -67,7 +81,8 @@ const FreelancerServicePage = ({ skill }) => {
         <p className="text-gray-600 mb-2">Service: {skill.service}</p>
         <p className="text-gray-600 mb-3">Details: {skill.serviceDetails}</p>
         <p className="text-xl font-bold text-blue-500 mb-1">
-          Price: ₺{skill.price}
+          Price: {skill?.price || "N/A"}
+          {" " + getCurrency(skill?.currency)}
         </p>
         <div className="flex items-center text-gray-500 mt-4">
           <FaCalendar className="mr-2" />
@@ -96,7 +111,10 @@ const FreelancerServicePage = ({ skill }) => {
       )}
 
       <div className="mt-6">
-      <ContactProfileButton listing={skill} setIsContactModalOpen={setIsContactModalOpen}/>
+        <ContactProfileButtons
+          listing={skill}
+          setIsContactModalOpen={setIsContactModalOpen}
+        />
       </div>
 
       <ContactModal

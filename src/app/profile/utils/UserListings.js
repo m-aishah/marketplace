@@ -23,7 +23,6 @@ export default function UserListings({ userId, isOwnProfile }) {
 
   useEffect(() => {
     const fetchUserListings = async () => {
-      
       let listingsQuery = query(
         collection(db, "listings"),
         where("userId", "==", userId),
@@ -85,12 +84,18 @@ export default function UserListings({ userId, isOwnProfile }) {
       <div className="border-t border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
           {listings.map((listing) => (
-            <ListingCard
+            <Link
+              href={`/${listing.listingType.toLowerCase()}/${listing.id}`}
               key={listing.id}
-              listing={listing}
-              onDelete={isOwnProfile ? handleDelete : undefined}
-              onEdit={isOwnProfile ? handleEdit : undefined}
-            />
+              className="group"
+            >
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                onDelete={isOwnProfile ? handleDelete : undefined}
+                onEdit={isOwnProfile ? handleEdit : undefined}
+              />
+            </Link>
           ))}
         </div>
 
@@ -102,16 +107,16 @@ export default function UserListings({ userId, isOwnProfile }) {
           </p>
         )}
       </div>
-      {isOwnProfile && (  
+      {isOwnProfile && (
         <div className="mt-8 text-center">
-        {listings.length > 0 && (
-          <Link
-            href={isOwnProfile ? "/all-listings" : `/all-listings/${userId}`}
-            className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-300"
-          >
-            See All Listings
-          </Link>
-        )}
+          {listings.length > 0 && (
+            <Link
+              href={isOwnProfile ? "/all-listings" : `/all-listings/${userId}`}
+              className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-300"
+            >
+              See All Listings
+            </Link>
+          )}
         </div>
       )}
       <br />

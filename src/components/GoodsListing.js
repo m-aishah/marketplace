@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
-import Link from "next/link";
+import ContactProfileButtons from "./ContactProfileButtons";
 import ContactModal from "./ContactModal";
 import ImageGallery from "./GoodsGallery";
-import { FaTag, FaMapMarkerAlt, FaUser, FaPhoneAlt } from 'react-icons/fa';
+import { FaTag, FaMapMarkerAlt, FaUser, FaPhoneAlt } from "react-icons/fa";
+import LoadingSpinner from "./LoadingSpinner";
 
 const GoodsListingPage = ({ listing }) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const imageUrls =
     listing?.imageUrls && listing.imageUrls.length > 0
@@ -16,6 +18,7 @@ const GoodsListingPage = ({ listing }) => {
       : null;
 
   useEffect(() => {
+    setLoading(true);
     const fetchContacts = async () => {
       if (listing && listing.userId) {
         try {
@@ -34,7 +37,23 @@ const GoodsListingPage = ({ listing }) => {
     };
 
     fetchContacts();
+    setLoading(false);
   }, [listing]);
+
+  const getCurrency = (cuurency) => {
+    switch (cuurency) {
+      case "TL":
+        return "₺";
+      case "USD":
+        return "$";
+      case "EUR":
+        return "€";
+      default:
+        return "";
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -51,11 +70,16 @@ const GoodsListingPage = ({ listing }) => {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center space-x-2 text-green-600">
               <FaTag className="text-xl" />
-              <span className="text-2xl font-bold">₺{listing?.price || "N/A"}</span>
+              <span className="text-2xl font-bold">
+                {listing?.price || "N/A"}
+                {" " + getCurrency(listing?.currency)}
+              </span>
             </div>
             <div className="flex items-center space-x-2 text-gray-600">
               <FaMapMarkerAlt className="text-xl" />
-              <span className="text-lg">{listing?.location || "Location not specified"}</span>
+              <span className="text-lg">
+                {listing?.location || "Location not specified"}
+              </span>
             </div>
           </div>
 
@@ -66,39 +90,31 @@ const GoodsListingPage = ({ listing }) => {
             </p>
           </div>
 
-      
-
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h3 className="text-xl font-semibold mb-2 text-blue-800">Additional Details</h3>
+            <h3 className="text-xl font-semibold mb-2 text-blue-800">
+              Additional Details
+            </h3>
             <div className="grid lg:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium text-gray-600">Category:</span>
-                <span className="ml-2 text-gray-800">{listing?.category || "Unknown"}</span>
+                <span className="ml-2 text-gray-800">
+                  {listing?.category || "Unknown"}
+                </span>
               </div>
               <div>
                 <span className="font-medium text-gray-600">Condition:</span>
-                <span className="ml-2 text-gray-800">{listing?.condition || "Not specified"}</span>
+                <span className="ml-2 text-gray-800">
+                  {listing?.condition || "Not specified"}
+                </span>
               </div>
               {/* Add more details as needed */}
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-            <button
-              onClick={() => setIsContactModalOpen(true)}
-              className="transition bg-blue-600 font-medium text-white px-6 py-3 rounded-full text-sm hover:bg-blue-700 hover:shadow-lg flex items-center justify-center"
-            >
-              <FaPhoneAlt className="mr-2" />
-              Contact Advertiser
-            </button>
-            <Link
-              href={`/profile/${listing?.userId}`}
-              className="transition bg-gray-200 font-medium text-gray-800 px-6 py-3 rounded-full text-sm hover:bg-gray-300 hover:shadow-lg flex items-center justify-center"
-            >
-              <FaUser className="mr-2" />
-              Advertiser Profile
-            </Link>
-          </div>
+          <ContactProfileButtons
+            listing={listing}
+            setIsContactModalOpen={setIsContactModalOpen}
+          />
         </div>
       </div>
 

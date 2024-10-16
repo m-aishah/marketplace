@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, db } from "../../../firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/firebase";
 import { getDoc, doc } from "firebase/firestore";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -9,10 +10,11 @@ import ProfileHeader from "../utils/ProfileHeader";
 import UserListings from "../utils/UserListings";
 import ContactInformation from "../utils/ContactInformation";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { useParams } from 'next/navigation';
+import { useParams } from "next/navigation";
 
 function UserProfile() {
-  const [user, setUser] = useState(null);
+  const [user] = useAuthState(auth);
+  const [fetchedUser, setfetchedUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("listings");
   const { id } = useParams();
@@ -25,7 +27,7 @@ function UserProfile() {
         const userDoc = await getDoc(doc(db, "users", id));
         if (userDoc.exists()) {
           const userData = { id: userDoc.id, ...userDoc.data() };
-          setUser(userData);
+          setfetchedUser(userData);
         } else {
           console.log("No such user!");
         }
@@ -45,7 +47,7 @@ function UserProfile() {
     return <LoadingSpinner />;
   }
 
-  if (!user) {
+  if (!fetchedUser) {
     return <div>User not found</div>;
   }
 
@@ -60,7 +62,7 @@ function UserProfile() {
           <span className="text-sm font-medium">Back</span>
         </Link>
       </div>
-      <ProfileHeader user={user} isOwnProfile={false} />
+      <ProfileHeader user={fetchedUser} isOwnProfile={false} />
 
       <div className="mb-6">
         <div className="border-b border-gray-200">
@@ -89,8 +91,18 @@ function UserProfile() {
         </div>
       </div>
 
-      {activeTab === "listings" && <UserListings userId={user.id} isOwnProfile={false}/>}
-      {activeTab === "contact" && <ContactInformation userId={user.id} isOwnProfile={false}/>}
+      {activeTab === "listings" && (
+        <UserListings userId={fetchedUser.id} isOwnProfile={false} />
+      )}
+      {user ? (
+        activeTab === "contact" && (
+          <ContactInformation userId={fetchedUser.id} isOwnProfile={false} />
+        )
+      ) : (
+        <div className="text-center text-gray-800 py-4">
+          Please log in to view contact options.
+        </div>
+      )}
     </div>
   );
 }

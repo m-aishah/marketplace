@@ -5,12 +5,14 @@ import Image from "next/image";
 import ContactModal from "./ContactModal";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
-import ContactProfileButton from "./ContactProfileButtons";
+import ContactProfileButtons from "./ContactProfileButtons";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const ApartmentListingPage = ({ apartment }) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [contacts, setContacts] = useState([]);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const imageUrls = apartment?.imageUrls || [];
 
@@ -23,6 +25,7 @@ const ApartmentListingPage = ({ apartment }) => {
   };
 
   useEffect(() => {
+    setLoading(true);
     const fetchContacts = async () => {
       if (apartment && apartment.userId) {
         try {
@@ -41,7 +44,23 @@ const ApartmentListingPage = ({ apartment }) => {
     };
 
     fetchContacts();
+    setLoading(false);
   }, [apartment]);
+
+  const getCurrency = (cuurency) => {
+    switch (cuurency) {
+      case "TL":
+        return "₺";
+      case "USD":
+        return "$";
+      case "EUR":
+        return "€";
+      default:
+        return "";
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="max-w-4xl mx-auto mt-6 bg-white shadow-md rounded-lg overflow-hidden">
@@ -78,7 +97,8 @@ const ApartmentListingPage = ({ apartment }) => {
           {apartment?.location || "No Location"}
         </p>
         <p className="mt-2 text-green-600 text-xl">
-          ${apartment?.price || "Price Not Available"}
+          {apartment?.price || "N/A"}
+          {" " + getCurrency(apartment?.currency)}
         </p>
         <div className="mt-4">
           <h2 className="text-lg font-semibold">Amenities:</h2>
@@ -104,7 +124,10 @@ const ApartmentListingPage = ({ apartment }) => {
           <QuickView quickViewData={apartment} />
         </div>
         <div className="mt-6">
-          <ContactProfileButton listing={apartment} setIsContactModalOpen={setIsContactModalOpen}/>
+          <ContactProfileButtons
+            listing={apartment}
+            setIsContactModalOpen={setIsContactModalOpen}
+          />
         </div>
       </div>
       <ContactModal

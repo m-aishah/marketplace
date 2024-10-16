@@ -17,7 +17,7 @@ const ListingPage = ({ params }) => {
         console.log(good);
         setListing(good.listing);
       } catch (error) {
-        console.error("Error fetching good: ", error);
+        console.error("Error fetching requests: ", error);
       }
     };
 

@@ -1,16 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
 import ApartmentListingPage from "../../../components/ApartmentListing";
-import  {getListingFromFirestore } from '../../../utils/firestoreUtils'
+import { getListingFromFirestore } from "../../../utils/firestoreUtils";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
-// TODO: Do we want the lisitng page to only be accessible to logged in user? or it is if user tries add to cart or whatever that the user should be promptd to login?
 const ListingPage = ({ params }) => {
   const { id } = params;
-
   const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     const fetchApartment = async () => {
       try {
         const apartment = await getListingFromFirestore(id);
@@ -19,18 +19,15 @@ const ListingPage = ({ params }) => {
       } catch (error) {
         console.error("Error fetching good: ", error);
       }
-    }
+    };
 
     fetchApartment();
-  }, [id])
-  // if (!listing) return <p className="text-center">Apartment Not Found</p>;
+    setLoading(false);
+  }, [id]);
 
-  return (
-    // TODO: Pass the listing to the component and display it there
-    <ProtectedRoute>
-      <ApartmentListingPage apartment={listing}/>
-    </ProtectedRoute>
-  );
+  if (loading) return <LoadingSpinner />;
+
+  return <ApartmentListingPage apartment={listing} />;
 };
 
 export default ListingPage;
