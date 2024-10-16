@@ -42,8 +42,8 @@ export default function ConfirmationModal({
                 </Dialog.Title>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
-                    Are you sure you want to delete the listing "{listingTitle}
-                    "? This action cannot be undone.
+                    Are you sure you want to delete the listing &quot;{listingTitle}
+                    &quot;? This action cannot be undone.
                   </p>
                 </div>
                 <div className="mt-4 flex justify-end">
