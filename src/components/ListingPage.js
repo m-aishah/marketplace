@@ -166,6 +166,19 @@ export default function ListingPage({ listingsArray, category, title }) {
     return options;
   };
 
+  const getCurrency = (currency) => {
+    switch (currency) {
+      case "TL":
+        return "₺";
+      case "USD":
+        return "$";
+      case "EUR":
+        return "€";
+      default:
+        return "";
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-grow container mx-auto px-4 py-8">
@@ -180,18 +193,15 @@ export default function ListingPage({ listingsArray, category, title }) {
               <div className="relative flex-grow">
                 <Input
                   type="text"
-                  placeholder={`     Search for ${category}...`}
+                  placeholder={`Search for ${category}...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-4 pr-10 py-2"
+                  className="w-full pl-10 pr-10 py-2"
                 />
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
               </div>
             )}
-            <Button
-              onClick={toggleFilterModal}
-              className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
-            >
+            <Button onClick={toggleFilterModal} variant="blue">
               <RiFilter2Fill className="lg:h-6 lg:w-6 mr-2" />
               <span>Filter</span>
             </Button>
@@ -235,7 +245,8 @@ export default function ListingPage({ listingsArray, category, title }) {
                           {listing.category}
                         </p>
                         <p className="font-bold text-lg mb-2">
-                          ${listing.price}
+                          {listing.price || "N/A"}
+                          {" " + getCurrency(listing.currency)}
                         </p>
                         <p className="text-sm line-clamp-2 h-10 text-muted-foreground">
                           {listing.description}
@@ -253,9 +264,10 @@ export default function ListingPage({ listingsArray, category, title }) {
               <Button
                 onClick={handlePrev}
                 disabled={currentPage === 0}
-                className={`transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center ${
+                className={`${
                   currentPage === 0 ? "opacity-50 cursor-not-allowed" : ""
                 }`}
+                variant="blue"
               >
                 <MdArrowBackIos />
                 <span>Previous</span>
@@ -268,11 +280,12 @@ export default function ListingPage({ listingsArray, category, title }) {
               <Button
                 onClick={handleNext}
                 disabled={currentPage >= totalPages - 1}
-                className={`transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center ${
+                className={`${
                   currentPage >= totalPages - 1
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
+                variant="blue"
               >
                 <span>Next</span>
                 <MdArrowForwardIos />

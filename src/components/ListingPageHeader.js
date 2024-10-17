@@ -32,10 +32,7 @@ const Header = ({ title, setIsCreateModalOpen }) => {
         >
           {title}
         </h1>
-        <Button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="transition font-medium text-sm rounded-full text-center bg-transparent text-black ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 px-4 py-2 lg:px-5 lg:py-3 inline-flex items-center justify-center"
-        >
+        <Button onClick={() => setIsCreateModalOpen(true)} variant="secondary">
           <FiPlus className="mr-2 lg:h-5 lg:w-5 text-black" />
           <span className="text-black">New Listing</span>
         </Button>
