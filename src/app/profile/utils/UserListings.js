@@ -70,6 +70,7 @@ export default function UserListings({ userId, isOwnProfile }) {
     if (!isOwnProfile) return;
     console.log("Editing listing with ID:", listingId);
     router.push(`/edit-listing?listingId=${listingId}`);
+    setLoading(true);
   };
 
   return (

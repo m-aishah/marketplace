@@ -94,15 +94,14 @@ function UserProfile() {
       {activeTab === "listings" && (
         <UserListings userId={fetchedUser.id} isOwnProfile={false} />
       )}
-      {user ? (
-        activeTab === "contact" && (
+      {activeTab === "contact" &&
+        (user ? (
           <ContactInformation userId={fetchedUser.id} isOwnProfile={false} />
-        )
-      ) : (
-        <div className="text-center text-gray-800 py-4">
-          Please log in to view contact options.
-        </div>
-      )}
+        ) : (
+          <div className="text-center text-gray-800 py-4">
+            Please log in to view contact options.
+          </div>
+        ))}
     </div>
   );
 }
