@@ -1,17 +1,27 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/firebase";
+import { Pencil, Trash2 } from "lucide-react";
+import { deleteListingFromFirestore } from "@/utils/firestoreUtils";
+import { auth, db } from "@/firebase";
 import ContactProfileButtons from "./ContactProfileButtons";
 import ContactModal from "./ContactModal";
 import ImageGallery from "./GoodsGallery";
-import { FaTag, FaMapMarkerAlt, FaUser, FaPhoneAlt } from "react-icons/fa";
+import { FaTag, FaMapMarkerAlt } from "react-icons/fa";
 import LoadingSpinner from "./LoadingSpinner";
+import { useRouter } from "next/navigation";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { toast } from "react-toastify";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 const GoodsListingPage = ({ listing }) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [user] = useAuthState(auth);
+  const router = useRouter();
 
+  const isOwnListing = user && user.uid === listing?.userId;
   const imageUrls =
     listing?.imageUrls && listing.imageUrls.length > 0
       ? listing.imageUrls
@@ -40,8 +50,8 @@ const GoodsListingPage = ({ listing }) => {
     setLoading(false);
   }, [listing]);
 
-  const getCurrency = (cuurency) => {
-    switch (cuurency) {
+  const getCurrency = (currency) => {
+    switch (currency) {
       case "TL":
         return "₺";
       case "USD":
@@ -53,11 +63,42 @@ const GoodsListingPage = ({ listing }) => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!isOwnListing || !listing) return;
+    try {
+      await deleteListingFromFirestore(listing.id);
+      toast.success("Listing successfully deleted");
+      router.push("/");
+    } catch (error) {
+      console.error("Error deleting listing:", error);
+      toast.error("Failed to delete listing");
+    } finally {
+      setIsConfirmOpen(false);
+    }
+  };
+
+  const handleEdit = () => {
+    router.push(`/edit-listing?listingId=${listing.id}`);
+    setLoading(true);
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+    <div className="px-4 sm:px-6 lg:px-8 py-8">
+      {isOwnListing && (
+        <div
+          className="max-w-4xl mt-6 mx-auto bg-blue-100 rounded-t-lg border-l-4 border-blue-500 text-blue-700 p-4"
+          role="alert"
+        >
+          <p className="font-bold">Note:</p>
+          <p>You are viewing your own listing.</p>
+        </div>
+      )}
+      <div
+        className={`max-w-4xl mx-auto mb-6 bg-white shadow-md overflow-hidden
+          ${isOwnListing ? "rounded-b-lg" : "rounded-lg mt-6"}`}
+      >
         <div className="p-6">
           {imageUrls && <ImageGallery images={imageUrls} />}
         </div>
@@ -110,19 +151,45 @@ const GoodsListingPage = ({ listing }) => {
               {/* Add more details as needed */}
             </div>
           </div>
-
-          <ContactProfileButtons
-            listing={listing}
-            setIsContactModalOpen={setIsContactModalOpen}
-          />
+          <div className="mt-6">
+            {!isOwnListing && (
+              <ContactProfileButtons
+                listing={listing}
+                setIsContactModalOpen={setIsContactModalOpen}
+              />
+            )}
+            {isOwnListing && (
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleEdit}
+                  className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
+                >
+                  <Pencil size={20} className="inline-block mr-2" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => setIsConfirmOpen(true)}
+                  className="transition font-medium text-sm rounded-full text-center bg-red-600 text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-red-600/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
+                >
+                  <Trash2 size={20} className="inline-block mr-2" />
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
         contacts={contacts}
         listingOwnerId={listing?.userId}
+      />
+      <ConfirmationModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        listingTitle={listing ? listing.name : ""}
       />
     </div>
   );
