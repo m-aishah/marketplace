@@ -26,14 +26,13 @@ const contactLabels = {
   instagram: "Visit Instagram profile",
 };
 
-const ContactModal = ({ isOpen, onClose, contacts }) => {
+const ContactModal = ({ isOpen, onClose, contacts, listingOwnerId }) => {
   const [user] = useAuthState(auth);
 
+  console.log(user);
+
   const handleContactClick = (contact) => {
-    if (
-      user &&
-      contacts.some((contactItem) => contactItem.value === user.email)
-    ) {
+    if (user && user.uid === listingOwnerId) {
       toast.error("You cannot contact yourself.");
     } else {
       window.open(getContactLink(contact), "_blank", "noopener noreferrer");

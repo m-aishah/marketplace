@@ -134,6 +134,7 @@ const ApartmentListingPage = ({ apartment }) => {
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
         contacts={contacts}
+        listingOwnerId={apartment?.userId}
       />
     </div>
   );
