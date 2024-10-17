@@ -495,7 +495,7 @@ const ListingForm = ({
         <div className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors">
           <div className="flex gap-4 flex-wrap items-center justify-center">
             {images.length === 0 && videos.length === 0 ? (
-              <div className="text-center">
+              <div className="text-center" onClick={triggerFileInput}>
                 <p className="text-gray-500 text-sm">
                   Click the icon to upload images and videos here.
                 </p>
