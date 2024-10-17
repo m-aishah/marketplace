@@ -14,6 +14,7 @@ import ConfirmationModal from "@/components/ConfirmationModal";
 import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { toast } from "react-toastify";
+import { Button } from "@/components/Button";
 
 const FreelancerServicePage = ({ skill }) => {
   const [contacts, setContacts] = useState([]);
@@ -162,20 +163,14 @@ const FreelancerServicePage = ({ skill }) => {
           )}
           {isOwnListing && (
             <div className="flex space-x-2">
-              <button
-                onClick={handleEdit}
-                className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
-              >
+              <Button onClick={handleEdit} variant="white">
                 <Pencil size={20} className="inline-block mr-2" />
                 Edit
-              </button>
-              <button
-                onClick={() => setIsConfirmOpen(true)}
-                className="transition font-medium text-sm rounded-full text-center bg-red-600 text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-red-600/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
-              >
+              </Button>
+              <Button onClick={() => setIsConfirmOpen(true)} variant="red">
                 <Trash2 size={20} className="inline-block mr-2" />
                 Delete
-              </button>
+              </Button>
             </div>
           )}
         </div>

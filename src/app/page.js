@@ -65,8 +65,8 @@ export default function HomePage() {
     return listings[category].slice(0, itemsPerPage);
   };
 
-  const getCurrency = (cuurency) => {
-    switch (cuurency) {
+  const getCurrency = (currency) => {
+    switch (currency) {
       case "TL":
         return "₺";
       case "USD":
@@ -91,11 +91,9 @@ export default function HomePage() {
               {title}
             </h2>
           </Link>
-          <Link href={`/${category.toLowerCase()}`}>
-            <Button className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center">
-              View More
-            </Button>
-          </Link>
+          <Button href={`/${category.toLowerCase()}`} variant="blue">
+            View More
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -131,7 +129,7 @@ export default function HomePage() {
                       {listing.category}
                     </p>
                     <p className="font-bold text-lg mb-2">
-                      {listing?.price || "N/A"}
+                      {listing.price || "N/A"}
                       {" " + getCurrency(listing.currency)}
                     </p>
                     <p className="text-sm line-clamp-2 h-10 text-muted-foreground">
@@ -176,32 +174,25 @@ export default function HomePage() {
           </div>
           <div className="relative flex items-center w-full space-x-3">
             <div className="relative w-full">
-              <FiSearch
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6 cursor-pointer"
-                onClick={handleSearch}
-              />
               <Input
                 type="text"
                 placeholder="Search for apartments, goods, services, or requests..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="w-full pl-12 pr-4 py-2"
+                className="w-full pl-4 pr-4 py-2"
               />
             </div>
-            <Button
-              onClick={handleSearch}
-              className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
-            >
+            <Button onClick={handleSearch} variant="blue">
+              <FiSearch className="text-white mr-2 h-4 w-4 cursor-pointer" />
               Search
             </Button>
           </div>
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold">Featured Listings</h2>
-            <Button
-              onClick={() => setIsModalOpen(true)}
-              className="transition font-medium text-sm rounded-full text-center bg-transparent text-black ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
-            >
+            <h2 className="text-2xl sm:text-3xl font-bold">
+              Featured Listings
+            </h2>
+            <Button onClick={() => setIsModalOpen(true)}>
               <FiPlus className="mr-2 lg:h-5 lg:w-5 text-black" />
               <span className="text-black">New Listing</span>
             </Button>

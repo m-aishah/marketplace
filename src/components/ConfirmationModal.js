@@ -1,5 +1,6 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
+import { Button } from "@/components/Button";
 
 export default function ConfirmationModal({
   isOpen,
@@ -48,20 +49,12 @@ export default function ConfirmationModal({
                   </p>
                 </div>
                 <div className="mt-4 flex space-x-2 justify-end">
-                  <button
-                    type="button"
-                    className="transition font-medium text-sm rounded-full text-center bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
-                    onClick={onClose}
-                  >
+                  <Button variant="blue" onClick={onClose}>
                     Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="transition font-medium text-sm rounded-full text-center bg-red-600 text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-red-600/80 px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center"
-                    onClick={onConfirm}
-                  >
+                  </Button>
+                  <Button variant="red" onClick={onConfirm}>
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
