@@ -122,6 +122,7 @@ const GoodsListingPage = ({ listing }) => {
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
         contacts={contacts}
+        listingOwnerId={listing?.userId}
       />
     </div>
   );

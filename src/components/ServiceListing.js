@@ -121,6 +121,7 @@ const FreelancerServicePage = ({ skill }) => {
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
         contacts={contacts}
+        listingOwnerId={skill?.userId}
       />
     </div>
   );
