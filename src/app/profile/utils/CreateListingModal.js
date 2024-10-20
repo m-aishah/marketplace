@@ -11,9 +11,9 @@ const options = [
     color: "text-blue-500",
   },
   {
-    name: "Goods",
+    name: "Products",
     icon: FaBox,
-    path: "/create-listing/goods",
+    path: "/create-listing/products",
     color: "text-green-500",
   },
   {

@@ -59,7 +59,7 @@ function EditListingContent() {
           {/* Listing Form */}
           <ListingForm
             user={user}
-            categories={["apartments", "skills", "goods"]}
+            categories={["apartments", "skills", "products"]}
             listingType={listingData.listingType}
             listingData={listingData}
             listingId={listingId}

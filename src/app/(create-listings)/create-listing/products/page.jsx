@@ -28,7 +28,7 @@ function CreateListing() {
             user={user}
             categories={categories}
             currencies={currencies}
-            listingType="goods"
+            listingType="products"
           />
         </div>
       </div>

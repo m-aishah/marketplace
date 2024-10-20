@@ -12,7 +12,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { toast } from "react-toastify";
-import ImageGallery from "./GoodsGallery";
+import ImageGallery from "./ProductsGallery";
 import { Button } from "@/components/Button";
 
 const ApartmentListingPage = ({ apartment }) => {

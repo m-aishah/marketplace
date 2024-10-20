@@ -83,7 +83,7 @@ const ListingForm = ({
             },
           ],
         };
-      case "goods":
+      case "products":
         return {
           title: "Product",
           namePlaceholder: "e.g. Vintage Watch",
@@ -351,7 +351,7 @@ const ListingForm = ({
       if (listingType === "apartments") {
         bedroomsRef.current.value = listingData.bedrooms || "";
         bathroomsRef.current.value = listingData.bathrooms || "";
-      } else if (listingType === "goods") {
+      } else if (listingType === "products") {
         conditionRef.current.value = listingData.condition || "";
       } else if (listingType === "services") {
         serviceRef.current.value = listingData.service || "";
@@ -389,7 +389,7 @@ const ListingForm = ({
       if (listingType === "apartments") {
         newListingData.bedrooms = parseInt(bedroomsRef.current.value);
         newListingData.bathrooms = parseInt(bathroomsRef.current.value);
-      } else if (listingType === "goods") {
+      } else if (listingType === "products") {
         newListingData.condition = conditionRef.current.value;
       } else if (listingType === "services") {
         newListingData.service = serviceRef.current.value;
