@@ -72,13 +72,19 @@ export default function ProfileHeader({ user, onUpdate, isOwnProfile }) {
     <div className="bg-white shadow-lg shadow-brand/20 rounded-lg p-6 mb-6 w-full max-w-[1400px] mx-auto">
       <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
         <div className="relative">
-          <Image
-            src={previewUrl || user.profilePicUrl || "/default-avatar.png"}
-            alt="Profile"
-            width={96}
-            height={96}
-            className="rounded-full object-cover border-2 border-gray-200"
-          />
+          {previewUrl || user.profilePicUrl ? (
+            <Image
+              src={previewUrl || user.profilePicUrl}
+              alt="Profile"
+              width={96}
+              height={96}
+              className="rounded-full object-cover border-2 border-gray-200"
+            />
+          ) : (
+            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+              <FiUser className="w-12 h-12 text-gray-400" />
+            </div>
+          )}
           {isOwnProfile && isEditing && (
             <div className="absolute -bottom-2 -right-2 flex space-x-1">
               <button

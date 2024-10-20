@@ -58,7 +58,11 @@ function Profile() {
               <span className="text-sm font-medium">Back</span>
             </Link>
           </div>
-          <ProfileHeader user={user} onUpdate={handleProfileUpdate} isOwnProfile={true}/>
+          <ProfileHeader
+            user={user}
+            onUpdate={handleProfileUpdate}
+            isOwnProfile={true}
+          />
 
           <div className="mb-6">
             <div className="border-b border-gray-200">
@@ -97,13 +101,17 @@ function Profile() {
             </div>
           </div>
 
-          {activeTab === "listings" && <UserListings userId={user.id} isOwnProfile={true}/>}
+          {activeTab === "listings" && (
+            <UserListings userId={user.id} isOwnProfile={true} />
+          )}
 
           {activeTab === "transactions" && (
             <TransactionHistory userId={user.id} />
           )}
 
-          {activeTab === "contact" && <ContactInformation userId={user.id} isOwnProfile={true}/>}
+          {activeTab === "contact" && (
+            <ContactInformation userId={user.id} isOwnProfile={true} />
+          )}
         </div>
       ) : (
         <LoadingSpinner />
