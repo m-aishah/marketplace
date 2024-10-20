@@ -4,13 +4,12 @@ import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/firebase";
 import { getDoc, doc } from "firebase/firestore";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import ProfileHeader from "../utils/ProfileHeader";
 import UserListings from "../utils/UserListings";
 import ContactInformation from "../utils/ContactInformation";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useParams } from "next/navigation";
+import BackButton from "@/components/BackButton";
 
 function UserProfile() {
   const [user] = useAuthState(auth);
@@ -53,15 +52,7 @@ function UserProfile() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <Link
-          href="/"
-          className="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          <span className="text-sm font-medium">Back</span>
-        </Link>
-      </div>
+      <BackButton />
       <ProfileHeader user={fetchedUser} isOwnProfile={false} />
 
       <div className="mb-6">

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import GoodsListingPage from "../../../components/GoodsListing";
+import ProductsListingPage from "../../../components/ProductsListing";
 import { getListingFromFirestore } from "../../../utils/firestoreUtils";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -27,7 +27,7 @@ const ListingPage = ({ params }) => {
 
   if (loading) return <LoadingSpinner />;
 
-  return <GoodsListingPage listing={listing} />;
+  return <ProductsListingPage listing={listing} />;
 };
 
 export default ListingPage;

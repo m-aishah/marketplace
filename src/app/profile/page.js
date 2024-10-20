@@ -3,14 +3,13 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "../../firebase";
 import { getDoc, doc } from "firebase/firestore";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import ProfileHeader from "./utils/ProfileHeader";
 import UserListings from "./utils/UserListings";
 import TransactionHistory from "./utils/TransactionHistory";
 import ContactInformation from "./utils/ContactInformation";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import BackButton from "@/components/BackButton";
 
 function Profile() {
   const [user, setUser] = useState(null);
@@ -49,16 +48,12 @@ function Profile() {
     <ProtectedRoute>
       {user ? (
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <Link
-              href="/"
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              <span className="text-sm font-medium">Back</span>
-            </Link>
-          </div>
-          <ProfileHeader user={user} onUpdate={handleProfileUpdate} isOwnProfile={true}/>
+          <BackButton />
+          <ProfileHeader
+            user={user}
+            onUpdate={handleProfileUpdate}
+            isOwnProfile={true}
+          />
 
           <div className="mb-6">
             <div className="border-b border-gray-200">
@@ -97,13 +92,17 @@ function Profile() {
             </div>
           </div>
 
-          {activeTab === "listings" && <UserListings userId={user.id} isOwnProfile={true}/>}
+          {activeTab === "listings" && (
+            <UserListings userId={user.id} isOwnProfile={true} />
+          )}
 
           {activeTab === "transactions" && (
             <TransactionHistory userId={user.id} />
           )}
 
-          {activeTab === "contact" && <ContactInformation userId={user.id} isOwnProfile={true}/>}
+          {activeTab === "contact" && (
+            <ContactInformation userId={user.id} isOwnProfile={true} />
+          )}
         </div>
       ) : (
         <LoadingSpinner />

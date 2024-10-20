@@ -5,7 +5,7 @@ import { deleteListingFromFirestore } from "@/utils/firestoreUtils";
 import { auth, db } from "@/firebase";
 import ContactProfileButtons from "./ContactProfileButtons";
 import ContactModal from "./ContactModal";
-import ImageGallery from "./GoodsGallery";
+import ImageGallery from "./ProductsGallery";
 import { FaTag, FaMapMarkerAlt } from "react-icons/fa";
 import LoadingSpinner from "./LoadingSpinner";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { Button } from "@/components/Button";
 
-const GoodsListingPage = ({ listing }) => {
+const ProductsListingPage = ({ listing }) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -190,4 +190,4 @@ const GoodsListingPage = ({ listing }) => {
   );
 };
 
-export default GoodsListingPage;
+export default ProductsListingPage;

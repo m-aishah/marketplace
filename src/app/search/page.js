@@ -17,7 +17,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 function RequestsPageContent() {
   const [listings, setListings] = useState({
     apartments: [],
-    goods: [],
+    products: [],
     services: [],
     requests: [],
   });
@@ -45,7 +45,7 @@ function RequestsPageContent() {
 
     Promise.all([
       fetchUserListings("apartments"),
-      fetchUserListings("goods"),
+      fetchUserListings("products"),
       fetchUserListings("services"),
       fetchUserListings("requests"),
     ]).then(() => setLoading(false));

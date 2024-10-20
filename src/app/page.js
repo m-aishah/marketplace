@@ -24,7 +24,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [listings, setListings] = useState({
     apartments: [],
-    goods: [],
+    products: [],
     services: [],
     requests: [],
   });
@@ -55,7 +55,7 @@ export default function HomePage() {
 
     Promise.all([
       fetchUserListings("apartments"),
-      fetchUserListings("goods"),
+      fetchUserListings("products"),
       fetchUserListings("services"),
       fetchUserListings("requests"),
     ]).then(() => setLoading(false));
@@ -169,14 +169,15 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold mb-4">Find What You Need</h1>
             <p className="text-xl text-muted-foreground mb-8">
-              Discover apartments, goods, services, and more in your community
+              Discover apartments, products, services, and more in your
+              community
             </p>
           </div>
           <div className="relative flex items-center w-full space-x-3">
             <div className="relative w-full">
               <Input
                 type="text"
-                placeholder="Search for apartments, goods, services, or requests..."
+                placeholder="Search for apartments, products, services, or requests..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -198,7 +199,7 @@ export default function HomePage() {
             </Button>
           </div>
           {renderSection("apartments", "Apartments")}
-          {renderSection("goods", "Goods")}
+          {renderSection("products", "Products")}
           {renderSection("services", "Services")}
           {renderSection("requests", "Requests")}
         </div>

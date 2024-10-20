@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FiEdit2, FiCheck, FiX, FiTrash2, FiUser } from "react-icons/fi";
 import { updateDoc, doc } from "firebase/firestore";
 import {
@@ -13,16 +13,20 @@ import Image from "next/image";
 export default function ProfileHeader({ user, onUpdate, isOwnProfile }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [username, setUsername] = useState(user.username);
-  const [bio, setBio] = useState(user.bio || "");
-  const [profilePic, setProfilePic] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [editedUsername, setEditedUsername] = useState(user.username);
+  const [editedBio, setEditedBio] = useState(user.bio || "");
+  const [editedProfilePic, setEditedProfilePic] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(user.profilePicUrl);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setPreviewUrl(user.profilePicUrl);
+  }, [user.profilePicUrl]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProfilePic(file);
+      setEditedProfilePic(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
@@ -31,54 +35,69 @@ export default function ProfileHeader({ user, onUpdate, isOwnProfile }) {
     if (!isOwnProfile) return;
     setIsSaving(true);
     const userRef = doc(db, "users", user.id);
-    let updateData = { username, bio };
+    let updateData = { username: editedUsername, bio: editedBio };
 
-    if (profilePic) {
+    if (editedProfilePic) {
       const profilePicRef = ref(storage, `${user.id}/profile_pic`);
-      await uploadBytes(profilePicRef, profilePic);
+      await uploadBytes(profilePicRef, editedProfilePic);
       const profilePicUrl = await getDownloadURL(profilePicRef);
       updateData.profilePicUrl = profilePicUrl;
+    } else if (previewUrl === null && user.profilePicUrl) {
+      const profilePicRef = ref(storage, `${user.id}/profile_pic`);
+      await deleteObject(profilePicRef);
+      updateData.profilePicUrl = null;
     }
 
     await updateDoc(userRef, updateData);
-    onUpdate(updateData);
+    onUpdate({ ...user, ...updateData });
     setIsEditing(false);
-    setPreviewUrl(null);
     setIsSaving(false);
+
+    setEditedUsername(updateData.username);
+    setEditedBio(updateData.bio);
+    setPreviewUrl(updateData.profilePicUrl);
+    setEditedProfilePic(null);
+  };
+
+  const handleStartEditing = () => {
+    setIsEditing(true);
+    setEditedUsername(user.username);
+    setEditedBio(user.bio || "");
+    setPreviewUrl(user.profilePicUrl);
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    setUsername(user.username);
-    setBio(user.bio || "");
-    setProfilePic(null);
-    setPreviewUrl(null);
+    setEditedUsername(user.username);
+    setEditedBio(user.bio || "");
+    setEditedProfilePic(null);
+    setPreviewUrl(user.profilePicUrl);
   };
 
-  const handleDeleteProfilePic = async () => {
-    if (!isOwnProfile) return;
-    if (user.profilePicUrl) {
-      const profilePicRef = ref(storage, `${user.id}/profile_pic`);
-      await deleteObject(profilePicRef);
-      const userRef = doc(db, "users", user.id);
-      await updateDoc(userRef, { profilePicUrl: null });
-      onUpdate({ profilePicUrl: null });
-    }
-    setProfilePic(null);
+  const handleDeleteProfilePic = () => {
     setPreviewUrl(null);
+    setEditedProfilePic(null);
   };
+
+  const displayImageUrl = isEditing ? previewUrl : user.profilePicUrl;
 
   return (
     <div className="bg-white shadow-lg shadow-brand/20 rounded-lg p-6 mb-6 w-full max-w-[1400px] mx-auto">
       <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
         <div className="relative">
-          <Image
-            src={previewUrl || user.profilePicUrl || "/default-avatar.png"}
-            alt="Profile"
-            width={96}
-            height={96}
-            className="rounded-full object-cover border-2 border-gray-200"
-          />
+          {displayImageUrl ? (
+            <Image
+              src={displayImageUrl}
+              alt="Profile"
+              width={96}
+              height={96}
+              className="rounded-full object-cover border-2 border-gray-200"
+            />
+          ) : (
+            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+              <FiUser className="w-12 h-12 text-gray-400" />
+            </div>
+          )}
           {isOwnProfile && isEditing && (
             <div className="absolute -bottom-2 -right-2 flex space-x-1">
               <button
@@ -87,7 +106,7 @@ export default function ProfileHeader({ user, onUpdate, isOwnProfile }) {
               >
                 <FiEdit2 className="w-4 h-4" />
               </button>
-              {(user.profilePicUrl || profilePic) && (
+              {displayImageUrl && (
                 <button
                   onClick={handleDeleteProfilePic}
                   className="bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
@@ -111,8 +130,8 @@ export default function ProfileHeader({ user, onUpdate, isOwnProfile }) {
           {isOwnProfile && isEditing ? (
             <input
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={editedUsername}
+              onChange={(e) => setEditedUsername(e.target.value)}
               className="text-2xl font-bold mb-2 border-b border-gray-300 focus:outline-none focus:border-brand w-full"
             />
           ) : (
@@ -121,15 +140,15 @@ export default function ProfileHeader({ user, onUpdate, isOwnProfile }) {
           <p className="text-sm text-gray-500 mb-2">{user.email}</p>
           {isOwnProfile && isEditing ? (
             <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
+              value={editedBio}
+              onChange={(e) => setEditedBio(e.target.value)}
               className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-brand"
               rows="3"
               placeholder="Add a bio..."
             />
           ) : (
             <p className="text-sm text-gray-700">
-              {bio || "No bio added yet."}
+              {user.bio || "No bio added yet."}
             </p>
           )}
         </div>
@@ -161,7 +180,7 @@ export default function ProfileHeader({ user, onUpdate, isOwnProfile }) {
             </>
           ) : (
             <button
-              onClick={() => setIsEditing(true)}
+              onClick={handleStartEditing}
               className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 flex items-center"
             >
               <FiEdit2 className="mr-2" /> Edit Profile
