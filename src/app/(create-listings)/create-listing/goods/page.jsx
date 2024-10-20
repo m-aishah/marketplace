@@ -5,6 +5,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/firebase";
 import categories from "./categories";
 import currencies from "../currencyOptions";
+import BackButton from "@/components/BackButton";
 
 function CreateListing() {
   const [user] = useAuthState(auth);
@@ -13,6 +14,7 @@ function CreateListing() {
     <ProtectedRoute>
       <div className="w-full h-full flex justify-center items-center pb-28">
         <div className="w-full h-full p-4 flex flex-col items-center md:w-[700px] md:p-10">
+          <BackButton />
           <div className="mb-10 self-start">
             <h1 className="text-black text-xl md:text-3xl font-semibold tracking-tight mb-2">
               Add Product
