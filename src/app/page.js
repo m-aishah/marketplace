@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/Input";
-import { Card, CardContent } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { FiSearch, FiPlus } from "react-icons/fi";
 import {
@@ -19,6 +17,7 @@ import {
 import { db } from "@/firebase";
 import CreateListingModal from "../app/profile/utils/CreateListingModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { ProductCard } from "@/components/MainPageListingCard";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,19 +64,6 @@ export default function HomePage() {
     return listings[category].slice(0, itemsPerPage);
   };
 
-  const getCurrency = (currency) => {
-    switch (currency) {
-      case "TL":
-        return "₺";
-      case "USD":
-        return "$";
-      case "EUR":
-        return "€";
-      default:
-        return "";
-    }
-  };
-
   const renderSection = (category, title) => {
     const categoryListings = getListings(category);
 
@@ -103,41 +89,7 @@ export default function HomePage() {
               key={listing.id}
               className="group"
             >
-              <Card className="overflow-hidden transition-shadow hover:shadow-lg">
-                <CardContent className="p-0">
-                  <div className="p-4">
-                    {listing.imageUrls && listing.imageUrls.length > 0 ? (
-                      <div className="relative h-48 w-full">
-                        <Image
-                          src={listing.imageUrls[0]}
-                          alt={listing.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-48 bg-muted bg-gray-200 flex items-center justify-center">
-                        <span className="text-muted-foreground">No Image</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
-                      {listing.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {listing.category}
-                    </p>
-                    <p className="font-bold text-lg mb-2">
-                      {listing.price || "N/A"}
-                      {" " + getCurrency(listing.currency)}
-                    </p>
-                    <p className="text-sm line-clamp-2 h-10 text-muted-foreground">
-                      {listing.description}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <ProductCard listing={listing} />
             </Link>
           ))}
         </div>
