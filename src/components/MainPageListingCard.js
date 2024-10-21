@@ -47,15 +47,16 @@ export const ProductCard = ({ listing }) => {
               fill
               className="object-cover"
             />
-          ) : listing.videoUrls && listing.videoUrls.length > 0 ? (
-            <video
-              poster={`${listing.videoUrls[0]}#t=0.1`}
-              className="w-full h-full object-cover"
-            >
-              <source src={listing.videoUrls[0]} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
           ) : (
+            // ( listing.videoUrls && listing.videoUrls.length > 0 ? (
+            //   <video
+            //     poster={`${listing.videoUrls[0]}#t=0.1`}
+            //     className="w-full h-full object-cover"
+            //   >
+            //     <source src={listing.videoUrls[0]} type="video/mp4" />
+            //     Your browser does not support the video tag.
+            //   </video>
+            // ) :
             <div className="h-full bg-muted bg-gray-200 flex items-center justify-center">
               <ImageIcon className="w-12 h-12 text-muted-foreground" />
             </div>
