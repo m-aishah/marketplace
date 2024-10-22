@@ -49,13 +49,13 @@ const ListingForm = ({
   const nameRef = useRef(null);
   const descriptionRef = useRef(null);
   const priceRef = useRef(null);
+  const brandRef = useRef(null);
   const locationRef = useRef(null);
+  const paymentTypeRef = useRef(null);
+  const servicePaymentTypeRef = useRef(null);
   const bedroomsRef = useRef(null);
   const bathroomsRef = useRef(null);
   const conditionRef = useRef(null);
-  const serviceRef = useRef(null);
-  const serviceTitleRef = useRef(null);
-  const serviceDetailsRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const getFormConfig = () => {
@@ -66,20 +66,29 @@ const ListingForm = ({
           namePlaceholder: "e.g. Cozy Studio in Downtown",
           descriptionPlaceholder:
             "Describe the apartment, its features, and location",
-          pricePlaceholder: "Monthly rent",
-          priceLabel: "Rent per month*",
+          pricePlaceholder: "Rent amount",
+          priceLabel: "Rent*",
           additionalFields: [
+            {
+              ref: paymentTypeRef,
+              label: "Payment type*",
+              type: "text",
+              placeholder: "e.g Daily, Weekly, Monthly, ...",
+              required: true,
+            },
             {
               ref: bedroomsRef,
               label: "Bedrooms*",
               type: "number",
               placeholder: "Number of bedrooms",
+              required: true,
             },
             {
               ref: bathroomsRef,
               label: "Bathrooms*",
               type: "number",
               placeholder: "Number of bathrooms",
+              required: true,
             },
           ],
         };
@@ -97,6 +106,14 @@ const ListingForm = ({
               label: "Condition*",
               type: "text",
               placeholder: "e.g. New, Used, Like New",
+              required: true,
+            },
+            {
+              ref: brandRef,
+              label: "Brand",
+              type: "text",
+              placeholder: "e.g Apple, Samsung",
+              required: false,
             },
           ],
         };
@@ -110,33 +127,21 @@ const ListingForm = ({
           priceLabel: "Price*",
           additionalFields: [
             {
-              ref: serviceRef,
-              label: "Service*",
+              ref: servicePaymentTypeRef,
+              label: "Payment Type*",
               type: "text",
-              placeholder: "e.g. Web Development",
-            },
-            {
-              ref: serviceTitleRef,
-              label: "Title*",
-              type: "text",
-              placeholder: "e.g. Web Developer",
-            },
-            {
-              ref: serviceDetailsRef,
-              label: "Details*",
-              type: "text",
-              placeholder: "What does your service include?",
+              placeholder: "e.g one-time, hourly, ...",
+              required: true,
             },
           ],
         };
-      case "requests":
       default:
         return {
           title: "Request",
           namePlaceholder: "e.g. Laptop, Tutor",
           descriptionPlaceholder: "Describe what you're looking for in detail",
-          pricePlaceholder: "Your budget (optional)",
-          priceLabel: "Budget (optional)",
+          pricePlaceholder: "Your budget",
+          priceLabel: "Budget*",
           additionalFields: [],
         };
     }
@@ -641,7 +646,7 @@ const ListingForm = ({
             htmlFor="listing-name"
             className="text-base w-full font-light tracking-tight text-[#737373] md:w-[30%] md:text-lg"
           >
-            Name*
+            Title*
           </label>
           <input
             className="w-full rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
@@ -683,58 +688,60 @@ const ListingForm = ({
             placeholder="e.g. 123 Main St, City, State"
           />
         </div>
-        <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
-          <label
-            htmlFor="listing-category"
-            className="text-base font-light tracking-tight text-[#737373] w-[30%] md:text-lg"
-          >
-            Currency*
-          </label>
-          <div className="relative w-full md:flex-1">
-            <button
-              id="listing-category"
-              type="button"
-              className="w-full flex justify-between items-center ring-2 ring-gray-300 rounded-md bg-white text-left p-2 shadow text-base active:ring-brand active:ring-opacity-60 active:shadow-lg active:shadow-brand/10"
-              onClick={() => setIsCurrencyMenuOpen((prev) => !prev)}
+        <div className="w-full flex">
+          <div className="flex-1 mr-4 sm:mr-20">
+            <label
+              htmlFor="listing-price"
+              className="text-base w-full font-light tracking-tight text-[#737373] md:w-[30%] md:text-lg "
             >
-              {selectedCurrency}
-              {isCurrencyMenuOpen ? <FaChevronUp /> : <FaChevronDown />}
-            </button>
-            {isCurrencyMenuOpen && (
-              <div
-                ref={menuRef}
-                className="absolute w-full rounded shadow-lg top-10 text-base bg-white mt-3 z-10"
-              >
-                {currencies.map((currency) => (
-                  <div
-                    key={currency.id}
-                    className="cursor-pointer hover:bg-gray-100 p-2 active:bg-brand active:text-white"
-                    onClick={() => handleClickCurrencies(currency.name)}
-                  >
-                    <p>{currency.name}</p>
-                  </div>
-                ))}
-              </div>
-            )}
+              {formConfig.priceLabel}
+            </label>
+            <input
+              className="w-full mt-1 rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
+              id="listing-price"
+              ref={priceRef}
+              required={listingType !== "requests"}
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder={formConfig.pricePlaceholder}
+            />
           </div>
-        </div>
-        <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
-          <label
-            htmlFor="listing-price"
-            className="text-base w-full font-light tracking-tight text-[#737373] md:w-[30%] md:text-lg"
-          >
-            {formConfig.priceLabel}
-          </label>
-          <input
-            className="w-full rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
-            id="listing-price"
-            ref={priceRef}
-            required={listingType !== "requests"}
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder={formConfig.pricePlaceholder}
-          />
+          <div className="w-[50%] sm:w-[30%]">
+            <label
+              htmlFor="listing-currency"
+              className="text-base font-light tracking-tight text-[#737373] w-[30%] md:text-lg"
+            >
+              Currency*
+            </label>
+            <div className="mt-1 relative w-full md:flex-1">
+              <button
+                id="listing-currency"
+                type="button"
+                className="w-full flex justify-between items-center ring-2 ring-gray-300 rounded-md bg-white text-left p-2 shadow text-base active:ring-brand active:ring-opacity-60 active:shadow-lg active:shadow-brand/10"
+                onClick={() => setIsCurrencyMenuOpen((prev) => !prev)}
+              >
+                {selectedCurrency}
+                {isCurrencyMenuOpen ? <FaChevronUp /> : <FaChevronDown />}
+              </button>
+              {isCurrencyMenuOpen && (
+                <div
+                  ref={menuRef}
+                  className="absolute w-full rounded shadow-lg top-10 text-base bg-white mt-3 z-10"
+                >
+                  {currencies.map((currency) => (
+                    <div
+                      key={currency.id}
+                      className="cursor-pointer hover:bg-gray-100 p-2 active:bg-brand active:text-white"
+                      onClick={() => handleClickCurrencies(currency.name)}
+                    >
+                      <p>{currency.name}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         {formConfig.additionalFields.map((field, index) => (
           <div
@@ -751,7 +758,7 @@ const ListingForm = ({
               className="w-full rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
               id={`listing-${field.label.toLowerCase()}`}
               ref={field.ref}
-              required
+              required={field.required}
               type={field.type}
               placeholder={field.placeholder}
             />
