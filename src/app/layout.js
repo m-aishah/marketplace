@@ -18,7 +18,7 @@ const geistMono = localFont({
 });
 
 export const metadata = {
-  title: "Marketplace",
+  title: "FindAll",
   description: "Student marketplace, Apartments, Products, Services",
 };
 

@@ -356,12 +356,16 @@ const ListingForm = ({
       if (listingType === "apartments") {
         bedroomsRef.current.value = listingData.bedrooms || "";
         bathroomsRef.current.value = listingData.bathrooms || "";
+        paymentTypeRef.current.value = listingData.paymentType || "";
       } else if (listingType === "products") {
         conditionRef.current.value = listingData.condition || "";
+        brandRef.current.value = listingData.brand || "";
       } else if (listingType === "services") {
         serviceRef.current.value = listingData.service || "";
         serviceTitleRef.current.value = listingData.serviceTitle || "";
         serviceDetailsRef.current.value = listingData.serviceDetails || "";
+        servicePaymentTypeRef.current.value =
+          listingData.servicePaymentType || "";
       }
     }
   }, [listingData, listingType]);
@@ -394,12 +398,16 @@ const ListingForm = ({
       if (listingType === "apartments") {
         newListingData.bedrooms = parseInt(bedroomsRef.current.value);
         newListingData.bathrooms = parseInt(bathroomsRef.current.value);
+        newListingData.paymentType = paymentTypeRef.current.value;
       } else if (listingType === "products") {
         newListingData.condition = conditionRef.current.value;
+        newListingData.brand = brandRef.current.value;
       } else if (listingType === "services") {
         newListingData.service = serviceRef.current.value;
         newListingData.serviceTitle = serviceTitleRef.current.value;
         newListingData.serviceDetails = serviceDetailsRef.current.value;
+        newListingData.servicePaymentTypeRef =
+          servicePaymentTypeRef.current.value;
       }
 
       let listingId;

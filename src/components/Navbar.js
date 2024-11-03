@@ -58,7 +58,7 @@ const Navbar = () => {
           <Image src="/images/logo.svg" alt="Logo" width={40} height={40} />
           <div className="flex items-baseline">
             <h1 className="ml-2 text-lg leading-tight font-bold tracking-tighter md:text-3xl">
-              Marketplace
+              FindAll
             </h1>
             <div className="ml-1 w-1 h-1 rounded-full bg-gradient-to-r from-[#FF7F50] to-[#98FF98] md:w-2 md:h-2"></div>
           </div>

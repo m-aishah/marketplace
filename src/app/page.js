@@ -77,9 +77,7 @@ export default function HomePage() {
               {title}
             </h2>
           </Link>
-          <Button href={`/${category.toLowerCase()}`} variant="blue">
-            View More
-          </Button>
+          <Button href={`/${category.toLowerCase()}`}>View More</Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -136,8 +134,8 @@ export default function HomePage() {
                 className="w-full pl-4 pr-4 py-2"
               />
             </div>
-            <Button onClick={handleSearch} variant="blue">
-              <FiSearch className="text-white mr-2 h-4 w-4 cursor-pointer" />
+            <Button onClick={handleSearch}>
+              <FiSearch className="text-black mr-2 h-4 w-4 cursor-pointer" />
               Search
             </Button>
           </div>
@@ -145,9 +143,9 @@ export default function HomePage() {
             <h2 className="text-2xl sm:text-3xl font-bold">
               Featured Listings
             </h2>
-            <Button onClick={() => setIsModalOpen(true)}>
-              <FiPlus className="mr-2 lg:h-5 lg:w-5 text-black" />
-              <span className="text-black">New Listing</span>
+            <Button onClick={() => setIsModalOpen(true)} variant="blue">
+              <FiPlus className="mr-2 lg:h-5 lg:w-5 text-white" />
+              <span className="text-white">New Listing</span>
             </Button>
           </div>
           {renderSection("apartments", "Apartments")}
