@@ -13,6 +13,7 @@ import {
 import { auth } from '../../firebase'; 
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
+import { Button } from '@/components/Button';
 
 function Login() {
     const [email, setEmail] = useState('');
