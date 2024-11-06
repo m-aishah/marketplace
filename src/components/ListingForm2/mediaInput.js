@@ -4,12 +4,13 @@ import { MediaDisplayBox } from "./mediaDisplayBox";
 
 const MediaInput = ({
   images,
-  videos,
+  // videos,
   setImages,
-  setVideos,
+  // setVideos,
   setDeletedImages,
-  setDeletedVideos,
+  // setDeletedVideos,
   handleFileUpload,
+  listingData,
 }) => {
   const fileInputRef = useRef(null);
 
@@ -23,18 +24,19 @@ const MediaInput = ({
     <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
       <MediaDisplayBox
         images={images}
-        videos={videos}
+        // videos={videos}
         setImages={setImages}
-        setVideos={setVideos}
+        // setVideos={setVideos}
         setDeletedImages={setDeletedImages}
-        setDeletedVideos={setDeletedVideos}
+        // setDeletedVideos={setDeletedVideos}
+        listingData={listingData}
       />
       <input
         type="file"
         ref={fileInputRef}
         className="hidden"
         multiple
-        accept="image/*, video/*"
+        accept="image/*" // , video/*
         onChange={handleFileUpload}
       />
       <div className="mt-5 self-end">

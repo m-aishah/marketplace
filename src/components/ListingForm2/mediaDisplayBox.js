@@ -5,11 +5,11 @@ import { toast } from "react-toastify";
 
 export const MediaDisplayBox = ({
   images,
-  videos,
+  //   videos,
   setImages,
-  setVideos,
+  //   setVideos,
   setDeletedImages,
-  setDeletedVideos,
+  //   setDeletedVideos,
   listingData,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,26 +55,26 @@ export const MediaDisplayBox = ({
     }
   };
 
-  const handleVideoChange = (e, index) => {
-    e.preventDefault();
-    const file = e.target.files[0];
-    const isValidSize = file.size <= 50 * 1024 * 1024;
-    const isValidType = file.type === "video/mp4" || file.type === "video/avi";
+  //   const handleVideoChange = (e, index) => {
+  //     e.preventDefault();
+  //     const file = e.target.files[0];
+  //     const isValidSize = file.size <= 50 * 1024 * 1024;
+  //     const isValidType = file.type === "video/mp4" || file.type === "video/avi";
 
-    if (!isValidSize || !isValidType) {
-      const errorMessages = `${
-        !isValidSize ? "Video must be less than 50MB.\n" : ""
-      }${!isValidType ? "Only MP4 and AVI formats are allowed.\n" : ""}`;
-      toast.error(errorMessages);
-    } else {
-      const updatedVideos = [...videos];
-      updatedVideos[index] = {
-        url: URL.createObjectURL(file),
-        file,
-      };
-      setVideos(updatedVideos);
-    }
-  };
+  //     if (!isValidSize || !isValidType) {
+  //       const errorMessages = `${
+  //         !isValidSize ? "Video must be less than 50MB.\n" : ""
+  //       }${!isValidType ? "Only MP4 and AVI formats are allowed.\n" : ""}`;
+  //       toast.error(errorMessages);
+  //     } else {
+  //       const updatedVideos = [...videos];
+  //       updatedVideos[index] = {
+  //         url: URL.createObjectURL(file),
+  //         file,
+  //       };
+  //       setVideos(updatedVideos);
+  //     }
+  //   };
 
   const handleDeleteImage = (index, e) => {
     e.preventDefault();
@@ -89,30 +89,30 @@ export const MediaDisplayBox = ({
     }
   };
 
-  const handleDeleteVideo = (index, e) => {
-    e.preventDefault();
-    const videoToDelete = videos[index];
+  //   const handleDeleteVideo = (index, e) => {
+  //     e.preventDefault();
+  //     const videoToDelete = videos[index];
 
-    if (videoToDelete.file) {
-      setVideos((prevVideos) => prevVideos.filter((_, i) => i !== index));
-    } else {
-      const videoToDeleteUrl = listingData.videoUrls[index];
-      setDeletedVideos((prevDeleted) => [...prevDeleted, videoToDeleteUrl]);
-      setVideos((prevVideos) => prevVideos.filter((_, i) => i !== index));
-    }
-  };
+  //     if (videoToDelete.file) {
+  //       setVideos((prevVideos) => prevVideos.filter((_, i) => i !== index));
+  //     } else {
+  //       const videoToDeleteUrl = listingData.videoUrls[index];
+  //       setDeletedVideos((prevDeleted) => [...prevDeleted, videoToDeleteUrl]);
+  //       setVideos((prevVideos) => prevVideos.filter((_, i) => i !== index));
+  //     }
+  //   };
 
   return (
     <div>
       <div className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors">
         <div className="flex gap-4 flex-wrap items-center justify-center">
-          {images.length === 0 && videos.length === 0 ? (
+          {images.length === 0 ? ( // && videos.length === 0
             <div className="text-center" onClick={triggerFileInput}>
               <p className="text-gray-500 text-sm">
-                Click the icon to upload images and videos here.
+                Click the icon to upload images.
               </p>
               <p className="text-xs text-gray-400">
-                JPEG or PNG only (Max: 10MB) MP4 or AVI only (Max: 50MB)
+                JPEG or PNG only (Max: 10MB)
               </p>
             </div>
           ) : (
@@ -154,7 +154,7 @@ export const MediaDisplayBox = ({
                 </div>
               ))}
 
-              {videos.map((video, index) => (
+              {/* {videos.map((video, index) => (
                 <div key={index} className="relative group w-[150px] h-[150px]">
                   <video
                     autoPlay
@@ -189,7 +189,7 @@ export const MediaDisplayBox = ({
                     <FaExpandAlt className="text-white" />
                   </button>
                 </div>
-              ))}
+              ))} */}
             </>
           )}
         </div>
@@ -215,7 +215,7 @@ export const MediaDisplayBox = ({
                 className="object-contain"
               />
             )}
-            {modalMediaType === "video" && (
+            {/* {modalMediaType === "video" && (
               <video
                 autoPlay
                 muted
@@ -226,7 +226,7 @@ export const MediaDisplayBox = ({
                 width="800"
                 height="800"
               />
-            )}
+            )} */}
           </div>
         </div>
       )}

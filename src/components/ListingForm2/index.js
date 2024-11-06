@@ -22,9 +22,9 @@ const ListingForm = ({
 
   const [formMode, setFormMode] = useState(listingData ? "edit" : "create");
   const [images, setImages] = useState(listingData?.imageUrls || []);
-  const [videos, setVideos] = useState(listingData?.videoUrls || []);
-  const [deletedVideos, setDeletedVideos] = useState([]);
   const [deletedImages, setDeletedImages] = useState([]);
+  // const [videos, setVideos] = useState(listingData?.videoUrls || []);
+  // const [deletedVideos, setDeletedVideos] = useState([]);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCurrencyMenuOpen, setIsCurrencyMenuOpen] = useState(false);
@@ -45,44 +45,39 @@ const ListingForm = ({
     refs[field.refName] = useRef(null);
     return refs;
   }, {});
-  const fileInputRef = useRef(null);
 
-  const triggerFileInput = () => {
-    fileInputRef.current.click();
-  };
+  // const handleVideoUpload = (e) => {
+  //   const files = Array.from(e.target.files);
+  //   const validFiles = [];
+  //   let errorMessages = "";
 
-  const handleVideoUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const validFiles = [];
-    let errorMessages = "";
+  //   files.forEach((file) => {
+  //     const isValidSize = file.size <= 50 * 1024 * 1024;
+  //     const isValidType =
+  //       file.type === "video/mp4" || file.type === "video/avi";
 
-    files.forEach((file) => {
-      const isValidSize = file.size <= 50 * 1024 * 1024;
-      const isValidType =
-        file.type === "video/mp4" || file.type === "video/avi";
+  //     if (!isValidSize) {
+  //       errorMessages += "Video must be less than 50MB.\n";
+  //     }
+  //     if (!isValidType) {
+  //       errorMessages += "Only MP4 and AVI formats are allowed.\n";
+  //     }
 
-      if (!isValidSize) {
-        errorMessages += "Video must be less than 50MB.\n";
-      }
-      if (!isValidType) {
-        errorMessages += "Only MP4 and AVI formats are allowed.\n";
-      }
+  //     if (isValidSize && isValidType) {
+  //       validFiles.push(file);
+  //     }
+  //   });
 
-      if (isValidSize && isValidType) {
-        validFiles.push(file);
-      }
-    });
-
-    if (errorMessages) {
-      toast.error(errorMessages);
-    } else {
-      const newVideos = validFiles.map((file) => ({
-        url: URL.createObjectURL(file),
-        file,
-      }));
-      setVideos((prevImages) => [...prevImages, ...newVideos]);
-    }
-  };
+  //   if (errorMessages) {
+  //     toast.error(errorMessages);
+  //   } else {
+  //     const newVideos = validFiles.map((file) => ({
+  //       url: URL.createObjectURL(file),
+  //       file,
+  //     }));
+  //     setVideos((prevImages) => [...prevImages, ...newVideos]);
+  //   }
+  // };
 
   const handleFileUpload = (e) => {
     const selectedFiles = Array.from(e.target.files);
@@ -97,9 +92,9 @@ const ListingForm = ({
       handleImageUpload(e);
     }
 
-    if (videoFiles.length > 0) {
-      handleVideoUpload(e);
-    }
+    // if (videoFiles.length > 0) {
+    //   handleVideoUpload(e);
+    // }
   };
 
   const handleImageUpload = (e) => {
@@ -231,29 +226,29 @@ const ListingForm = ({
         listingId,
         "image"
       );
-      const newVideoUrls = await uploadMediaFiles(
-        videos,
-        user.uid,
-        listingId,
-        "video"
-      );
+      // const newVideoUrls = await uploadMediaFiles(
+      //   videos,
+      //   user.uid,
+      //   listingId,
+      //   "video"
+      // );
 
       // Merge newly uploaded URLs with existing ones
       let imageUrls = [...(listingData?.imageUrls || []), ...newImageUrls];
-      let videoUrls = [...(listingData?.videoUrls || []), ...newVideoUrls];
+      // let videoUrls = [...(listingData?.videoUrls || []), ...newVideoUrls];
 
       // Remove deleted media URLs from Firestore if necessary
       if (deletedImages.length) {
         await deleteMediaFromStorage(deletedImages);
         imageUrls = imageUrls.filter((url) => !deletedImages.includes(url));
       }
-      if (deletedVideos.length) {
-        await deleteMediaFromStorage(deletedVideos);
-        videoUrls = videoUrls.filter((url) => !deletedVideos.includes(url));
-      }
+      // if (deletedVideos.length) {
+      //   await deleteMediaFromStorage(deletedVideos);
+      //   videoUrls = videoUrls.filter((url) => !deletedVideos.includes(url));
+      // }
 
       // Update Firestore with the final media URLs
-      await saveListingData({ imageUrls, videoUrls }, "edit", listingId);
+      await saveListingData({ imageUrls }, "edit", listingId); //,  videoUrls
 
       toast.success(
         `${formConfig.title} ${
@@ -280,19 +275,20 @@ const ListingForm = ({
       <div className="w-full gap-2 flex flex-col p-5 bg-[#FAFAFA] rounded-t-lg md:flex-row md:gap-0">
         <div className="w-full">
           <p className="text-[#737373] text-base font-light md:text-lg">
-            {formConfig.title} Picture and (or) Video
+            {formConfig.title} Picture(s)
           </p>
         </div>
       </div>
 
       <MediaInput
         images={images}
-        videos={videos}
+        // videos={videos}
         setImages={setImages}
-        setVideos={setVideos}
+        // setVideos={setVideos}
         setDeletedImages={setDeletedImages}
-        setDeletedVideos={setDeletedVideos}
+        // setDeletedVideos={setDeletedVideos}
         handleFileUpload={handleFileUpload}
+        listingData={listingData}
       />
 
       <div className="w-full bg-[#FAFAFA] flex flex-col items-center gap-4 mb-4 p-5 rounded-lg">
@@ -340,7 +336,7 @@ const ListingForm = ({
             ref={locationRef}
             required
             type="text"
-            placeholder="e.g. 123 Main St, City, State"
+            placeholder={formConfig.locationPlaceholder}
           />
         </div>
         <div className="w-full flex">
