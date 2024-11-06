@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, createRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { FaChevronUp, FaChevronDown, FaUpload } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -41,10 +41,14 @@ const ListingForm = ({
   const descriptionRef = useRef(null);
   const priceRef = useRef(null);
   const locationRef = useRef(null);
-  const additionalRefs = formConfig.additionalFields.reduce((refs, field) => {
-    refs[field.refName] = useRef(null);
-    return refs;
-  }, {});
+
+  // Initialize additionalRefs as an object with refs for each additional field
+  const additionalRefs = useMemo(() => {
+    return formConfig.additionalFields.reduce((refs, field) => {
+      refs[field.refName] = React.createRef();
+      return refs;
+    }, {});
+  }, [formConfig.additionalFields]);
 
   // const handleVideoUpload = (e) => {
   //   const files = Array.from(e.target.files);
