@@ -361,11 +361,7 @@ const ListingForm = ({
         conditionRef.current.value = listingData.condition || "";
         brandRef.current.value = listingData.brand || "";
       } else if (listingType === "services") {
-        serviceRef.current.value = listingData.service || "";
-        serviceTitleRef.current.value = listingData.serviceTitle || "";
-        serviceDetailsRef.current.value = listingData.serviceDetails || "";
-        servicePaymentTypeRef.current.value =
-          listingData.servicePaymentType || "";
+        servicePaymentTypeRef.current.value = listingData.paymentType || "";
       }
     }
   }, [listingData, listingType]);
@@ -403,11 +399,7 @@ const ListingForm = ({
         newListingData.condition = conditionRef.current.value;
         newListingData.brand = brandRef.current.value;
       } else if (listingType === "services") {
-        newListingData.service = serviceRef.current.value;
-        newListingData.serviceTitle = serviceTitleRef.current.value;
-        newListingData.serviceDetails = serviceDetailsRef.current.value;
-        newListingData.servicePaymentTypeRef =
-          servicePaymentTypeRef.current.value;
+        newListingData.paymentType = servicePaymentTypeRef.current.value;
       }
 
       let listingId;
