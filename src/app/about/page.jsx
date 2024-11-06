@@ -10,7 +10,7 @@ function About() {
       <div className="bg-white shadow-lg rounded-lg p-8 border border-gray-200">
         <p className="text-lg text-gray-700 mb-4 text-center">
           Welcome to our platform—the first of a suite of applications designed to
-          make life easier for students and residents of TRNC. Here, you'll find a
+          make life easier for students and residents of TRNC. Here, you&apos;ll find a
           community-driven space that connects people and provides solutions.
         </p>
         <p className="text-lg text-gray-700 mb-4 text-center">
