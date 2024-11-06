@@ -1,20 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  FaChevronUp,
-  FaChevronDown,
-  FaUpload,
-  FaTrash,
-  FaExpand,
-  FaTimes,
-} from "react-icons/fa";
+import { FaChevronUp, FaChevronDown, FaUpload } from "react-icons/fa";
 import { toast } from "react-toastify";
 import {
   saveListingData,
   uploadMediaFiles,
   deleteMediaFromStorage,
 } from "@/utils/firestoreUtils";
+import { getFormConfig } from "./formConfig";
+import MediaInput from "./mediaInput";
 
 const ListingForm = ({
   user,
@@ -24,14 +18,14 @@ const ListingForm = ({
   listingData,
 }) => {
   const router = useRouter();
+  const formConfig = getFormConfig(listingType);
+
   const [formMode, setFormMode] = useState(listingData ? "edit" : "create");
   const [images, setImages] = useState(listingData?.imageUrls || []);
   const [videos, setVideos] = useState(listingData?.videoUrls || []);
   const [deletedVideos, setDeletedVideos] = useState([]);
   const [deletedImages, setDeletedImages] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMedia, setModalMedia] = useState(null);
-  const [modalMediaType, setModalMediaType] = useState(null);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCurrencyMenuOpen, setIsCurrencyMenuOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(
@@ -46,104 +40,12 @@ const ListingForm = ({
   const nameRef = useRef(null);
   const descriptionRef = useRef(null);
   const priceRef = useRef(null);
-  const brandRef = useRef(null);
   const locationRef = useRef(null);
-  const paymentTypeRef = useRef(null);
-  const servicePaymentTypeRef = useRef(null);
-  const bedroomsRef = useRef(null);
-  const bathroomsRef = useRef(null);
-  const conditionRef = useRef(null);
+  const additionalRefs = formConfig.additionalFields.reduce((refs, field) => {
+    refs[field.refName] = useRef(null);
+    return refs;
+  }, {});
   const fileInputRef = useRef(null);
-
-  const getFormConfig = () => {
-    switch (listingType) {
-      case "apartments":
-        return {
-          title: "Apartment",
-          namePlaceholder: "e.g. Cozy Studio in Downtown",
-          descriptionPlaceholder:
-            "Describe the apartment, its features, and location",
-          pricePlaceholder: "Rent amount",
-          priceLabel: "Rent*",
-          additionalFields: [
-            {
-              ref: paymentTypeRef,
-              label: "Payment type*",
-              type: "text",
-              placeholder: "e.g Daily, Weekly, Monthly, ...",
-              required: true,
-            },
-            {
-              ref: bedroomsRef,
-              label: "Bedrooms*",
-              type: "number",
-              placeholder: "Number of bedrooms",
-              required: true,
-            },
-            {
-              ref: bathroomsRef,
-              label: "Bathrooms*",
-              type: "number",
-              placeholder: "Number of bathrooms",
-              required: true,
-            },
-          ],
-        };
-      case "products":
-        return {
-          title: "Product",
-          namePlaceholder: "e.g. Vintage Watch",
-          descriptionPlaceholder:
-            "Describe the item, its condition, and any unique features",
-          pricePlaceholder: "Price",
-          priceLabel: "Price*",
-          additionalFields: [
-            {
-              ref: conditionRef,
-              label: "Condition*",
-              type: "text",
-              placeholder: "e.g. New, Used, Like New",
-              required: true,
-            },
-            {
-              ref: brandRef,
-              label: "Brand",
-              type: "text",
-              placeholder: "e.g Apple, Samsung",
-              required: false,
-            },
-          ],
-        };
-      case "services":
-        return {
-          title: "Service",
-          namePlaceholder: "e.g. Web Development",
-          descriptionPlaceholder: "Describe your service and experience",
-
-          pricePlaceholder: "Hourly rate or fixed price",
-          priceLabel: "Price*",
-          additionalFields: [
-            {
-              ref: servicePaymentTypeRef,
-              label: "Payment Type*",
-              type: "text",
-              placeholder: "e.g one-time, hourly, ...",
-              required: true,
-            },
-          ],
-        };
-      default:
-        return {
-          title: "Request",
-          namePlaceholder: "e.g. Laptop, Tutor",
-          descriptionPlaceholder: "Describe what you're looking for in detail",
-          pricePlaceholder: "Your budget",
-          priceLabel: "Budget*",
-          additionalFields: [],
-        };
-    }
-  };
-  const formConfig = getFormConfig();
 
   const triggerFileInput = () => {
     fileInputRef.current.click();
@@ -234,84 +136,6 @@ const ListingForm = ({
     }
   };
 
-  const handleImageChange = (e, index) => {
-    const file = e.target.files[0];
-    const isValidSize = file.size <= 10 * 1024 * 1024;
-    const isValidType = file.type === "image/jpeg" || file.type === "image/png";
-
-    if (!isValidSize || !isValidType) {
-      const errorMessages = `${
-        !isValidSize ? "Image must be less than 10MB.\n" : ""
-      }${!isValidType ? "Only JPEG and PNG formats are allowed.\n" : ""}`;
-      toast.error(errorMessages);
-    } else {
-      const updatedImages = [...images];
-      updatedImages[index] = {
-        url: URL.createObjectURL(file),
-        file,
-      };
-      setImages(updatedImages);
-    }
-  };
-
-  const handleVideoChange = (e, index) => {
-    const file = e.target.files[0];
-    const isValidSize = file.size <= 50 * 1024 * 1024;
-    const isValidType = file.type === "video/mp4" || file.type === "video/avi";
-
-    if (!isValidSize || !isValidType) {
-      const errorMessages = `${
-        !isValidSize ? "Video must be less than 50MB.\n" : ""
-      }${!isValidType ? "Only MP4 and AVI formats are allowed.\n" : ""}`;
-      toast.error(errorMessages);
-    } else {
-      const updatedVideos = [...videos];
-      updatedVideos[index] = {
-        url: URL.createObjectURL(file),
-        file,
-      };
-      setVideos(updatedVideos);
-    }
-  };
-
-  const handleDeleteImage = (index) => {
-    const imageToDelete = images[index];
-
-    if (imageToDelete.file) {
-      // Remove newly uploaded image from state
-      setImages((prevImages) => prevImages.filter((_, i) => i !== index));
-    } else {
-      // Track the URL to be deleted from Firestore Storage
-      const imageToDeleteUrl = listingData.imageUrls[index];
-      setDeletedImages((prevDeleted) => [...prevDeleted, imageToDeleteUrl]);
-      setImages((prevImages) => prevImages.filter((_, i) => i !== index));
-    }
-  };
-
-  const handleDeleteVideo = (index) => {
-    const videoToDelete = videos[index];
-
-    if (videoToDelete.file) {
-      setVideos((prevVideos) => prevVideos.filter((_, i) => i !== index));
-    } else {
-      const videoToDeleteUrl = listingData.videoUrls[index];
-      setDeletedVideos((prevDeleted) => [...prevDeleted, videoToDeleteUrl]);
-      setVideos((prevVideos) => prevVideos.filter((_, i) => i !== index));
-    }
-  };
-
-  const openModal = (media, type) => {
-    setModalMedia(media);
-    setModalMediaType(type);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalMedia(null);
-    setModalMediaType(null);
-    setIsModalOpen(false);
-  };
-
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
@@ -346,23 +170,20 @@ const ListingForm = ({
   useEffect(() => {
     if (listingData) {
       setFormMode("edit");
+
       nameRef.current.value = listingData.name || "";
       descriptionRef.current.value = listingData.description || "";
       priceRef.current.value = listingData.price || "";
       locationRef.current.value = listingData.location || "";
 
-      if (listingType === "apartments") {
-        bedroomsRef.current.value = listingData.bedrooms || "";
-        bathroomsRef.current.value = listingData.bathrooms || "";
-        paymentTypeRef.current.value = listingData.paymentType || "";
-      } else if (listingType === "products") {
-        conditionRef.current.value = listingData.condition || "";
-        brandRef.current.value = listingData.brand || "";
-      } else if (listingType === "services") {
-        servicePaymentTypeRef.current.value = listingData.paymentType || "";
-      }
+      formConfig.additionalFields.forEach((field) => {
+        const additionalRef = additionalRefs[field.refName];
+        if (additionalRef && listingData[field.title]) {
+          additionalRef.current.value = listingData[field.title];
+        }
+      });
     }
-  }, [listingData, listingType]);
+  }, [listingData, listingType, formConfig, additionalRefs]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -391,16 +212,10 @@ const ListingForm = ({
       };
 
       // Add specific fields based on listing type
-      if (listingType === "apartments") {
-        newListingData.bedrooms = parseInt(bedroomsRef.current.value);
-        newListingData.bathrooms = parseInt(bathroomsRef.current.value);
-        newListingData.paymentType = paymentTypeRef.current.value;
-      } else if (listingType === "products") {
-        newListingData.condition = conditionRef.current.value;
-        newListingData.brand = brandRef.current.value;
-      } else if (listingType === "services") {
-        newListingData.paymentType = servicePaymentTypeRef.current.value;
-      }
+      formConfig.additionalFields.forEach((field) => {
+        newListingData[field.title] =
+          additionalRefs[field.refName].current.value;
+      });
 
       // Save listing data to Firestore and retrieve listing ID
       const listingId = await saveListingData(
@@ -470,151 +285,17 @@ const ListingForm = ({
         </div>
       </div>
 
-      <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
-        <div className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors">
-          <div className="flex gap-4 flex-wrap items-center justify-center">
-            {images.length === 0 && videos.length === 0 ? (
-              <div className="text-center" onClick={triggerFileInput}>
-                <p className="text-gray-500 text-sm">
-                  Click the icon to upload images and videos here.
-                </p>
-                <p className="text-xs text-gray-400">
-                  JPEG or PNG only (Max: 10MB) MP4 or AVI only (Max: 50MB)
-                </p>
-              </div>
-            ) : (
-              <>
-                {images.map((image, index) => (
-                  <div
-                    key={index}
-                    className="relative group w-[150px] h-[150px]"
-                  >
-                    <Image
-                      src={image.file ? image.url : image}
-                      alt={`Upload ${index}`}
-                      width={150}
-                      height={150}
-                      className="rounded-lg w-full h-full object-cover"
-                      onClick={triggerFileInput}
-                    />
-                    <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-white text-sm">Change Image</p>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-                      onChange={(e) => handleImageChange(e, index)}
-                    />
-                    <button
-                      className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
-                      onClick={() => handleDeleteImage(index)}
-                    >
-                      <FaTrash className="text-white" />
-                    </button>
-                    <button
-                      className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
-                      onClick={() => openModal(image.url, "image")}
-                    >
-                      <FaExpand className="text-white" />
-                    </button>
-                  </div>
-                ))}
-
-                {videos.map((video, index) => (
-                  <div
-                    key={index}
-                    className="relative group w-[150px] h-[150px]"
-                  >
-                    <video
-                      autoPlay
-                      muted
-                      loop
-                      src={video.file ? video.url : video}
-                      alt={`Upload ${index}`}
-                      width={150}
-                      height={150}
-                      className="rounded-lg w-full h-full object-cover"
-                      onClick={triggerFileInput}
-                    />
-                    <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-white text-sm">Change Video</p>
-                    </div>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-                      onChange={(e) => handleVideoChange(e, index)}
-                    />
-                    <button
-                      className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
-                      onClick={() => handleDeleteVideo(index)}
-                    >
-                      <FaTrash className="text-white" />
-                    </button>
-                    <button
-                      className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
-                      onClick={() => openModal(video.url, "video")}
-                    >
-                      <FaExpand className="text-white" />
-                    </button>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
-
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          multiple
-          accept="image/*, video/*"
-          onChange={handleFileUpload}
-        />
-
-        <div className="mt-5 self-end">
-          <FaUpload
-            className="text-brand text-base mb-2 cursor-pointer"
-            onClick={triggerFileInput}
-          />
-        </div>
-      </div>
+      <MediaInput
+        images={images}
+        videos={videos}
+        setImages={setImages}
+        setVideos={setVideos}
+        setDeletedImages={setDeletedImages}
+        setDeletedVideos={setDeletedVideos}
+        handleFileUpload={handleFileUpload}
+      />
 
       <div className="w-full bg-[#FAFAFA] flex flex-col items-center gap-4 mb-4 p-5 rounded-lg">
-        {/* Modal to show full images */}
-        {isModalOpen && (
-          <div className="fixed w-full top-0 left-0 min-h-screen bg-black/95 z-50 flex flex-col justify-center items-center">
-            {modalMedia && (
-              <div className="flex flex-col gap-2 max-w-[1000px] w-full p-4">
-                <div onClick={closeModal} className="flex justify-end">
-                  <FaTimes className="text-lg cursor-pointer text-white" />
-                </div>
-                {modalMediaType === "image" ? (
-                  <Image
-                    src={modalMedia}
-                    alt="Full image"
-                    width={0}
-                    height={0}
-                    className="w-full h-auto object-cover rounded-lg shadow-lg shadow-white/10"
-                  />
-                ) : (
-                  <video
-                    controls
-                    autoPlay
-                    muted
-                    loop
-                    src={modalMedia}
-                    alt="Full videos"
-                    className="w-full h-auto object-cover rounded-lg shadow-white/10"
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
           <label
             htmlFor="listing-name"
@@ -723,15 +404,15 @@ const ListingForm = ({
             className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row"
           >
             <label
-              htmlFor={`listing-${field.label.toLowerCase()}`}
+              htmlFor={`listing-${field.title}`}
               className="text-base w-full font-light tracking-tight text-[#737373] md:w-[30%] md:text-lg"
             >
               {field.label}
             </label>
             <input
               className="w-full rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
-              id={`listing-${field.label.toLowerCase()}`}
-              ref={field.ref}
+              id={`listing-${field.title}`}
+              ref={additionalRefs[field.refName]}
               required={field.required}
               type={field.type}
               placeholder={field.placeholder}

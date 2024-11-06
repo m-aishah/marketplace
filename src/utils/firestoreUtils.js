@@ -181,6 +181,42 @@ export const uploadListingVideoToStorage = async (
   return getDownloadURL(storageRef);
 };
 
+export const saveListingData = async (listingData, formMode, listingId) => {
+  if (formMode === "edit") {
+    await updateDoc(doc(db, "listings", listingId), listingData);
+    return listingId;
+  } else {
+    const docRef = await addDoc(collection(db, "listings"), listingData);
+    return docRef.id;
+  }
+};
+
+// Uploads images or videos to storage
+export const uploadMediaFiles = async (mediaArray, userId, listingId, type) => {
+  const urls = [];
+  for (let i = 0; i < mediaArray.length; i++) {
+    const media = mediaArray[i];
+    if (media.file) {
+      const uploadFn =
+        type === "image"
+          ? uploadListingImageToStorage
+          : uploadListingVideoToStorage;
+      const url = await uploadFn(media.file, userId, listingId, i);
+      if (url) urls.push(url);
+    }
+  }
+  return urls;
+};
+
+// Deletes media from storage
+export const deleteMediaFromStorage = async (mediaUrls) => {
+  const deletePromises = mediaUrls.map(async (url) => {
+    const mediaRef = ref(storage, url);
+    await deleteObject(mediaRef);
+  });
+  await Promise.all(deletePromises);
+};
+
 export const fetchPaginatedListingsByListingType = async (
   listingType,
   limitCount = 9,

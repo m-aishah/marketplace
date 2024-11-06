@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { getDoc, doc } from "firebase/firestore";
 import { db, auth } from "@/firebase";
-import ListingForm from "@/components/ListingForm";
+import ListingForm from "@/components/ListingForm2";
 import { useAuthState } from "react-firebase-hooks/auth";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import BackButton from "@/components/BackButton";
