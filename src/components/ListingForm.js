@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Modal } from "@/components/Modal";
 import {
   FaChevronUp,
   FaChevronDown,
@@ -10,31 +9,47 @@ import {
   FaExpand,
   FaTimes,
 } from "react-icons/fa";
-import { uploadListingImageToStorage } from "@/utils/firestoreUtils";
-import { db } from "@/firebase";
-import { addDoc, collection, updateDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
-import { ref, deleteObject } from "firebase/storage";
-import { storage } from "@/firebase";
+import {
+  saveListingData,
+  uploadMediaFiles,
+  deleteMediaFromStorage,
+} from "@/utils/firestoreUtils";
 
-const ListingForm = ({ user, categories, listingType, listingData }) => {
+const ListingForm = ({
+  user,
+  categories,
+  currencies,
+  listingType,
+  listingData,
+}) => {
   const router = useRouter();
   const [formMode, setFormMode] = useState(listingData ? "edit" : "create");
   const [images, setImages] = useState(listingData?.imageUrls || []);
+  const [videos, setVideos] = useState(listingData?.videoUrls || []);
+  const [deletedVideos, setDeletedVideos] = useState([]);
   const [deletedImages, setDeletedImages] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalImage, setModalImage] = useState(null);
+  const [modalMedia, setModalMedia] = useState(null);
+  const [modalMediaType, setModalMediaType] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCurrencyMenuOpen, setIsCurrencyMenuOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(
     listingData?.category || "Category"
   );
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    listingData?.currency || "Currency"
+  ); //confirm this code
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const menuRef = useRef(null);
   const nameRef = useRef(null);
   const descriptionRef = useRef(null);
   const priceRef = useRef(null);
+  const brandRef = useRef(null);
   const locationRef = useRef(null);
+  const paymentTypeRef = useRef(null);
+  const servicePaymentTypeRef = useRef(null);
   const bedroomsRef = useRef(null);
   const bathroomsRef = useRef(null);
   const conditionRef = useRef(null);
@@ -48,30 +63,33 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
           namePlaceholder: "e.g. Cozy Studio in Downtown",
           descriptionPlaceholder:
             "Describe the apartment, its features, and location",
-          pricePlaceholder: "Monthly rent",
-          priceLabel: "Rent per month*",
+          pricePlaceholder: "Rent amount",
+          priceLabel: "Rent*",
           additionalFields: [
             {
-              ref: locationRef,
-              label: "Location*",
+              ref: paymentTypeRef,
+              label: "Payment type*",
               type: "text",
-              placeholder: "e.g. 123 Main St, City, State",
+              placeholder: "e.g Daily, Weekly, Monthly, ...",
+              required: true,
             },
             {
               ref: bedroomsRef,
               label: "Bedrooms*",
               type: "number",
               placeholder: "Number of bedrooms",
+              required: true,
             },
             {
               ref: bathroomsRef,
               label: "Bathrooms*",
               type: "number",
               placeholder: "Number of bathrooms",
+              required: true,
             },
           ],
         };
-      case "goods":
+      case "products":
         return {
           title: "Product",
           namePlaceholder: "e.g. Vintage Watch",
@@ -85,17 +103,42 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
               label: "Condition*",
               type: "text",
               placeholder: "e.g. New, Used, Like New",
+              required: true,
+            },
+            {
+              ref: brandRef,
+              label: "Brand",
+              type: "text",
+              placeholder: "e.g Apple, Samsung",
+              required: false,
             },
           ],
         };
-      case "skills":
-      default:
+      case "services":
         return {
-          title: "Skill",
+          title: "Service",
           namePlaceholder: "e.g. Web Development",
-          descriptionPlaceholder: "Describe your skill and experience",
+          descriptionPlaceholder: "Describe your service and experience",
+
           pricePlaceholder: "Hourly rate or fixed price",
           priceLabel: "Price*",
+          additionalFields: [
+            {
+              ref: servicePaymentTypeRef,
+              label: "Payment Type*",
+              type: "text",
+              placeholder: "e.g one-time, hourly, ...",
+              required: true,
+            },
+          ],
+        };
+      default:
+        return {
+          title: "Request",
+          namePlaceholder: "e.g. Laptop, Tutor",
+          descriptionPlaceholder: "Describe what you're looking for in detail",
+          pricePlaceholder: "Your budget",
+          priceLabel: "Budget*",
           additionalFields: [],
         };
     }
@@ -106,7 +149,59 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
     fileInputRef.current.click();
   };
 
+  const handleVideoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const validFiles = [];
+    let errorMessages = "";
+
+    files.forEach((file) => {
+      const isValidSize = file.size <= 50 * 1024 * 1024;
+      const isValidType =
+        file.type === "video/mp4" || file.type === "video/avi";
+
+      if (!isValidSize) {
+        errorMessages += "Video must be less than 50MB.\n";
+      }
+      if (!isValidType) {
+        errorMessages += "Only MP4 and AVI formats are allowed.\n";
+      }
+
+      if (isValidSize && isValidType) {
+        validFiles.push(file);
+      }
+    });
+
+    if (errorMessages) {
+      toast.error(errorMessages);
+    } else {
+      const newVideos = validFiles.map((file) => ({
+        url: URL.createObjectURL(file),
+        file,
+      }));
+      setVideos((prevImages) => [...prevImages, ...newVideos]);
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    const imageFiles = selectedFiles.filter((file) =>
+      file.type.startsWith("image/")
+    );
+    const videoFiles = selectedFiles.filter((file) =>
+      file.type.startsWith("video/")
+    );
+
+    if (imageFiles.length > 0) {
+      handleImageUpload(e);
+    }
+
+    if (videoFiles.length > 0) {
+      handleVideoUpload(e);
+    }
+  };
+
   const handleImageUpload = (e) => {
+    // console.log(images);
     const files = Array.from(e.target.files);
     const validFiles = [];
     let errorMessages = "";
@@ -159,6 +254,26 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
     }
   };
 
+  const handleVideoChange = (e, index) => {
+    const file = e.target.files[0];
+    const isValidSize = file.size <= 50 * 1024 * 1024;
+    const isValidType = file.type === "video/mp4" || file.type === "video/avi";
+
+    if (!isValidSize || !isValidType) {
+      const errorMessages = `${
+        !isValidSize ? "Video must be less than 50MB.\n" : ""
+      }${!isValidType ? "Only MP4 and AVI formats are allowed.\n" : ""}`;
+      toast.error(errorMessages);
+    } else {
+      const updatedVideos = [...videos];
+      updatedVideos[index] = {
+        url: URL.createObjectURL(file),
+        file,
+      };
+      setVideos(updatedVideos);
+    }
+  };
+
   const handleDeleteImage = (index) => {
     const imageToDelete = images[index];
 
@@ -173,13 +288,27 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
     }
   };
 
-  const openModal = (image) => {
-    setModalImage(image);
+  const handleDeleteVideo = (index) => {
+    const videoToDelete = videos[index];
+
+    if (videoToDelete.file) {
+      setVideos((prevVideos) => prevVideos.filter((_, i) => i !== index));
+    } else {
+      const videoToDeleteUrl = listingData.videoUrls[index];
+      setDeletedVideos((prevDeleted) => [...prevDeleted, videoToDeleteUrl]);
+      setVideos((prevVideos) => prevVideos.filter((_, i) => i !== index));
+    }
+  };
+
+  const openModal = (media, type) => {
+    setModalMedia(media);
+    setModalMediaType(type);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
-    setModalImage(null);
+    setModalMedia(null);
+    setModalMediaType(null);
     setIsModalOpen(false);
   };
 
@@ -187,9 +316,18 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
     setIsMenuOpen(false);
   };
 
+  const closeMenuCurrency = () => {
+    setIsCurrencyMenuOpen(false);
+  };
+
   const handleClickCategories = (category) => {
     closeMenu();
     setSelectedOption(category);
+  };
+
+  const handleClickCurrencies = (currency) => {
+    closeMenuCurrency();
+    setSelectedCurrency(currency);
   };
 
   useEffect(() => {
@@ -211,12 +349,17 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
       nameRef.current.value = listingData.name || "";
       descriptionRef.current.value = listingData.description || "";
       priceRef.current.value = listingData.price || "";
+      locationRef.current.value = listingData.location || "";
+
       if (listingType === "apartments") {
-        locationRef.current.value = listingData.location || "";
         bedroomsRef.current.value = listingData.bedrooms || "";
         bathroomsRef.current.value = listingData.bathrooms || "";
-      } else if (listingType === "goods") {
+        paymentTypeRef.current.value = listingData.paymentType || "";
+      } else if (listingType === "products") {
         conditionRef.current.value = listingData.condition || "";
+        brandRef.current.value = listingData.brand || "";
+      } else if (listingType === "services") {
+        servicePaymentTypeRef.current.value = listingData.paymentType || "";
       }
     }
   }, [listingData, listingType]);
@@ -224,69 +367,78 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!user) return;
+
+    // Verify that both currency and category are selected
+    if (selectedCurrency === "Currency" || selectedOption === "Category") {
+      toast.error("Please select both a currency and a category.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // Prepare listing data based on listing type
       const newListingData = {
         userId: user.uid,
         name: nameRef.current.value,
         description: descriptionRef.current.value,
         price: parseFloat(priceRef.current.value),
         category: selectedOption,
+        currency: selectedCurrency,
         listingType,
+        location: locationRef.current.value,
         createdAt: new Date().toISOString(),
       };
 
-      // Handle apartment/goods specific fields
+      // Add specific fields based on listing type
       if (listingType === "apartments") {
-        newListingData.location = locationRef.current.value;
         newListingData.bedrooms = parseInt(bedroomsRef.current.value);
         newListingData.bathrooms = parseInt(bathroomsRef.current.value);
-      } else if (listingType === "goods") {
+        newListingData.paymentType = paymentTypeRef.current.value;
+      } else if (listingType === "products") {
         newListingData.condition = conditionRef.current.value;
+        newListingData.brand = brandRef.current.value;
+      } else if (listingType === "services") {
+        newListingData.paymentType = servicePaymentTypeRef.current.value;
       }
 
-      let listingId;
+      // Save listing data to Firestore and retrieve listing ID
+      const listingId = await saveListingData(
+        newListingData,
+        formMode,
+        listingData?.id
+      );
 
-      // Determine if we're editing or creating
-      if (formMode === "edit") {
-        listingId = listingData.id;
-        await updateDoc(doc(db, "listings", listingId), newListingData);
-      } else {
-        const docRef = await addDoc(collection(db, "listings"), newListingData);
-        listingId = docRef.id;
-      }
+      // Handle image and video uploads
+      const newImageUrls = await uploadMediaFiles(
+        images,
+        user.uid,
+        listingId,
+        "image"
+      );
+      const newVideoUrls = await uploadMediaFiles(
+        videos,
+        user.uid,
+        listingId,
+        "video"
+      );
 
-      let imageUrls = [...(listingData?.imageUrls || [])];
+      // Merge newly uploaded URLs with existing ones
+      let imageUrls = [...(listingData?.imageUrls || []), ...newImageUrls];
+      let videoUrls = [...(listingData?.videoUrls || []), ...newVideoUrls];
 
-      // Upload new images
-      for (let index = 0; index < images.length; index++) {
-        const image = images[index];
-        if (image.file) {
-          const imageUrl = await uploadListingImageToStorage(
-            image.file,
-            user.uid,
-            listingId,
-            index
-          );
-          imageUrls.push(imageUrl);
-        }
-      }
-
-      // Delete images from Firestore Storage if needed
-      if (deletedImages.length > 0) {
-        const promises = deletedImages.map(async (imageUrl) => {
-          const imageRef = ref(storage, imageUrl);
-          await deleteObject(imageRef);
-        });
-
-        // Wait for all deletion promises to complete
-        await Promise.all(promises);
+      // Remove deleted media URLs from Firestore if necessary
+      if (deletedImages.length) {
+        await deleteMediaFromStorage(deletedImages);
         imageUrls = imageUrls.filter((url) => !deletedImages.includes(url));
       }
+      if (deletedVideos.length) {
+        await deleteMediaFromStorage(deletedVideos);
+        videoUrls = videoUrls.filter((url) => !deletedVideos.includes(url));
+      }
 
-      // Update Firestore with the new imageUrls
-      await updateDoc(doc(db, "listings", listingId), { imageUrls });
+      // Update Firestore with the final media URLs
+      await saveListingData({ imageUrls, videoUrls }, "edit", listingId);
 
       toast.success(
         `${formConfig.title} ${
@@ -294,7 +446,7 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
         } successfully`
       );
 
-      // Handle UI after successful edit or creation
+      // Redirect to profile page after successful form submission
       router.push("/profile");
     } catch (error) {
       console.error("Error saving listing: ", error);
@@ -311,9 +463,9 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
   return (
     <form className="w-full" onSubmit={handleSubmit}>
       <div className="w-full gap-2 flex flex-col p-5 bg-[#FAFAFA] rounded-t-lg md:flex-row md:gap-0">
-        <div className="w-full md:w-[30%]">
+        <div className="w-full">
           <p className="text-[#737373] text-base font-light md:text-lg">
-            {formConfig.title} Picture
+            {formConfig.title} Picture and (or) Video
           </p>
         </div>
       </div>
@@ -321,48 +473,94 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
       <div className="w-full bg-[#FAFAFA] flex flex-col px-5 pb-5 mb-10 rounded-b-lg">
         <div className="w-full border-dashed border-2 border-gray-300 rounded-lg flex items-center justify-center p-5 cursor-pointer hover:border-brand transition-colors">
           <div className="flex gap-4 flex-wrap items-center justify-center">
-            {images.length === 0 ? (
-              <div className="text-center">
+            {images.length === 0 && videos.length === 0 ? (
+              <div className="text-center" onClick={triggerFileInput}>
                 <p className="text-gray-500 text-sm">
-                  Click or drag images here
+                  Click the icon to upload images and videos here.
                 </p>
                 <p className="text-xs text-gray-400">
-                  JPEG or PNG only (Max: 10MB)
+                  JPEG or PNG only (Max: 10MB) MP4 or AVI only (Max: 50MB)
                 </p>
               </div>
             ) : (
-              images.map((image, index) => (
-                <div key={index} className="relative group w-[150px] h-[150px]">
-                  <Image
-                    src={image.file ? image.url : image}
-                    alt={`Upload ${index}`}
-                    width={150}
-                    height={150}
-                    className="rounded-lg w-full h-full object-cover"
-                  />
-                  <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-white text-sm">Change Image</p>
+              <>
+                {images.map((image, index) => (
+                  <div
+                    key={index}
+                    className="relative group w-[150px] h-[150px]"
+                  >
+                    <Image
+                      src={image.file ? image.url : image}
+                      alt={`Upload ${index}`}
+                      width={150}
+                      height={150}
+                      className="rounded-lg w-full h-full object-cover"
+                      onClick={triggerFileInput}
+                    />
+                    <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white text-sm">Change Image</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => handleImageChange(e, index)}
+                    />
+                    <button
+                      className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
+                      onClick={() => handleDeleteImage(index)}
+                    >
+                      <FaTrash className="text-white" />
+                    </button>
+                    <button
+                      className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
+                      onClick={() => openModal(image.url, "image")}
+                    >
+                      <FaExpand className="text-white" />
+                    </button>
                   </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-                    onChange={(e) => handleImageChange(e, index)}
-                  />
-                  <button
-                    className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
-                    onClick={() => handleDeleteImage(index)}
+                ))}
+
+                {videos.map((video, index) => (
+                  <div
+                    key={index}
+                    className="relative group w-[150px] h-[150px]"
                   >
-                    <FaTrash className="text-white" />
-                  </button>
-                  <button
-                    className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
-                    onClick={() => openModal(image.url)}
-                  >
-                    <FaExpand className="text-white" />
-                  </button>
-                </div>
-              ))
+                    <video
+                      autoPlay
+                      muted
+                      loop
+                      src={video.file ? video.url : video}
+                      alt={`Upload ${index}`}
+                      width={150}
+                      height={150}
+                      className="rounded-lg w-full h-full object-cover"
+                      onClick={triggerFileInput}
+                    />
+                    <div className="absolute cursor-pointer rounded-lg inset-0 flex items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white text-sm">Change Video</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => handleVideoChange(e, index)}
+                    />
+                    <button
+                      className="absolute bottom-2 left-2 bg-brand p-2 rounded-full hover:opacity-80"
+                      onClick={() => handleDeleteVideo(index)}
+                    >
+                      <FaTrash className="text-white" />
+                    </button>
+                    <button
+                      className="absolute bottom-2 right-2 bg-brand p-2 rounded-full hover:opacity-80"
+                      onClick={() => openModal(video.url, "video")}
+                    >
+                      <FaExpand className="text-white" />
+                    </button>
+                  </div>
+                ))}
+              </>
             )}
           </div>
         </div>
@@ -372,8 +570,8 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
           ref={fileInputRef}
           className="hidden"
           multiple
-          accept="image/*"
-          onChange={handleImageUpload}
+          accept="image/*, video/*"
+          onChange={handleFileUpload}
         />
 
         <div className="mt-5 self-end">
@@ -387,22 +585,34 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
       <div className="w-full bg-[#FAFAFA] flex flex-col items-center gap-4 mb-4 p-5 rounded-lg">
         {/* Modal to show full images */}
         {isModalOpen && (
-          <Modal onClose={closeModal}>
-            {modalImage && (
-              <div className="flex flex-col p-2 gap-5 md:p-6">
+          <div className="fixed w-full top-0 left-0 min-h-screen bg-black/95 z-50 flex flex-col justify-center items-center">
+            {modalMedia && (
+              <div className="flex flex-col gap-2 max-w-[1000px] w-full p-4">
                 <div onClick={closeModal} className="flex justify-end">
-                  <FaTimes className="text-lg" />
+                  <FaTimes className="text-lg cursor-pointer text-white" />
                 </div>
-                <Image
-                  src={modalImage}
-                  alt="Full image"
-                  width={0}
-                  height={0}
-                  className="w-full h-auto object-contain"
-                />
+                {modalMediaType === "image" ? (
+                  <Image
+                    src={modalMedia}
+                    alt="Full image"
+                    width={0}
+                    height={0}
+                    className="w-full h-auto object-cover rounded-lg shadow-lg shadow-white/10"
+                  />
+                ) : (
+                  <video
+                    controls
+                    autoPlay
+                    muted
+                    loop
+                    src={modalMedia}
+                    alt="Full videos"
+                    className="w-full h-auto object-cover rounded-lg shadow-white/10"
+                  />
+                )}
               </div>
             )}
-          </Modal>
+          </div>
         )}
 
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
@@ -410,7 +620,7 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
             htmlFor="listing-name"
             className="text-base w-full font-light tracking-tight text-[#737373] md:w-[30%] md:text-lg"
           >
-            Name*
+            Title*
           </label>
           <input
             className="w-full rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
@@ -438,21 +648,74 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
         </div>
         <div className="w-full flex flex-col gap-2 md:gap-0 md:justify-between md:items-center md:flex-row">
           <label
-            htmlFor="listing-price"
+            htmlFor="listing-location"
             className="text-base w-full font-light tracking-tight text-[#737373] md:w-[30%] md:text-lg"
           >
-            {formConfig.priceLabel}
+            Location*
           </label>
           <input
             className="w-full rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
-            id="listing-price"
-            ref={priceRef}
+            id="listing-location"
+            ref={locationRef}
             required
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder={formConfig.pricePlaceholder}
+            type="text"
+            placeholder="e.g. 123 Main St, City, State"
           />
+        </div>
+        <div className="w-full flex">
+          <div className="flex-1 mr-4 sm:mr-20">
+            <label
+              htmlFor="listing-price"
+              className="text-base w-full font-light tracking-tight text-[#737373] md:w-[30%] md:text-lg "
+            >
+              {formConfig.priceLabel}
+            </label>
+            <input
+              className="w-full mt-1 rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
+              id="listing-price"
+              ref={priceRef}
+              required={listingType !== "requests"}
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder={formConfig.pricePlaceholder}
+            />
+          </div>
+          <div className="w-[50%] sm:w-[30%]">
+            <label
+              htmlFor="listing-currency"
+              className="text-base font-light tracking-tight text-[#737373] w-[30%] md:text-lg"
+            >
+              Currency*
+            </label>
+            <div className="mt-1 relative w-full md:flex-1">
+              <button
+                id="listing-currency"
+                type="button"
+                className="w-full flex justify-between items-center ring-2 ring-gray-300 rounded-md bg-white text-left p-2 shadow text-base active:ring-brand active:ring-opacity-60 active:shadow-lg active:shadow-brand/10"
+                onClick={() => setIsCurrencyMenuOpen((prev) => !prev)}
+              >
+                {selectedCurrency}
+                {isCurrencyMenuOpen ? <FaChevronUp /> : <FaChevronDown />}
+              </button>
+              {isCurrencyMenuOpen && (
+                <div
+                  ref={menuRef}
+                  className="absolute w-full rounded shadow-lg top-10 text-base bg-white mt-3 z-10"
+                >
+                  {currencies.map((currency) => (
+                    <div
+                      key={currency.id}
+                      className="cursor-pointer hover:bg-gray-100 p-2 active:bg-brand active:text-white"
+                      onClick={() => handleClickCurrencies(currency.name)}
+                    >
+                      <p>{currency.name}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         {formConfig.additionalFields.map((field, index) => (
           <div
@@ -469,7 +732,7 @@ const ListingForm = ({ user, categories, listingType, listingData }) => {
               className="w-full rounded-md ring-2 ring-gray-300 p-2 placeholder-gray-400 text-base shadow focus:outline-none focus:ring-brand focus:ring-opacity-60 focus:shadow-lg focus:shadow-brand/10 md:flex-1"
               id={`listing-${field.label.toLowerCase()}`}
               ref={field.ref}
-              required
+              required={field.required}
               type={field.type}
               placeholder={field.placeholder}
             />

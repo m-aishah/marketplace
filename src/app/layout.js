@@ -18,8 +18,8 @@ const geistMono = localFont({
 });
 
 export const metadata = {
-  title: "Marketplace",
-  description: "Student marketplace, Apartments, Goods, Skills",
+  title: "FindAll",
+  description: "Student marketplace, Apartments, Products, Services",
 };
 
 export default function RootLayout({ children }) {

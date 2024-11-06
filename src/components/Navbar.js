@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { usePathname } from 'next/navigation';
+import { usePathname } from "next/navigation";
 import { FiMenu, FiX, FiUser } from "react-icons/fi";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 
@@ -14,19 +14,12 @@ const Navbar = () => {
   const pathname = usePathname();
   const auth = getAuth();
 
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
+  const closeMenu = () => setIsMenuOpen(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
-    };
-
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    const handleScroll = () => setIsScrolled(window.scrollY > 0);
     window.addEventListener("scroll", handleScroll);
     return () => {
       unsubscribe();
@@ -44,11 +37,19 @@ const Navbar = () => {
 
   const isActive = (path) => pathname === path;
 
+  const navItems = [
+    { href: "/", text: "Home" },
+    { href: "/apartments", text: "Apartments" },
+    { href: "/products", text: "Products" },
+    { href: "/services", text: "Services" },
+    { href: "/requests", text: "Requests" },
+  ];
+
   return (
     <header
       className={`${
         isScrolled
-          ? "fixed top-0 shadow-lg shadow-brand/20 z-20"
+          ? "sticky top-0 shadow-lg shadow-brand/20 z-20"
           : "relative shadow"
       } w-full p-4 flex justify-center bg-white transition-all duration-300`}
     >
@@ -57,179 +58,99 @@ const Navbar = () => {
           <Image src="/images/logo.svg" alt="Logo" width={40} height={40} />
           <div className="flex items-baseline">
             <h1 className="ml-2 text-lg leading-tight font-bold tracking-tighter md:text-3xl">
-              Marketplace
+              FindAll
             </h1>
             <div className="ml-1 w-1 h-1 rounded-full bg-gradient-to-r from-[#FF7F50] to-[#98FF98] md:w-2 md:h-2"></div>
           </div>
         </Link>
 
-        <div
-          onClick={() => setIsMenuOpen((prev) => !prev)}
-          className="md:hidden"
-        >
-          {isMenuOpen ? <FiX className="relative z-50 w-5 h-5" /> : <FiMenu className="relative z-50 w-5 h-5" />}
-        </div>
+        <button onClick={toggleMenu} className="lg:hidden z-50">
+          {isMenuOpen ? (
+            <FiX className="w-5 h-5" />
+          ) : (
+            <FiMenu className="w-5 h-5" />
+          )}
+        </button>
 
-        <ul className="hidden gap-5 md:flex">
-          <li>
-            <Link
-              className={`transition hover:text-brand ${isActive('/') ? 'text-brand font-bold' : ''}`}
-              href="/"
-            >
-              Home
-            </Link>
-          </li>
-          <li>
-            <Link
-              className={`transition hover:text-brand ${isActive('/apartments') ? 'text-brand font-bold' : ''}`}
-              href="/apartments"
-            >
-              Apartments
-            </Link>
-          </li>
-          <li>
-            <Link
-              className={`transition hover:text-brand ${isActive('/goods') ? 'text-brand font-bold' : ''}`}
-              href="/goods"
-            >
-              Goods
-            </Link>
-          </li>
-          <li>
-            <Link
-              className={`transition hover:text-brand ${isActive('/services') ? 'text-brand font-bold' : ''}`}
-              href="/services"
-            >
-              Services
-            </Link>
-          </li>
-          <li>
-            <Link
-              className={`transition hover:text-brand ${isActive('/requests') ? 'text-brand font-bold' : ''}`}
-              href="/requests"
-            >
-              Requests
-            </Link>
-          </li>
+        <ul className="hidden gap-5 lg:flex">
+          {navItems.map((item) => (
+            <NavItem
+              key={item.href}
+              href={item.href}
+              text={item.text}
+              isActive={isActive(item.href)}
+            />
+          ))}
         </ul>
 
-        <div className="hidden gap-5 md:flex">
+        <div className="hidden gap-5 lg:flex">
           {user ? (
             <>
-              <Link
-                className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 flex items-center"
+              <NavButton
                 href="/profile"
-              >
-                <FiUser className="mr-2" /> Profile
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
-              >
-                Sign Out
-              </button>
+                text="Profile"
+                icon={<FiUser className="mr-2" />}
+              />
+              <NavButton onClick={handleSignOut} text="Sign Out" primary />
             </>
           ) : (
             <>
-              <Link
-                className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100"
-                href="/login"
-              >
-                Login
-              </Link>
-              <Link
-                className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
-                href="/signup"
-              >
-                Get Started
-              </Link>
+              <NavButton href="/login" text="Login" />
+              <NavButton href="/signup" text="Get Started" primary />
             </>
           )}
         </div>
 
         {isMenuOpen && (
-          <div className="fixed top-0 left-0 w-full h-full bg-gray-200 z-40 p-4">
-            <nav className="flex flex-col items-center gap-10">
-              <div
-                onClick={closeMenu}
-                className="self-start flex w-full justify-between items-center"
-              >
-                <Link href="/">
-                  <Image
-                    src="/images/logo.svg"
-                    alt="Logo"
-                    width={40}
-                    height={40}
-                  />
-                </Link>
-                <FiX className="z-50 w-5 h-5" />
-              </div>
-
+          <div className="fixed inset-0 bg-gray-200 z-40 p-4">
+            <nav className="flex flex-col items-center gap-10 pt-16">
               <ul className="flex flex-col gap-3 items-center">
-                <li onClick={closeMenu}>
-                  <Link className={`transition active:text-brand ${isActive('/') ? 'text-brand font-bold' : ''}`} href="/">
-                    Home
-                  </Link>
-                </li>
-                <li onClick={closeMenu}>
-                  <Link
-                    className={`transition active:text-brand ${isActive('/apartments') ? 'text-brand font-bold' : ''}`}
-                    href="/apartments"
-                  >
-                    Apartments
-                  </Link>
-                </li>
-                <li onClick={closeMenu}>
-                  <Link className={`transition active:text-brand ${isActive('/goods') ? 'text-brand font-bold' : ''}`} href="/goods">
-                    Goods
-                  </Link>
-                </li>
-                <li onClick={closeMenu}>
-                  <Link className={`transition active:text-brand ${isActive('/skills') ? 'text-brand font-bold' : ''}`} href="/skills">
-                    Skills
-                  </Link>
-                </li>
+                {navItems.map((item) => (
+                  <NavItem
+                    key={item.href}
+                    href={item.href}
+                    text={item.text}
+                    isActive={isActive(item.href)}
+                    onClick={closeMenu}
+                  />
+                ))}
               </ul>
 
               <div className="flex gap-5">
                 {user ? (
                   <>
-                    <div onClick={closeMenu}>
-                      <Link
-                        className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100 flex items-center"
-                        href="/profile"
-                      >
-                        <FiUser className="mr-2" /> Profile
-                      </Link>
-                    </div>
-                    <button
+                    <NavButton
+                      href="/profile"
+                      text="Profile"
+                      icon={<FiUser className="mr-2" />}
+                      onClick={closeMenu}
+                      fullWidth
+                    />
+                    <NavButton
                       onClick={() => {
                         handleSignOut();
                         closeMenu();
                       }}
-                      className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
-                    >
-                      Sign Out
-                    </button>
+                      text="Sign Out"
+                      primary
+                      fullWidth
+                    />
                   </>
                 ) : (
                   <>
-                    <div onClick={closeMenu}>
-                      <Link
-                        className="transition bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100"
-                        href="/login"
-                      >
-                        Login
-                      </Link>
-                    </div>
-                    <div onClick={closeMenu}>
-                      <Link
-                        className="transition bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
-                        href="/signup"
-                      >
-                        Get Started
-                      </Link>
-                    </div>
+                    <NavButton
+                      href="/login"
+                      text="Login"
+                      onClick={closeMenu}
+                      fullWidth
+                    />
+                    <NavButton
+                      href="/signup"
+                      text="Get Started"
+                      primary
+                      onClick={closeMenu}
+                      fullWidth
+                    />
                   </>
                 )}
               </div>
@@ -238,6 +159,51 @@ const Navbar = () => {
         )}
       </nav>
     </header>
+  );
+};
+
+const NavItem = ({ href, text, isActive, onClick }) => (
+  <li onClick={onClick}>
+    <Link
+      className={`transition hover:text-brand ${
+        isActive ? "text-brand font-bold" : ""
+      }`}
+      href={href}
+    >
+      {text}
+    </Link>
+  </li>
+);
+
+const NavButton = ({ href, text, icon, primary, onClick, fullWidth }) => {
+  const baseClasses = "transition font-medium text-sm rounded-full text-center";
+  const primaryClasses = primary
+    ? "bg-brand text-white hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
+    : "bg-transparent text-black ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100";
+  const widthClasses = fullWidth ? "w-full" : "";
+
+  const ButtonContent = () => (
+    <>
+      {icon}
+      {text}
+    </>
+  );
+
+  return href ? (
+    <Link
+      className={`${baseClasses} ${primaryClasses} ${widthClasses} px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center`}
+      href={href}
+      onClick={onClick}
+    >
+      <ButtonContent />
+    </Link>
+  ) : (
+    <button
+      onClick={onClick}
+      className={`${baseClasses} ${primaryClasses} ${widthClasses} px-4 py-2 sm:px-5 sm:py-3 inline-flex items-center justify-center`}
+    >
+      <ButtonContent />
+    </button>
   );
 };
 

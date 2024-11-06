@@ -3,9 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
+import {
+    signInWithEmailAndPassword,
+    sendPasswordResetEmail,
+    onAuthStateChanged,
+    GoogleAuthProvider,
+    signInWithPopup
+} from 'firebase/auth';
 import { auth } from '../../firebase'; 
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { FcGoogle } from 'react-icons/fc';
+import { Button } from '@/components/Button';
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -15,6 +23,8 @@ function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [resetEmailSent, setResetEmailSent] = useState(false);
     const router = useRouter();
+
+    const provider = new GoogleAuthProvider();
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -26,7 +36,29 @@ function Login() {
         return () => unsubscribe();
     }, [router]);
 
-    const handleLogin = async (e) => {
+    const handleGoogleLogin = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+
+            const existingUser = await fetchSignInMethodsForEmail(auth, user.email);
+            
+            if (existingUser.includes('password')) {
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                await linkWithCredential(user, credential);
+            }
+
+            router.push('/');
+        } catch (error) {
+            setError('Failed to log in with Google. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleEmailLogin = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
@@ -77,6 +109,28 @@ function Login() {
                         Login to your account
                     </h2>
                 </div>
+
+                <div className="mt-6">
+                    <button
+                        onClick={handleGoogleLogin}
+                        className="transition w-full flex justify-center bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100"
+                    >
+                        <FcGoogle className="h-6 w-6 mr-2" />
+                        Login with Google
+                    </button>
+
+                    <div className="relative mt-4">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-gray-500">
+                                OR
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 {resetEmailSent ? (
                     <div className="rounded-md bg-green-50 p-4">
                         <div className="flex">
@@ -93,7 +147,7 @@ function Login() {
                         </div>
                     </div>
                 ) : (
-                    <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+                    <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
                         <div className="rounded-md shadow-sm -space-y-px">
                             <div>
                                 <label htmlFor="email" className="sr-only">Email address</label>
@@ -145,16 +199,17 @@ function Login() {
                         </div>
 
                         <div>
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="transition w-full bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="transition w-full bg-brand font-medium text-white px-5 py-3 rounded-full text-sm ring-1 ring-transparent hover:shadow-md hover:shadow-black/30 hover:ring-gray-100 hover:bg-brand/80"
                             >
-                            {isLoading ? 'Logging in...' : 'Log in'}
-                        </button>
+                                {isLoading ? 'Logging in...' : 'Log in'}
+                            </button>
                         </div>
                     </form>
                 )}
+
                 {error && (
                     <div className="rounded-md bg-red-50 p-4 mt-4">
                         <div className="flex">
@@ -166,25 +221,12 @@ function Login() {
                         </div>
                     </div>
                 )}
-                <div className="mt-6">
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white text-gray-500">
-                                Don't have an account?
-                            </span>
-                        </div>
-                    </div>
-                    <div className="mt-6">
-                    <Link
-                        href="/signup"
-                        className="transition w-full flex justify-center bg-transparent font-medium text-black px-5 py-3 rounded-full text-sm ring-1 ring-black hover:shadow-md hover:shadow-brand/30 hover:ring-brand hover:bg-gray-100"
-                        >
-                        Sign up
+
+                <div className="mt-2 text-center text-sm text-gray-600">
+                    Don&apos;t have an account?{' '}
+                    <Link href="/signup" className="font-medium text-brand hover:text-brand-light">
+                        Sign Up
                     </Link>
-                    </div>
                 </div>
             </div>
         </div>

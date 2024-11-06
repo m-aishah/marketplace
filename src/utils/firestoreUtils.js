@@ -8,6 +8,10 @@ import {
   getDocs,
   query,
   where,
+  orderBy,
+  limit,
+  startAfter,
+  getCountFromServer,
 } from "firebase/firestore";
 import {
   ref,
@@ -108,13 +112,13 @@ export const getListingFromFirestore = async (listingId) => {
     const listingRef = doc(db, "listings", listingId);
     const listing = await getDoc(listingRef);
     if (listing.exists()) {
-      return { id: listing.id, ...listing.data() };
+      return { listing: { id: listing.id, ...listing.data() } };
     } else {
       throw new Error("Listing not found");
     }
   } catch (error) {
     console.error("Error fetching listing: ", error);
-    throw error;
+    return { error: error };
   }
 };
 
@@ -154,7 +158,106 @@ export const uploadListingImageToStorage = async (
   index
 ) => {
   if (!file) return null;
-  const storageRef = ref(storage, `${userId}/listings/${listingId}/${index}`);
+  const storageRef = ref(
+    storage,
+    `${userId}/listings/${listingId}/images/${index}`
+  );
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
+};
+
+export const uploadListingVideoToStorage = async (
+  file,
+  userId,
+  listingId,
+  index
+) => {
+  if (!file) return null;
+  const storageRef = ref(
+    storage,
+    `${userId}/listings/${listingId}/videos/${index}`
+  );
+  await uploadBytes(storageRef, file);
+  return getDownloadURL(storageRef);
+};
+
+export const saveListingData = async (listingData, formMode, listingId) => {
+  if (formMode === "edit") {
+    await updateDoc(doc(db, "listings", listingId), listingData);
+    return listingId;
+  } else {
+    const docRef = await addDoc(collection(db, "listings"), listingData);
+    return docRef.id;
+  }
+};
+
+// Uploads images or videos to storage
+export const uploadMediaFiles = async (mediaArray, userId, listingId, type) => {
+  const urls = [];
+  for (let i = 0; i < mediaArray.length; i++) {
+    const media = mediaArray[i];
+    if (media.file) {
+      const uploadFn =
+        type === "image"
+          ? uploadListingImageToStorage
+          : uploadListingVideoToStorage;
+      const url = await uploadFn(media.file, userId, listingId, i);
+      if (url) urls.push(url);
+    }
+  }
+  return urls;
+};
+
+// Deletes media from storage
+export const deleteMediaFromStorage = async (mediaUrls) => {
+  const deletePromises = mediaUrls.map(async (url) => {
+    const mediaRef = ref(storage, url);
+    await deleteObject(mediaRef);
+  });
+  await Promise.all(deletePromises);
+};
+
+export const fetchPaginatedListingsByListingType = async (
+  listingType,
+  limitCount = 9,
+  lastVisible = null
+) => {
+  try {
+    let listingsQuery = query(
+      collection(db, "listings"),
+      where("listingType", "==", listingType),
+      orderBy("createdAt", "desc")
+      //limit(limitCount)
+    );
+
+    //if (lastVisible) {
+    //  listingsQuery = query(listingsQuery, startAfter(lastVisible));
+    //}
+
+    const listingsSnapshot = await getDocs(listingsQuery);
+    const fetchedListings = listingsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    //const lastDoc = listingsSnapshot.docs[listingsSnapshot.docs.length - 1];
+
+    //return { listings: fetchedListings, lastVisible: lastDoc };
+    return { listings: fetchedListings, lastVisible: null };
+  } catch (error) {
+    console.error("Error fetching listings:", error);
+    return { listings: [], lastVisible: null };
+  }
+};
+
+export const getDocumentCount = async (collectionName) => {
+  try {
+    const collectionRef = collection(db, collectionName);
+    const snapshot = await getCountFromServer(collectionRef);
+    console.log(snapshot.data().count);
+    return snapshot.data().count;
+  } catch (error) {
+    console.error("Error getting document count:", error);
+    return 0;
+  }
 };

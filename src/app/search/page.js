@@ -1,44 +1,93 @@
 "use client";
 
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import homePageData from "../homePageData";
 import ListingPage from "../../components/ListingPage";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+} from "firebase/firestore";
+import { db } from "@/firebase";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
-export default function RequestsPage() {
+function RequestsPageContent() {
+  const [listings, setListings] = useState({
+    apartments: [],
+    products: [],
+    services: [],
+    requests: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    const fetchUserListings = async (listingType) => {
+      const listingsQuery = query(
+        collection(db, "listings"),
+        where("listingType", "==", listingType),
+        orderBy("createdAt", "desc"),
+        limit(9)
+      );
+      const listingsSnapshot = await getDocs(listingsQuery);
+      const fetchedListings = listingsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setListings((prev) => ({
+        ...prev,
+        [listingType]: fetchedListings,
+      }));
+    };
+
+    Promise.all([
+      fetchUserListings("apartments"),
+      fetchUserListings("products"),
+      fetchUserListings("services"),
+      fetchUserListings("requests"),
+    ]).then(() => setLoading(false));
+  }, []);
+
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
-  const filteredListings = Object.keys(homePageData).reduce((acc, category) => {
-    const categoryListings = homePageData[category].filter((listing) =>
-      listing.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredListings = Object.keys(listings).reduce((acc, category) => {
+    const categoryListings = listings[category].filter((listing) =>
+      listing.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
     return acc.concat(categoryListings);
   }, []);
 
-  const filters = [];
-
-  for (const category of Object.keys(homePageData)) {
-    const uniqueTypes = new Set(
-      homePageData[category].map((listing) => listing.type)
-    );
-    const filteredTypes = [...uniqueTypes].filter((type) =>
-      filteredListings.some((listing) => listing.type === type)
-    );
-    filters.push(...filteredTypes);
-  }
-
   if (!filteredListings.length)
     return (
       <p className="text-center m-20">
-        No listings found for the query "{searchQuery}".
+        No listings found for the query &quot;{searchQuery}&quot;.
       </p>
     );
 
   return (
-    <ListingPage
-      listings={filteredListings}
-      category="search-results"
-      title="Search Results"
-      filters={filters}
-    />
+    <>
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <ListingPage
+          listingsArray={filteredListings}
+          category="search-results"
+          title={'Search Results for "' + searchQuery + '"'}
+        />
+      )}
+    </>
+  );
+}
+
+export default function RequestsPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <RequestsPageContent />
+    </Suspense>
   );
 }

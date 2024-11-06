@@ -5,15 +5,12 @@ import { useRouter } from "next/navigation";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "@/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
 import { deleteListingFromFirestore } from "@/utils/firestoreUtils";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import ListingCard from "@/components/ListingCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import BackButton from "@/components/BackButton";
 
 export default function AllListings() {
-  const [user] = useAuthState(auth);
   const [listings, setListings] = useState([]);
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -32,7 +29,7 @@ export default function AllListings() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!userId) return;
@@ -85,15 +82,7 @@ export default function AllListings() {
   return (
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <Link
-            href="/profile"
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            <span className="text-sm font-medium">Back</span>
-          </Link>
-        </div>
+        <BackButton />
         <h1 className="text-3xl font-bold">Your Listings</h1>
         {deleteMessage && (
           <p className="text-green-500 text-center">{deleteMessage}</p>
