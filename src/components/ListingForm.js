@@ -9,15 +9,12 @@ import {
   FaExpand,
   FaTimes,
 } from "react-icons/fa";
-import {
-  uploadListingImageToStorage,
-  uploadListingVideoToStorage,
-} from "@/utils/firestoreUtils";
-import { db } from "@/firebase";
-import { addDoc, collection, updateDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
-import { ref, deleteObject } from "firebase/storage";
-import { storage } from "@/firebase";
+import {
+  saveListingData,
+  uploadMediaFiles,
+  deleteMediaFromStorage,
+} from "@/utils/firestoreUtils";
 
 const ListingForm = ({
   user,
@@ -120,7 +117,7 @@ const ListingForm = ({
       case "services":
         return {
           title: "Service",
-          namePlaceholder: "e.g. Aishah",
+          namePlaceholder: "e.g. Web Development",
           descriptionPlaceholder: "Describe your service and experience",
 
           pricePlaceholder: "Hourly rate or fixed price",
@@ -353,6 +350,7 @@ const ListingForm = ({
       descriptionRef.current.value = listingData.description || "";
       priceRef.current.value = listingData.price || "";
       locationRef.current.value = listingData.location || "";
+
       if (listingType === "apartments") {
         bedroomsRef.current.value = listingData.bedrooms || "";
         bathroomsRef.current.value = listingData.bathrooms || "";
@@ -370,7 +368,7 @@ const ListingForm = ({
     event.preventDefault();
     if (!user) return;
 
-    // Verify that currency and category are selected
+    // Verify that both currency and category are selected
     if (selectedCurrency === "Currency" || selectedOption === "Category") {
       toast.error("Please select both a currency and a category.");
       return;
@@ -379,6 +377,7 @@ const ListingForm = ({
     setIsSubmitting(true);
 
     try {
+      // Prepare listing data based on listing type
       const newListingData = {
         userId: user.uid,
         name: nameRef.current.value,
@@ -391,6 +390,7 @@ const ListingForm = ({
         createdAt: new Date().toISOString(),
       };
 
+      // Add specific fields based on listing type
       if (listingType === "apartments") {
         newListingData.bedrooms = parseInt(bedroomsRef.current.value);
         newListingData.bathrooms = parseInt(bathroomsRef.current.value);
@@ -402,69 +402,43 @@ const ListingForm = ({
         newListingData.paymentType = servicePaymentTypeRef.current.value;
       }
 
-      let listingId;
+      // Save listing data to Firestore and retrieve listing ID
+      const listingId = await saveListingData(
+        newListingData,
+        formMode,
+        listingData?.id
+      );
 
-      if (formMode === "edit") {
-        listingId = listingData.id;
-        await updateDoc(doc(db, "listings", listingId), newListingData);
-      } else {
-        const docRef = await addDoc(collection(db, "listings"), newListingData);
-        listingId = docRef.id;
-      }
+      // Handle image and video uploads
+      const newImageUrls = await uploadMediaFiles(
+        images,
+        user.uid,
+        listingId,
+        "image"
+      );
+      const newVideoUrls = await uploadMediaFiles(
+        videos,
+        user.uid,
+        listingId,
+        "video"
+      );
 
-      let imageUrls = [...(listingData?.imageUrls || [])];
-      let videoUrls = [...(listingData?.videoUrls || [])];
+      // Merge newly uploaded URLs with existing ones
+      let imageUrls = [...(listingData?.imageUrls || []), ...newImageUrls];
+      let videoUrls = [...(listingData?.videoUrls || []), ...newVideoUrls];
 
-      for (let index = 0; index < images.length; index++) {
-        const image = images[index];
-        if (image.file) {
-          const imageUrl = await uploadListingImageToStorage(
-            image.file,
-            user.uid,
-            listingId,
-            index
-          );
-          if (imageUrl) imageUrls.push(imageUrl);
-        }
-      }
-
-      for (let index = 0; index < videos.length; index++) {
-        const video = videos[index];
-        if (video.file) {
-          const videoUrl = await uploadListingVideoToStorage(
-            video.file,
-            user.uid,
-            listingId,
-            index
-          );
-          if (videoUrl) videoUrls.push(videoUrl);
-        }
-      }
-
-      // Delete images from Firestore Storage if needed
-      if (deletedImages.length > 0) {
-        const promises = deletedImages.map(async (imageUrl) => {
-          const imageRef = ref(storage, imageUrl);
-          await deleteObject(imageRef);
-        });
-
-        await Promise.all(promises);
+      // Remove deleted media URLs from Firestore if necessary
+      if (deletedImages.length) {
+        await deleteMediaFromStorage(deletedImages);
         imageUrls = imageUrls.filter((url) => !deletedImages.includes(url));
       }
-
-      // Delete videos from Firestore Storage if needed
-      if (deletedVideos.length > 0) {
-        const promises = deletedVideos.map(async (videoUrl) => {
-          const videoRef = ref(storage, videoUrl);
-          await deleteObject(videoRef);
-        });
-
-        await Promise.all(promises);
+      if (deletedVideos.length) {
+        await deleteMediaFromStorage(deletedVideos);
         videoUrls = videoUrls.filter((url) => !deletedVideos.includes(url));
       }
 
-      // Update Firestore with the new imageUrls and videoUrls
-      await updateDoc(doc(db, "listings", listingId), { imageUrls, videoUrls });
+      // Update Firestore with the final media URLs
+      await saveListingData({ imageUrls, videoUrls }, "edit", listingId);
 
       toast.success(
         `${formConfig.title} ${
@@ -472,7 +446,7 @@ const ListingForm = ({
         } successfully`
       );
 
-      // Handle UI after successful edit or creation
+      // Redirect to profile page after successful form submission
       router.push("/profile");
     } catch (error) {
       console.error("Error saving listing: ", error);
