@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { FaBed, FaBath, FaHome } from "react-icons/fa";
+import { FaBed, FaBath, FaHome, FaMoneyBill, FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
 import { Pencil, Trash2 } from "lucide-react";
-import QuickView from "./QuickView";
 import ContactModal from "./ContactModal";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { deleteListingFromFirestore } from "@/utils/firestoreUtils";
@@ -14,9 +13,9 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { toast } from "react-toastify";
 import ImageGallery from "./ProductsGallery";
 import { Button } from "@/components/Button";
+import BackButton from "./BackButton";
 
 const ApartmentListingPage = ({ apartment }) => {
-  const [currentImage, setCurrentImage] = useState(0);
   const [contacts, setContacts] = useState([]);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -30,7 +29,7 @@ const ApartmentListingPage = ({ apartment }) => {
   useEffect(() => {
     setLoading(true);
     const fetchContacts = async () => {
-      if (apartment && apartment.userId) {
+      if (apartment?.userId) {
         try {
           const contactsQuery = query(
             collection(db, "contacts"),
@@ -87,58 +86,85 @@ const ApartmentListingPage = ({ apartment }) => {
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8">
       {isOwnListing && (
-        <div
-          className="max-w-4xl mt-6 mx-auto bg-blue-100 rounded-t-lg border-l-4 border-blue-500 text-blue-700 p-4"
-          role="alert"
-        >
+        <div className="max-w-4xl mt-6 mx-auto bg-blue-100 rounded-t-lg border-l-4 border-blue-500 text-blue-700 p-4">
           <p className="font-bold">Note:</p>
           <p>You are viewing your own listing.</p>
         </div>
       )}
-      <div
-        className={`max-w-4xl mx-auto mb-6 bg-white shadow-md overflow-hidden
-          ${isOwnListing ? "rounded-b-lg" : "rounded-lg mt-6"}`}
-      >
+      <div className={`max-w-4xl mx-auto mb-6 bg-white shadow-md overflow-hidden
+        ${isOwnListing ? "rounded-b-lg" : "rounded-lg mt-6"}`}>
+        
         <div className="p-6">
+        <BackButton />
           {imageUrls && <ImageGallery images={imageUrls} />}
         </div>
 
-        <div className="p-6">
-          <div className="flex justify-between items-start">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {apartment?.name || "No Title"}
-            </h1>
-          </div>
-          <p className="mt-2 text-gray-600">
-            {apartment?.location || "No Location"}
-          </p>
-          <p className="mt-2 text-green-600 text-xl">
-            {apartment?.price || "N/A"}
-            {" " + getCurrency(apartment?.currency)}
-          </p>
-          <div className="mt-4">
-            <h2 className="text-lg font-semibold">Amenities:</h2>
-            <div className="grid grid-cols-2 gap-4 mt-2 pl-6">
-              <p className="flex items-center">
-                <FaHome className="mr-2" /> {apartment?.category || "Unknown"}
-              </p>
-              <p className="flex items-center">
-                <FaBed className="mr-2" /> {apartment?.bedrooms} Bedrooms
-              </p>
-              <p className="flex items-center">
-                <FaBath className="mr-2" /> {apartment?.bathrooms} Bathrooms
-              </p>
+        <div className="px-6 py-8 space-y-6 bg-gray-50">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
+            {apartment?.name || "Apartment Name"}
+          </h2>
+
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center space-x-2 text-green-600">
+              <FaMoneyBill className="text-xl" />
+              <span className="text-2xl font-bold">
+                {apartment?.price || "N/A"}
+                {" " + getCurrency(apartment?.currency)}
+                <span className="text-sm text-gray-600 ml-1">/ {apartment?.paymentType}</span>
+              </span>
+            </div>
+            <div className="flex items-center space-x-2 text-gray-600">
+              <FaMapMarkerAlt className="text-xl" />
+              <span className="text-lg">
+                {apartment?.location || "Location not specified"}
+              </span>
             </div>
           </div>
-          <div className="mt-4">
-            <h2 className="text-lg font-semibold">Description:</h2>
-            <p className="mt-2 text-gray-600 whitespace-pre-line">
+
+          <div className="bg-white p-4 rounded-lg shadow-inner">
+            <h2 className="text-xl font-semibold mb-2">Description</h2>
+            <p className="text-gray-600 leading-relaxed whitespace-pre-line">
               {apartment?.description || "No description available"}
             </p>
           </div>
-          <div className="container mx-auto p-4">
-            <QuickView quickViewData={apartment} />
+
+
+          <div className="bg-white p-6 rounded-lg shadow-inner">
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-6">
+              <div className="flex items-center space-x-3 text-gray-700">
+                <FaHome className="text-xl text-blue-600" />
+                <div>
+                  {/* <p className="text-sm text-gray-500">Type</p> */}
+                  <p className="font-medium">{apartment?.category || "Not specified"}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3 text-gray-700">
+                <FaBed className="text-xl text-blue-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Bedrooms</p>
+                  <p className="font-medium">{apartment?.bedrooms || "0"}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3 text-gray-700">
+                <FaBath className="text-xl text-blue-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Bathrooms</p>
+                  <p className="font-medium">{apartment?.bathrooms || "0"}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3 text-gray-700">
+                <FaCalendarAlt className="text-xl text-blue-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Listed On</p>
+                  <p className="font-medium">
+                    {new Date(apartment?.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
+
+     
           <div className="mt-6">
             {!isOwnListing && (
               <ContactProfileButtons
@@ -160,19 +186,21 @@ const ApartmentListingPage = ({ apartment }) => {
             )}
           </div>
         </div>
-        <ContactModal
-          isOpen={isContactModalOpen}
-          onClose={() => setIsContactModalOpen(false)}
-          contacts={contacts}
-          listingOwnerId={apartment?.userId}
-        />
-        <ConfirmationModal
-          isOpen={isConfirmOpen}
-          onClose={() => setIsConfirmOpen(false)}
-          onConfirm={handleDelete}
-          listingTitle={apartment ? apartment.name : ""}
-        />
       </div>
+
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        contacts={contacts}
+        listingOwnerId={apartment?.userId}
+      />
+      
+      <ConfirmationModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        listingTitle={apartment ? apartment.name : ""}
+      />
     </div>
   );
 };

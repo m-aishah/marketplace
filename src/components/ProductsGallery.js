@@ -28,9 +28,10 @@ const ImageGallery = ({ images }) => {
           <Image
             src={images[currentImageIndex]}
             alt={`Image ${currentImageIndex + 1}`}
-            layout="fill"
-            objectFit="contain"
-            className="rounded-lg"
+            fill
+            sizes="(max-width: 768px) 100vw, 80vw"
+            priority
+            className="rounded-lg object-contain"
           />
           <button
             onClick={toggleFullscreen}
@@ -59,9 +60,9 @@ const ImageGallery = ({ images }) => {
               <Image
                 src={url}
                 alt={`Thumbnail ${index + 1}`}
-                layout="fill"
-                objectFit="cover"
-                className="rounded relative z-10"
+                fill
+                sizes="80px"
+                className="rounded relative z-10 object-cover"
               />
             </div>
           </div>
@@ -79,8 +80,9 @@ const ImageGallery = ({ images }) => {
               <Image
                 src={images[currentImageIndex]}
                 alt={`Image ${currentImageIndex + 1}`}
-                layout="fill"
-                objectFit="contain"
+                fill
+                sizes="100vw"
+                className="object-contain"
               />
             </div>
             <button
