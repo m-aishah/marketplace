@@ -45,18 +45,11 @@ export const ProductCard = ({ listing }) => {
               src={listing.imageUrls[0]}
               alt={listing.name}
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
+              loading="lazy"
             />
           ) : (
-            // ( listing.videoUrls && listing.videoUrls.length > 0 ? (
-            //   <video
-            //     poster={`${listing.videoUrls[0]}#t=0.1`}
-            //     className="w-full h-full object-cover"
-            //   >
-            //     <source src={listing.videoUrls[0]} type="video/mp4" />
-            //     Your browser does not support the video tag.
-            //   </video>
-            // ) :
             <div className="h-full bg-muted bg-gray-200 flex items-center justify-center">
               <ImageIcon className="w-12 h-12 text-muted-foreground" />
             </div>
@@ -94,7 +87,6 @@ export const ProductCard = ({ listing }) => {
               <span className="text-sm">{listing?.location || "N/A"}</span>
             </div>
           </div>
-          {/*<StarRating rating={listing.rating || 0} />*/}
         </div>
       </CardContent>
     </Card>

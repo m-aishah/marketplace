@@ -13,6 +13,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { toast } from "react-toastify";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { Button } from "@/components/Button";
+import BackButton from "./BackButton";
 
 const ProductsListingPage = ({ listing }) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -101,6 +102,7 @@ const ProductsListingPage = ({ listing }) => {
           ${isOwnListing ? "rounded-b-lg" : "rounded-lg mt-6"}`}
       >
         <div className="p-6">
+        <BackButton />
           {imageUrls && <ImageGallery images={imageUrls} />}
         </div>
 
