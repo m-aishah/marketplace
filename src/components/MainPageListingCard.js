@@ -60,8 +60,22 @@ export const ProductCard = ({ listing }) => {
             <span
               className="text-sm font-medium px-2 py-1 rounded-full transform -translate-x-1 translate-y-1"
               style={{
-                backgroundColor: "rgba(59, 130, 246, 0.1)",
-                color: "rgb(59, 130, 246)",
+                backgroundColor:
+                  listing.listingType === "apartments"
+                    ? "rgba(59, 130, 246, 0.1)"
+                    : listing.listingType === "services"
+                    ? "rgba(245, 158, 11, 0.1)"
+                    : listing.listingType === "products"
+                    ? "rgba(16, 185, 129, 0.1)"
+                    : "rgba(185, 78, 16, 0.1)",
+                color:
+                  listing.listingType === "apartments"
+                    ? "rgb(59, 130, 246)"
+                    : listing.listingType === "services"
+                    ? "rgb(245, 158, 11)"
+                    : listing.listingType === "products"
+                    ? "rgb(16, 185, 129)"
+                    : "rgb(235, 72, 72)",
               }}
             >
               {listing.category}

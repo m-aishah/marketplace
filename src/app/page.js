@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,6 +14,12 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db } from "@/firebase";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/effect-coverflow";
+import "swiper/css/pagination";
+
 import CreateListingModal from "../app/profile/utils/CreateListingModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ProductCard } from "@/components/MainPageListingCard";
@@ -80,17 +85,28 @@ export default function HomePage() {
           <Button href={`/${category.toLowerCase()}`}>View More</Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Swiper
+          effect={"coverflow"}
+          grabCursor={true}
+          slidesPerView={"auto"}
+          spaceBetween={16}
+          pagination={{
+            dynamicBullets: true,
+          }}
+          modules={[Pagination]}
+          className="w-full"
+        >
           {categoryListings.map((listing) => (
-            <Link
-              href={`/${category.toLowerCase()}/${listing.id}`}
-              key={listing.id}
-              className="group"
-            >
-              <ProductCard listing={listing} />
-            </Link>
+            <SwiperSlide key={listing.id} className="max-w-[300px]">
+              <Link
+                href={`/${category.toLowerCase()}/${listing.id}`}
+                className="group"
+              >
+                <ProductCard listing={listing} />
+              </Link>
+            </SwiperSlide>
           ))}
-        </div>
+        </Swiper>
       </section>
     );
   };
