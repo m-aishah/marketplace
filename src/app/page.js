@@ -88,7 +88,6 @@ export default function HomePage() {
         <Swiper
           effect={"coverflow"}
           grabCursor={true}
-          centeredSlides={true}
           slidesPerView={"auto"}
           spaceBetween={16}
           pagination={{
