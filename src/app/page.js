@@ -159,7 +159,7 @@ export default function HomePage() {
             ))}
           </Swiper>
         ) : (
-          <div className="text-center"> No Listings at the moment.</div>
+          <div className="text-center"> No {category} at the moment.</div>
         )}
       </section>
     );
