@@ -8,9 +8,12 @@ import {
     sendPasswordResetEmail,
     onAuthStateChanged,
     GoogleAuthProvider,
+    fetchSignInMethodsForEmail,
+    linkWithCredential,
     signInWithPopup
 } from 'firebase/auth';
-import { auth } from '../../firebase'; 
+import { getDoc, setDoc, addDoc, doc, collection } from 'firebase/firestore';
+import { db, auth } from '../../firebase'; 
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import { Button } from '@/components/Button';
@@ -36,23 +39,61 @@ function Login() {
         return () => unsubscribe();
     }, [router]);
 
-    const handleGoogleLogin = async () => {
+   const handleGoogleLogin = async () => {
         setIsLoading(true);
         setError(null);
         try {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
-
-            const existingUser = await fetchSignInMethodsForEmail(auth, user.email);
             
-            if (existingUser.includes('password')) {
-                const credential = GoogleAuthProvider.credentialFromResult(result);
-                await linkWithCredential(user, credential);
+            const existingSignInMethods = await fetchSignInMethodsForEmail(auth, user.email);
+
+            if (existingSignInMethods.includes('password')) {
+                try {
+                    const credential = GoogleAuthProvider.credentialFromResult(result);
+                    await linkWithCredential(user, credential);
+                } catch (linkError) {
+                    console.error("Error linking accounts:", linkError);
+                    setError('This email is already associated with an email/password account. Please sign in with email and password.');
+                    return;
+                }
+            }
+
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            
+            if (!userDoc.exists()) {
+                await setDoc(doc(db, 'users', user.uid), {
+                    username: user.displayName || user.email.split('@')[0],
+                    email: user.email,
+                    authProviders: ['google', ...(existingSignInMethods || [])],
+                    lastSignIn: new Date().toISOString(),
+                });
+
+                await addDoc(collection(db, 'contacts'), {
+                    userId: user.uid,
+                    type: 'email',
+                    value: user.email,
+                });
+            } else {
+                await setDoc(doc(db, 'users', user.uid), {
+                    lastSignIn: new Date().toISOString(),
+                    authProviders: ['google', ...(existingSignInMethods || [])],
+                }, { merge: true });
             }
 
             router.push('/');
         } catch (error) {
-            setError('Failed to log in with Google. Please try again.');
+            console.error("Google sign-in error:", error);
+            switch (error.code) {
+                case 'auth/popup-closed-by-user':
+                    setError('Google sign-in was cancelled.');
+                    break;
+                case 'auth/email-already-in-use':
+                    setError('This email is already associated with another account.');
+                    break;
+                default:
+                    setError('Failed to sign in with Google. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -64,7 +105,13 @@ function Login() {
         setError(null);
 
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const existingUser = await fetchSignInMethodsForEmail(auth, email);
+            console.log(existingUser);
+            if (existingUser.includes('google.com') && !existingUser.includes('password')) {
+                setError('This account is linked to a Google account. Please sign in with Google.');
+                return;
+            }
+            await signInWithEmailAndPassword(auth, email, password);            
             router.push('/');
         } catch (error) {
             switch (error.code) {

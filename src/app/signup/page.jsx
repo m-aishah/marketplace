@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail } from 'firebase/auth';
-import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, linkWithCredential } from 'firebase/auth';
+import { doc, setDoc, collection, addDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
@@ -37,29 +37,36 @@ function Signup() {
         try {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
-            const googleUsername = user.displayName || user.email.split('@')[0];
 
-            const existingUser = await fetchSignInMethodsForEmail(auth, user.email);
-            
-            if (existingUser.includes('password')) {
+            const existingUser = await getDoc(doc(db, 'users', user.uid));
+
+            if (!existingUser.exists()) {
+                await setDoc(userDoc, {
+                    username: user.displayName || user.email.split('@')[0],
+                    email: user.email,
+                });
+
+                await addDoc(collection(db, 'contacts'), {
+                    userId: user.uid,
+                    type: 'email',
+                    value: user.email
+                });
+            } else {
                 const credential = GoogleAuthProvider.credentialFromResult(result);
                 await linkWithCredential(user, credential);
             }
-
-            await setDoc(doc(db, 'users', user.uid), {
-                username: googleUsername,
-                email: user.email,
-            });
-
-            await addDoc(collection(db, 'contacts'), {
-                userId: user.uid,
-                type: 'email',
-                value: user.email,
-            });
-
             router.push('/');
         } catch (error) {
-            setError('Failed to signup with Google. Please try again.');
+            switch (error.code) {
+                case 'auth/account-exists-with-different-credential':
+                    setError('This email is already associated with a different account. Please sign in with the correct provider.');
+                    break;
+                case 'auth/popup-closed-by-user':
+                    setError('Google sign-up was cancelled.');
+                    break;
+                default:
+                    setError('Failed to sign up with Google. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -102,22 +109,28 @@ function Signup() {
             return;
         }
 
-
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            await setDoc(doc(db, 'users', user.uid), {
-                username,
-                email,
-            });
+            const existingUser = await getDoc(doc(db, 'users', user.uid));
 
-            await addDoc(collection(db, 'contacts'), {
-                userId: user.uid,
-                type: 'email',
-                value: email
-            });
+            if (!existingUser.exists()) {
+                await setDoc(doc(db, 'users', user.uid), {
+                    username,
+                    email,
+                });
 
+                await addDoc(collection(db, 'contacts'), {
+                    userId: user.uid,
+                    type: 'email',
+                    value: email
+                });
+            } else {
+                setError('An account with this email already exists.');
+                setIsLoading(false);
+                return;
+            }
             router.push('/');
         } catch (error) {
             handleAuthErrors(error.code);
