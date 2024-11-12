@@ -39,12 +39,11 @@ function Login() {
         return () => unsubscribe();
     }, [router]);
 
-    const googleProvider = new GoogleAuthProvider();
    const handleGoogleLogin = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await signInWithPopup(auth, googleProvider);
+            const result = await signInWithPopup(auth, provider);
             const user = result.user;
             
             const existingSignInMethods = await fetchSignInMethodsForEmail(auth, user.email);
