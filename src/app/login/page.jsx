@@ -9,7 +9,6 @@ import {
     onAuthStateChanged,
     GoogleAuthProvider,
     fetchSignInMethodsForEmail,
-    linkWithPopup,
     linkWithCredential,
     signInWithPopup
 } from 'firebase/auth';
@@ -46,10 +45,9 @@ function Login() {
         setError(null);
         try {
             const result = await signInWithPopup(auth, googleProvider);
-            const { user } = result;
+            const user = result.user;
             
             const existingSignInMethods = await fetchSignInMethodsForEmail(auth, user.email);
-            console.log("Existing sign in methods:", existingMethods);
 
             if (existingSignInMethods.includes('password')) {
                 try {
@@ -78,7 +76,6 @@ function Login() {
                     value: user.email,
                 });
             } else {
-                // Update existing user document
                 await setDoc(doc(db, 'users', user.uid), {
                     lastSignIn: new Date().toISOString(),
                     authProviders: ['google', ...(existingSignInMethods || [])],

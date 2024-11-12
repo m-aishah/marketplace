@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail } from 'firebase/auth';
+import { createUserWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, linkWithCredential } from 'firebase/auth';
 import { doc, setDoc, collection, addDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
@@ -108,7 +108,6 @@ function Signup() {
             setIsLoading(false);
             return;
         }
-
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
