@@ -37,7 +37,7 @@ export default function RootLayout({ children }) {
           content="Discover apartments, products, and services in the student marketplace."
         />
         <meta property="og:image" content="/images/favicon.png" />{" "}
-        <meta property="og:url" content="https://yourwebsite.com" />
+        <meta property="og:url" content="findall.live" />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="FindAll - Student Marketplace" />
