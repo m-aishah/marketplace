@@ -31,17 +31,14 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/images/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
         <link rel="manifest" href="/images/manifest.webmanifest" />
-        {/* Open Graph metadata for link previews */}
         <meta property="og:title" content="FindAll - Student Marketplace" />
         <meta
           property="og:description"
           content="Discover apartments, products, and services in the student marketplace."
         />
         <meta property="og:image" content="/images/favicon.png" />{" "}
-        {/* Ensure this image exists in your public/images directory */}
         <meta property="og:url" content="https://yourwebsite.com" />
         <meta property="og:type" content="website" />
-        {/* Twitter Card metadata for link previews */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="FindAll - Student Marketplace" />
         <meta
@@ -49,7 +46,6 @@ export default function RootLayout({ children }) {
           content="Discover apartments, products, and services in the student marketplace."
         />
         <meta name="twitter:image" content="/images/preview-image.png" />{" "}
-        {/* Ensure this image exists in your public/images directory */}
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
