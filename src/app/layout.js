@@ -2,7 +2,6 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { AuthProvider } from "./AuthContext";
 import { ToastContainer } from "react-toastify";
-import Head from "next/head"; // Import the Head component
 import "react-toastify/dist/ReactToastify.css";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -26,16 +25,8 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <Head>
-        <title>FindAll</title>
-        <meta
-          name="description"
-          content="Student marketplace, Apartments, Products, Services"
-        />
-        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" type="image/png" href="/favicon.png" />
-      </Head>
+      <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
+      <link rel="icon" type="image/png" href="/images/favicon.png" />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
