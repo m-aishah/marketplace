@@ -45,7 +45,7 @@ export default function RootLayout({ children }) {
           name="twitter:description"
           content="Discover apartments, products, and services in the student marketplace."
         />
-        <meta name="twitter:image" content="/images/preview-image.png" />{" "}
+        <meta name="twitter:image" content="/images/favicon.png" />{" "}
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
