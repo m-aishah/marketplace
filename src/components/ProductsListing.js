@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  deleteDoc,
-} from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { Pencil, Trash2, Share2, Heart } from "lucide-react";
-import { deleteListingFromFirestore } from "@/utils/firestoreUtils";
+import {
+  deleteListingFromFirestore,
+  fetchLikeStatusFromFirestore,
+  likeListingInFirestore,
+  unlikeListingInFirestore,
+} from "@/utils/firestoreUtils";
 import { auth, db } from "@/firebase";
 import ContactProfileButtons from "./ContactProfileButtons";
 import ContactModal from "./ContactModal";
@@ -33,7 +31,6 @@ const ProductsListingPage = ({ listing }) => {
   const [loading, setLoading] = useState(true);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
   const [user] = useAuthState(auth);
   const router = useRouter();
 
@@ -64,20 +61,12 @@ const ProductsListingPage = ({ listing }) => {
 
     const fetchLikeStatus = async () => {
       if (user && listing?.id) {
-        const likesQuery = query(
-          collection(db, "likes"),
-          where("listingId", "==", listing.id),
-          where("userId", "==", user.uid)
+        setIsLiked(
+          await fetchLikeStatusFromFirestore({
+            listingId: listing.id,
+            userId: user.uid,
+          })
         );
-        const likeSnapshot = await getDocs(likesQuery);
-        setIsLiked(!likeSnapshot.empty);
-
-        const likeCountQuery = query(
-          collection(db, "likes"),
-          where("listingId", "==", listing.id)
-        );
-        const countSnapshot = await getDocs(likeCountQuery);
-        setLikeCount(countSnapshot.size);
       }
     };
 
@@ -119,19 +108,11 @@ const ProductsListingPage = ({ listing }) => {
   };
 
   const handleLike = async () => {
-    if (!user) {
-      // toast.error("Please sign in to like this listing");
-      return;
-    }
+    if (!user) return;
 
     try {
-      await addDoc(collection(db, "likes"), {
-        listingId: listing.id,
-        userId: user.uid,
-        createdAt: new Date().toISOString(),
-      });
+      await likeListingInFirestore({ listingId: listing.id, userId: user.uid });
       setIsLiked(true);
-      setLikeCount((prev) => prev + 1);
     } catch (error) {
       console.error("Error liking listing:", error);
     }
@@ -141,19 +122,11 @@ const ProductsListingPage = ({ listing }) => {
     if (!user) return;
 
     try {
-      const likesQuery = query(
-        collection(db, "likes"),
-        where("listingId", "==", listing.id),
-        where("userId", "==", user.uid)
-      );
-      const likeSnapshot = await getDocs(likesQuery);
-
-      likeSnapshot.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
+      await unlikeListingInFirestore({
+        listingId: listing.id,
+        userId: user.uid,
       });
-
       setIsLiked(false);
-      setLikeCount((prev) => Math.max(prev - 1, 0));
     } catch (error) {
       console.error("Error unliking listing:", error);
     }

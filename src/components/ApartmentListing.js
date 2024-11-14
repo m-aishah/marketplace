@@ -2,15 +2,13 @@ import { useState, useEffect } from "react";
 import { FaBed, FaBath, FaHome, FaMapMarkerAlt } from "react-icons/fa";
 import { Pencil, Trash2, Share2, Heart } from "lucide-react";
 import ContactModal from "./ContactModal";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  deleteDoc,
-} from "firebase/firestore";
-import { deleteListingFromFirestore } from "@/utils/firestoreUtils";
+  deleteListingFromFirestore,
+  fetchLikeStatusFromFirestore,
+  likeListingInFirestore,
+  unlikeListingInFirestore,
+} from "@/utils/firestoreUtils";
 import { auth, db } from "@/firebase";
 import ContactProfileButtons from "./ContactProfileButtons";
 import ConfirmationModal from "@/components/ConfirmationModal";
@@ -28,7 +26,6 @@ const ApartmentListingPage = ({ apartment }) => {
   const [loading, setLoading] = useState(true);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
   const [user] = useAuthState(auth);
   const router = useRouter();
 
@@ -56,20 +53,12 @@ const ApartmentListingPage = ({ apartment }) => {
 
     const fetchLikeStatus = async () => {
       if (user && apartment?.id) {
-        const likesQuery = query(
-          collection(db, "likes"),
-          where("listingId", "==", apartment.id),
-          where("userId", "==", user.uid)
+        setIsLiked(
+          await fetchLikeStatusFromFirestore({
+            listingId: apartment.id,
+            userId: user.uid,
+          })
         );
-        const likeSnapshot = await getDocs(likesQuery);
-        setIsLiked(!likeSnapshot.empty);
-
-        const likeCountQuery = query(
-          collection(db, "likes"),
-          where("listingId", "==", apartment.id)
-        );
-        const countSnapshot = await getDocs(likeCountQuery);
-        setLikeCount(countSnapshot.size);
       }
     };
 
@@ -111,19 +100,14 @@ const ApartmentListingPage = ({ apartment }) => {
   };
 
   const handleLike = async () => {
-    if (!user) {
-      // toast.error("Please sign in to like this listing");
-      return;
-    }
+    if (!user) return;
 
     try {
-      await addDoc(collection(db, "likes"), {
+      await likeListingInFirestore({
         listingId: apartment.id,
         userId: user.uid,
-        createdAt: new Date().toISOString(),
       });
       setIsLiked(true);
-      setLikeCount((prev) => prev + 1);
     } catch (error) {
       console.error("Error liking listing:", error);
     }
@@ -133,19 +117,11 @@ const ApartmentListingPage = ({ apartment }) => {
     if (!user) return;
 
     try {
-      const likesQuery = query(
-        collection(db, "likes"),
-        where("listingId", "==", apartment.id),
-        where("userId", "==", user.uid)
-      );
-      const likeSnapshot = await getDocs(likesQuery);
-
-      likeSnapshot.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
+      await unlikeListingInFirestore({
+        listingId: apartment.id,
+        userId: user.uid,
       });
-
       setIsLiked(false);
-      setLikeCount((prev) => Math.max(prev - 1, 0));
     } catch (error) {
       console.error("Error unliking listing:", error);
     }

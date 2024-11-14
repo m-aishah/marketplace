@@ -1,10 +1,14 @@
-import React from "react";
-import { Share2, Heart, ImageIcon, Tag, MapPin } from "lucide-react";
-import { toast } from "react-toastify";
+import React, { useState, useEffect } from "react";
+import { Heart, ImageIcon, Tag, MapPin } from "lucide-react";
+import {
+  fetchLikeStatusFromFirestore,
+  likeListingInFirestore,
+  unlikeListingInFirestore,
+} from "@/utils/firestoreUtils";
 
 const getCategoryStyles = (listingType) => {
   const styles = {
-    apartments: { bg: "bg-blue-100", text: "text-blue-600" },
+    listings: { bg: "bg-blue-100", text: "text-blue-600" },
     services: { bg: "bg-amber-100", text: "text-amber-600" },
     products: { bg: "bg-emerald-100", text: "text-emerald-600" },
     default: { bg: "bg-red-100", text: "text-red-600" },
@@ -17,33 +21,54 @@ const getCurrency = (currency) => {
   return symbols[currency] || "";
 };
 
-export const ProductCard = ({ listing }) => {
-  const [isLiked, setIsLiked] = React.useState(false);
-  const [showTooltip, setShowTooltip] = React.useState("");
+export const ProductCard = ({ user, listing }) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [showTooltip, setShowTooltip] = useState("");
 
-  const handleShare = (e) => {
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchLikeStatus = async () => {
+      if (user && listing?.id) {
+        setIsLiked(
+          await fetchLikeStatusFromFirestore({
+            listingId: listing.id,
+            userId: user.uid,
+          })
+        );
+      }
+    };
+
+    fetchLikeStatus();
+  }, [user, listing]);
+
+  const handleLike = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (navigator.share) {
-      navigator
-        .share({
-          title: listing.name,
-          text: listing.description,
-          url: window.location.href,
-        })
-        .catch(console.error);
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied to clipboard!");
+    if (!user) return;
+
+    try {
+      await likeListingInFirestore({ listingId: listing.id, userId: user.uid });
+      setIsLiked(true);
+    } catch (error) {
+      console.error("Error liking listing:", error);
     }
   };
 
-  const handleLike = (e) => {
+  const handleUnlike = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const newLikedState = !isLiked;
-    setIsLiked(newLikedState);
-    console.log("Listing liked:", newLikedState, "Listing ID:", listing.id);
+    if (!user) return;
+
+    try {
+      await unlikeListingInFirestore({
+        listingId: listing.id,
+        userId: user.uid,
+      });
+      setIsLiked(false);
+    } catch (error) {
+      console.error("Error unliking listing:", error);
+    }
   };
 
   const categoryStyles = getCategoryStyles(listing.listingType);
@@ -66,41 +91,31 @@ export const ProductCard = ({ listing }) => {
 
         {/* Action Buttons */}
         <div className="absolute right-2 top-2 flex space-x-2">
-          <button
-            className="relative h-8 w-8 rounded-full bg-white/90 p-2 shadow-sm transition-all hover:bg-white"
-            onClick={handleShare}
-            onMouseEnter={() => setShowTooltip("share")}
-            onMouseLeave={() => setShowTooltip("")}
-          >
-            <Share2 className="h-4 w-4 text-gray-600" />
-            {showTooltip === "share" && (
-              <div className="absolute -bottom-8 right-0 z-10 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white">
-                Share listing
-              </div>
-            )}
-          </button>
-
-          <button
-            className="relative h-8 w-8 rounded-full bg-white/90 p-2 shadow-sm transition-all hover:bg-white"
-            onClick={handleLike}
-            onMouseEnter={() => setShowTooltip("like")}
-            onMouseLeave={() => setShowTooltip("")}
-          >
-            <Heart
-              className={`h-4 w-4 transition-colors ${
-                isLiked ? "fill-red-500 text-red-500" : "text-gray-600"
-              }`}
-            />
-            {showTooltip === "like" && (
-              <div className="absolute -bottom-8 right-0 z-10 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white">
-                {isLiked ? "Remove from favorites" : "Add to favorites"}
-              </div>
-            )}
-          </button>
+          {user &&
+            (listing.listingType !== "services" &&
+            listing.listingType !== "requests" ? (
+              <button
+                className="relative h-8 w-8 rounded-full bg-white/90 p-2 shadow-sm transition-all hover:bg-white"
+                onClick={isLiked ? handleUnlike : handleLike}
+                onMouseEnter={() => setShowTooltip("like")}
+                onMouseLeave={() => setShowTooltip("")}
+              >
+                <Heart
+                  className={`h-4 w-4 transition-colors ${
+                    isLiked ? "fill-red-500 text-red-500" : "text-gray-600"
+                  }`}
+                />
+                {showTooltip === "like" && (
+                  <div className="absolute -bottom-8 right-0 z-10 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white">
+                    {isLiked ? "Remove from favorites" : "Add to favorites"}
+                  </div>
+                )}
+              </button>
+            ) : null)}
         </div>
       </div>
 
-      {/* Content - Fixed Height */}
+      {/* Content */}
       <div className="flex h-[208px] flex-col p-4">
         <div className="mb-2">
           <span

@@ -261,3 +261,50 @@ export const getDocumentCount = async (collectionName) => {
     return 0;
   }
 };
+
+// Likes
+export const likeListingInFirestore = async ({ listingId, userId }) => {
+  try {
+    await addDoc(collection(db, "likes"), {
+      listingId,
+      userId,
+      createdAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error liking listing:", error);
+    throw error;
+  }
+};
+
+export const unlikeListingInFirestore = async ({ listingId, userId }) => {
+  try {
+    const likesQuery = query(
+      collection(db, "likes"),
+      where("listingId", "==", listingId),
+      where("userId", "==", userId)
+    );
+    const likeSnapshot = await getDocs(likesQuery);
+
+    likeSnapshot.forEach(async (doc) => {
+      await deleteDoc(doc.ref);
+    });
+  } catch (error) {
+    console.error("Error unliking listing:", error);
+    throw error;
+  }
+};
+
+export const fetchLikeStatusFromFirestore = async ({ listingId, userId }) => {
+  try {
+    const likesQuery = query(
+      collection(db, "likes"),
+      where("listingId", "==", listingId),
+      where("userId", "==", userId)
+    );
+    const likeSnapshot = await getDocs(likesQuery);
+    return !likeSnapshot.empty;
+  } catch (error) {
+    console.error("Error fetching like status:", error);
+    return false;
+  }
+};

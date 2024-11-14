@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/Input";
@@ -12,6 +13,7 @@ import {
   FiPackage,
   FiTool,
   FiHelpCircle,
+  FiChevronRight,
 } from "react-icons/fi";
 import {
   collection,
@@ -21,7 +23,7 @@ import {
   limit,
   getDocs,
 } from "firebase/firestore";
-import { db } from "@/firebase";
+import { db, auth } from "@/firebase";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 import "swiper/css";
@@ -44,25 +46,35 @@ export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState("services");
   const itemsPerPage = 4;
   const router = useRouter();
+  const [user] = useAuthState(auth);
 
   useEffect(() => {
     setLoading(true);
     const fetchUserListings = async (listingType) => {
-      const listingsQuery = query(
-        collection(db, "listings"),
-        where("listingType", "==", listingType),
-        orderBy("createdAt", "desc"),
-        limit(itemsPerPage)
-      );
-      const listingsSnapshot = await getDocs(listingsQuery);
-      const fetchedListings = listingsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setListings((prev) => ({
-        ...prev,
-        [listingType]: fetchedListings,
-      }));
+      try {
+        const listingsQuery = query(
+          collection(db, "listings"),
+          where("listingType", "==", listingType),
+          orderBy("createdAt", "desc"),
+          limit(itemsPerPage)
+        );
+        const listingsSnapshot = await getDocs(listingsQuery);
+        const fetchedListings = listingsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setListings((prev) => ({
+          ...prev,
+          [listingType]: fetchedListings,
+        }));
+      } catch (error) {
+        console.error(`Error fetching ${listingType}:`, error);
+        // Set empty array for failed fetches to prevent UI breaks
+        setListings((prev) => ({
+          ...prev,
+          [listingType]: [],
+        }));
+      }
     };
 
     Promise.all([
@@ -73,15 +85,18 @@ export default function HomePage() {
     ]).then(() => setLoading(false));
   }, []);
 
-  const getListings = (category) => {
-    return listings[category].slice(0, itemsPerPage);
-  };
-
   const categoryIcons = {
     apartments: FiHome,
     products: FiPackage,
     services: FiTool,
     requests: FiHelpCircle,
+  };
+
+  const categoryColors = {
+    apartments: "from-blue-500 to-blue-600",
+    products: "from-emerald-500 to-emerald-600",
+    services: "from-amber-500 to-amber-600",
+    requests: "from-purple-500 to-purple-600",
   };
 
   const renderCategoryCard = (category, title) => {
@@ -108,58 +123,72 @@ export default function HomePage() {
   };
 
   const renderSection = (category, title) => {
-    const categoryListings = getListings(category);
+    const categoryListings = listings[category];
 
     return (
-      <section className="mb-8 sm:mb-12 transition-opacity duration-300">
+      <section
+        className="mb-8 sm:mb-12 transition-all duration-300"
+        aria-label={`${title} listings section`}
+      >
         <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <Link href={`/${category.toLowerCase()}`} className="group">
+          <Link
+            href={`/${category.toLowerCase()}`}
+            className="group flex items-center space-x-2"
+          >
             <h2 className="text-lg sm:text-2xl font-bold group-hover:text-primary transition-colors">
               {title}
             </h2>
+            <FiChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
           <Button
             href={`/${category.toLowerCase()}`}
-            className="shadow-md hover:shadow-lg transition-shadow"
+            className="shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+            aria-label={`View all ${title}`}
           >
-            <span className="text-sm sm:text-base">View More</span>
+            View All
           </Button>
         </div>
 
-        {categoryListings.length ? (
-          <Swiper
-            slidesPerView={1}
-            spaceBetween={12}
-            pagination={{
-              clickable: true,
-              dynamicBullets: true,
-            }}
-            breakpoints={{
-              640: {
-                slidesPerView: 2,
-                spaceBetween: 16,
-              },
-              1024: {
-                slidesPerView: 4,
-                spaceBetween: 16,
-              },
-            }}
-            modules={[Pagination]}
-            className="w-full"
-          >
-            {categoryListings.map((listing) => (
-              <SwiperSlide key={listing.id}>
-                <Link
-                  href={`/${category.toLowerCase()}/${listing.id}`}
-                  className="transform transition-transform duration-300 hover:scale-102"
-                >
-                  <ProductCard listing={listing} />
-                </Link>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+        {categoryListings.length > 0 ? (
+          <div className="relative">
+            <Swiper
+              slidesPerView={1}
+              spaceBetween={12}
+              pagination={{
+                clickable: true,
+                dynamicBullets: true,
+              }}
+              breakpoints={{
+                640: {
+                  slidesPerView: 2,
+                  spaceBetween: 16,
+                },
+                1024: {
+                  slidesPerView: 4,
+                  spaceBetween: 16,
+                },
+              }}
+              modules={[Pagination]}
+              className="w-full"
+            >
+              {categoryListings.map((listing) => (
+                <SwiperSlide key={listing.id}>
+                  <Link
+                    href={`/${category.toLowerCase()}/${listing.id}`}
+                    className="block transform transition-all duration-300 hover:-translate-y-1"
+                  >
+                    <ProductCard user={user} listing={listing} />
+                  </Link>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
         ) : (
-          <div className="text-center"> No {category} at the moment.</div>
+          <div className="text-center p-8 bg-gray-50 rounded-lg">
+            <p className="text-gray-600">
+              No {category} listings available at the moment.
+            </p>
+          </div>
         )}
       </section>
     );
@@ -172,84 +201,96 @@ export default function HomePage() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearch(e);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-gray-50">
-      <main className="container mx-auto p-3 sm:p-4 md:p-6 lg:p-8">
-        <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
-          <div className="text-center mb-6 sm:mb-8 space-y-4">
-            <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Discover apartments, products, services, and more in your
-              community
+      <main className="container mx-auto px-4 py-6 sm:py-8 md:py-12">
+        <div className="max-w-6xl mx-auto space-y-8">
+          {/* Hero Section */}
+          <div className="text-center space-y-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 animate-fade-in">
+              Find What You Need
+            </h1>
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
+              Discover apartments, products, services, and more in TRNC
             </p>
 
-            <div className="relative max-w-3xl mx-auto">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="relative flex-1">
-                  <Input
-                    type="text"
-                    placeholder="Search listings..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="w-full pl-3 pr-3 py-2 sm:py-3 text-sm sm:text-base shadow-lg"
-                  />
+            {/* Search Section */}
+            <div className="max-w-3xl mx-auto">
+              <form
+                onSubmit={handleSearch}
+                className="flex gap-2 p-2 bg-white rounded-2xl shadow-lg shadow-blue-100"
+              >
+                <Input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search listings..."
+                  className="flex-1 text-lg p-4 border-0 focus:ring-1 focus:ring-blue-500"
+                />
+                <div className="flex items-center justify-center p-4">
+                  <FiSearch className="w-5 h-5" onSubmit={handleSearch} />
                 </div>
-                <Button
-                  onClick={handleSearch}
-                  className="shadow-md hover:shadow-lg transition-shadow"
-                >
-                  <FiSearch className="text-black h-4 w-4" />
-                  <span className="hidden sm:inline ml-2">Search</span>
-                </Button>
-              </div>
+              </form>
             </div>
           </div>
 
-          <div className="flex justify-between items-center mb-4 sm:mb-6 sticky top-0 bg-background/80 backdrop-blur-sm p-2 sm:p-4 rounded-lg shadow-sm z-10">
-            <h2 className="text-lg sm:text-2xl font-bold">Featured Listings</h2>
-            <Button
-              onClick={() => setIsModalOpen(true)}
-              variant="blue"
-              className="px-4 sm:px-6 py-2 sm:py-3 shadow-lg hover:shadow-xl transition-shadow"
-            >
-              <FiPlus className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-              <span className="text-white text-sm sm:text-base ml-1 sm:ml-2">
-                New Listing
-              </span>
-            </Button>
+          {/* Sticky Header */}
+          <div className="sticky top-20 bg-white/90 backdrop-blur-lg p-4 rounded-xl shadow-md z-20 transition-all duration-300">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl sm:text-2xl font-bold">
+                Featured Listings
+              </h2>
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                variant="blue"
+                className="px-4 sm:px-6 py-2 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                aria-label="Create new listing"
+              >
+                <FiPlus className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                <span className="text-white text-sm sm:text-base ml-2">
+                  New Listing
+                </span>
+              </Button>
+            </div>
           </div>
 
+          {/* Category Navigation */}
           <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8 text-center bg-gradient-to-r from-blue-500 to-purple-600 text-white p-2 sm:p-4 rounded-lg shadow-lg">
             {["apartments", "products", "services", "requests"].map((item) =>
               renderCategoryCard(item, capitalizeFirstLetter(item))
             )}
           </div>
 
-          <div className="space-y-8 sm:space-y-12">
+          {/* Listings Sections */}
+          <div className="space-y-12">
             {renderSection(
               activeCategory,
               capitalizeFirstLetter(activeCategory)
             )}
-            {["apartments", "products", "services", "requests"]
+            {Object.keys(listings)
               .filter((item) => item !== activeCategory)
-              .map((item) => renderSection(item, capitalizeFirstLetter(item)))}
+              .map((item) =>
+                renderSection(
+                  item,
+                  item.charAt(0).toUpperCase() + item.slice(1)
+                )
+              )}
           </div>
         </div>
       </main>
+
       <CreateListingModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

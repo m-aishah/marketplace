@@ -4,7 +4,6 @@ import {
   FaBriefcase,
   FaCalendar,
   FaMapMarkerAlt,
-  FaTag,
   FaTools,
 } from "react-icons/fa";
 import ImageGallery from "./ProductsGallery";
@@ -26,7 +25,6 @@ const FreelancerServicePage = ({ skill }) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [user] = useAuthState(auth);
   const router = useRouter();
 
@@ -144,18 +142,6 @@ const FreelancerServicePage = ({ skill }) => {
                   {skill.name}
                 </h1>
                 <div className="flex space-x-2">
-                  <button
-                    onClick={() => setIsFavorite(!isFavorite)}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                  >
-                    <Heart
-                      className={`w-6 h-6 ${
-                        isFavorite
-                          ? "fill-red-500 text-red-500"
-                          : "text-gray-400"
-                      }`}
-                    />
-                  </button>
                   <button
                     onClick={handleShare}
                     className="p-2 rounded-full hover:bg-gray-100 transition-colors"
