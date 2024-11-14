@@ -214,7 +214,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-6 sm:py-8 md:py-12">
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Hero Section */}
@@ -237,7 +237,7 @@ export default function HomePage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search listings..."
-                  className="flex-1 text-lg p-4 border-0 focus:ring-1 focus:ring-blue-500"
+                  className="flex-1 p-4 border-0 focus:ring-1 focus:ring-blue-500"
                 />
                 <div className="flex items-center justify-center p-4">
                   <FiSearch className="w-5 h-5" onSubmit={handleSearch} />
@@ -247,7 +247,7 @@ export default function HomePage() {
           </div>
 
           {/* Sticky Header */}
-          <div className="sticky top-20 bg-white/90 backdrop-blur-lg p-4 rounded-xl shadow-md z-20 transition-all duration-300">
+          <div className="sticky top-20 bg-white/90 backdrop-blur-lg p-4 rounded-xl  z-20 transition-all duration-300">
             <div className="flex justify-between items-center">
               <h2 className="text-xl sm:text-2xl font-bold">
                 Featured Listings
