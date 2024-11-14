@@ -219,9 +219,9 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Hero Section */}
           <div className="text-center space-y-6">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 animate-fade-in">
+            {/* <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 animate-fade-in">
               Find What You Need
-            </h1>
+            </h1> */}
             <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
               Discover apartments, products, services, and more in TRNC
             </p>

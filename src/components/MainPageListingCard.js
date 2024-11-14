@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Heart, ImageIcon, Tag, MapPin } from "lucide-react";
+import { Heart, ImageIcon, Tag, MapPin, Share2 } from "lucide-react";
 import {
   fetchLikeStatusFromFirestore,
   likeListingInFirestore,
   unlikeListingInFirestore,
 } from "@/utils/firestoreUtils";
+import { toast } from "react-toastify";
 
 const getCategoryStyles = (listingType) => {
   const styles = {
@@ -71,6 +72,24 @@ export const ProductCard = ({ user, listing }) => {
     }
   };
 
+  const handleShare = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (navigator.share) {
+      navigator
+        .share({
+          title: apartment.name,
+          text: apartment.description,
+          url: window.location.href,
+        })
+        .catch(console.error);
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   const categoryStyles = getCategoryStyles(listing.listingType);
 
   return (
@@ -91,9 +110,9 @@ export const ProductCard = ({ user, listing }) => {
 
         {/* Action Buttons */}
         <div className="absolute right-2 top-2 flex space-x-2">
-          {user &&
-            (listing.listingType !== "services" &&
-            listing.listingType !== "requests" ? (
+          {user ? (
+            listing.listingType !== "services" &&
+            listing.listingType !== "requests" && (
               <button
                 className="relative h-8 w-8 rounded-full bg-white/90 p-2 shadow-sm transition-all hover:bg-white"
                 onClick={isLiked ? handleUnlike : handleLike}
@@ -111,7 +130,22 @@ export const ProductCard = ({ user, listing }) => {
                   </div>
                 )}
               </button>
-            ) : null)}
+            )
+          ) : (
+            <button
+              className="relative h-8 w-8 rounded-full bg-white/90 p-2 shadow-sm transition-all hover:bg-white"
+              onClick={handleShare}
+              onMouseEnter={() => setShowTooltip("share")}
+              onMouseLeave={() => setShowTooltip("")}
+            >
+              <Share2 className="h-4 w-4 text-gray-600" />
+              {showTooltip === "share" && (
+                <div className="absolute -bottom-8 right-0 z-10 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white">
+                  Share this listing
+                </div>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
