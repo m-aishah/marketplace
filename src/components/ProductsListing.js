@@ -1,12 +1,24 @@
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { Pencil, Trash2 } from "lucide-react";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  deleteDoc,
+} from "firebase/firestore";
+import { Pencil, Trash2, Share2, Heart } from "lucide-react";
 import { deleteListingFromFirestore } from "@/utils/firestoreUtils";
 import { auth, db } from "@/firebase";
 import ContactProfileButtons from "./ContactProfileButtons";
 import ContactModal from "./ContactModal";
 import ImageGallery from "./ProductsGallery";
-import { FaTag, FaMapMarkerAlt } from "react-icons/fa";
+import {
+  FaTag,
+  FaMapMarkerAlt,
+  FaCalendar,
+  FaCheckCircle,
+} from "react-icons/fa";
 import LoadingSpinner from "./LoadingSpinner";
 import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -20,6 +32,8 @@ const ProductsListingPage = ({ listing }) => {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const [user] = useAuthState(auth);
   const router = useRouter();
 
@@ -48,7 +62,27 @@ const ProductsListingPage = ({ listing }) => {
       }
     };
 
+    const fetchLikeStatus = async () => {
+      if (user && listing?.id) {
+        const likesQuery = query(
+          collection(db, "likes"),
+          where("listingId", "==", listing.id),
+          where("userId", "==", user.uid)
+        );
+        const likeSnapshot = await getDocs(likesQuery);
+        setIsLiked(!likeSnapshot.empty);
+
+        const likeCountQuery = query(
+          collection(db, "likes"),
+          where("listingId", "==", listing.id)
+        );
+        const countSnapshot = await getDocs(likeCountQuery);
+        setLikeCount(countSnapshot.size);
+      }
+    };
+
     fetchContacts();
+    fetchLikeStatus();
     setLoading(false);
   }, [listing]);
 
@@ -84,104 +118,213 @@ const ProductsListingPage = ({ listing }) => {
     setLoading(true);
   };
 
+  const handleLike = async () => {
+    if (!user) {
+      // toast.error("Please sign in to like this listing");
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "likes"), {
+        listingId: listing.id,
+        userId: user.uid,
+        createdAt: new Date().toISOString(),
+      });
+      setIsLiked(true);
+      setLikeCount((prev) => prev + 1);
+    } catch (error) {
+      console.error("Error liking listing:", error);
+    }
+  };
+
+  const handleUnlike = async () => {
+    if (!user) return;
+
+    try {
+      const likesQuery = query(
+        collection(db, "likes"),
+        where("listingId", "==", listing.id),
+        where("userId", "==", user.uid)
+      );
+      const likeSnapshot = await getDocs(likesQuery);
+
+      likeSnapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
+
+      setIsLiked(false);
+      setLikeCount((prev) => Math.max(prev - 1, 0));
+    } catch (error) {
+      console.error("Error unliking listing:", error);
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: listing.name,
+          text: listing.description,
+          url: window.location.href,
+        })
+        .catch(console.error);
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-8">
-      {isOwnListing && (
-        <div
-          className="max-w-4xl mt-6 mx-auto bg-blue-100 rounded-t-lg border-l-4 border-blue-500 text-blue-700 p-4"
-          role="alert"
-        >
-          <p className="font-bold">Note:</p>
-          <p>You are viewing your own listing.</p>
-        </div>
-      )}
-      <div
-        className={`max-w-4xl mx-auto mb-6 bg-white shadow-md overflow-hidden
-          ${isOwnListing ? "rounded-b-lg" : "rounded-lg mt-6"}`}
-      >
-        <div className="p-6">
-        <BackButton />
-          {imageUrls && <ImageGallery images={imageUrls} />}
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <BackButton />
         </div>
 
-        <div className="px-6 py-8 space-y-6 bg-gray-50">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
-            {listing?.name || "Product Name"}
-          </h2>
-
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center space-x-2 text-green-600">
-              <FaTag className="text-xl" />
-              <span className="text-2xl font-bold">
-                {listing?.price || "N/A"}
-                {" " + getCurrency(listing?.currency)}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <FaMapMarkerAlt className="text-xl" />
-              <span className="text-lg">
-                {listing?.location || "Location not specified"}
-              </span>
+        {isOwnListing && (
+          <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FaCheckCircle className="h-5 w-5 text-blue-500" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  You are viewing your own listing
+                </p>
+              </div>
             </div>
           </div>
+        )}
 
-          <div className="bg-white p-4 rounded-lg shadow-inner">
-            <h2 className="text-xl font-semibold mb-2">Description</h2>
-            <p className="text-gray-600 leading-relaxed">
-              {listing?.description || "Product Description"}
-            </p>
-          </div>
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Images */}
+            <div className="p-6">
+              {imageUrls && <ImageGallery images={imageUrls} />}
+            </div>
 
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h3 className="text-xl font-semibold mb-2 text-blue-800">
-              Additional Details
-            </h3>
-            <div className="grid lg:grid-cols-2 gap-4">
-              <div>
-                <span className="font-medium text-gray-600">Category:</span>
-                <span className="ml-2 text-gray-800">
-                  {listing?.category || "Unknown"}
+            {/* Right Column - Product Details */}
+            <div className="p-6 space-y-6">
+              <div className="flex justify-between items-start">
+                <h1 className="text-3xl font-bold text-gray-900 leading-tight">
+                  {listing?.name || "Product Name"}
+                </h1>
+                <div className="flex space-x-2">
+                  {user && (
+                    <button
+                      onClick={isLiked ? handleUnlike : handleLike}
+                      className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                      aria-label={isLiked ? "Unlike" : "Like"}
+                    >
+                      <Heart
+                        className={`w-6 h-6 ${
+                          isLiked
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-400"
+                        }`}
+                      />
+                    </button>
+                  )}
+
+                  <button
+                    onClick={handleShare}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <Share2 className="w-6 h-6 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  {listing?.category || "Category"}
+                </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  {listing?.condition || "Condition"}
                 </span>
               </div>
-              <div>
-                <span className="font-medium text-gray-600">Condition:</span>
-                <span className="ml-2 text-gray-800">
-                  {listing?.condition || "Not specified"}
-                </span>
+
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center text-2xl font-bold flex-wrap text-green-600">
+                  {getCurrency(listing?.currency)}
+                  {listing?.price || "N / A"}
+                </div>
+
+                <div className="flex items-center space-x-2 text-gray-600">
+                  <FaMapMarkerAlt className="flex-shrink-0" />
+                  <span>{listing?.location || "N / A"}</span>
+                </div>
               </div>
-              {/* Add more details as needed */}
+
+              <div className="border-t border-gray-200 pt-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Description
+                </h2>
+                <p className="text-gray-600 whitespace-pre-line">
+                  {listing?.description || "No description available"}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-3 bg-gray-50 p-4 rounded-lg">
+                  <FaTag className="text-xl text-blue-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Brand</p>
+                    <p className="text-sm">{listing?.brand}</p>
+                  </div>
+                </div>
+                <div className="flex isFavitems-center space-x-3 bg-gray-50 p-4 rounded-lg">
+                  <FaCalendar className="text-xl text-blue-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Listed On</p>
+                    <p className="text-sm">
+                      {new Date(listing?.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-6">
+                {!isOwnListing ? (
+                  <ContactProfileButtons
+                    listing={listing}
+                    setIsContactModalOpen={setIsContactModalOpen}
+                  />
+                ) : (
+                  <div className="flex space-x-4">
+                    <Button
+                      onClick={handleEdit}
+                      variant="white"
+                      className="flex-1 flex items-center justify-center"
+                    >
+                      <Pencil size={20} className="mr-2" />
+                      Edit Listing
+                    </Button>
+                    <Button
+                      onClick={() => setIsConfirmOpen(true)}
+                      variant="red"
+                      className="flex-1 flex items-center justify-center"
+                    >
+                      <Trash2 size={20} className="mr-2" />
+                      Delete Listing
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="mt-6">
-            {!isOwnListing && (
-              <ContactProfileButtons
-                listing={listing}
-                setIsContactModalOpen={setIsContactModalOpen}
-              />
-            )}
-            {isOwnListing && (
-              <div className="flex space-x-2">
-                <Button onClick={handleEdit} variant="white">
-                  <Pencil size={20} className="inline-block mr-2" />
-                  Edit
-                </Button>
-                <Button onClick={() => setIsConfirmOpen(true)} variant="red">
-                  <Trash2 size={20} className="inline-block mr-2" />
-                  Delete
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </div>
+
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
         contacts={contacts}
         listingOwnerId={listing?.userId}
       />
+
       <ConfirmationModal
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}

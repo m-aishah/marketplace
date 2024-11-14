@@ -2,6 +2,7 @@ import { FaUser, FaPhoneAlt } from "react-icons/fa";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/firebase";
+import { Button } from "./Button";
 
 export default function ContactProfileButtons({
   listing,
@@ -19,20 +20,21 @@ export default function ContactProfileButtons({
 
   return (
     <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-      <button
+      <Button
         onClick={() => setIsContactModalOpen(true)}
         className="transition bg-blue-600 font-medium text-white px-6 py-3 rounded-full text-sm hover:bg-blue-700 hover:shadow-lg flex items-center justify-center"
+        variant="blue"
       >
         <FaPhoneAlt className="mr-2" />
         Contact Advertiser
-      </button>
-      <Link
+      </Button>
+      <Button
         href={getProfileLink(user?.uid)}
-        className="transition bg-gray-200 font-medium text-gray-800 px-6 py-3 rounded-full text-sm hover:bg-gray-300 hover:shadow-lg flex items-center justify-center"
+        className="shadow-md hover:shadow-lg transition-shadow"
       >
         <FaUser className="mr-2" />
         Advertiser Profile
-      </Link>
+      </Button>
     </div>
   );
 }

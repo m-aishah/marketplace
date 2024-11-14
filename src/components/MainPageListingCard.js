@@ -1,108 +1,143 @@
 import React from "react";
-import { Star, ImageIcon } from "lucide-react";
-import { FaTag, FaMapMarkerAlt } from "react-icons/fa";
-import { Card, CardContent } from "./Card";
-import Image from "next/image";
+import { Share2, Heart, ImageIcon, Tag, MapPin } from "lucide-react";
+import { toast } from "react-toastify";
 
-const StarRating = ({ rating }) => {
-  return (
-    <div className="flex items-center">
-      {[...Array(5)].map((_, i) => (
-        <Star
-          key={i}
-          className={`h-4 w-4 ${
-            i < Math.floor(rating)
-              ? "text-yellow-400 fill-yellow-400"
-              : "text-gray-300"
-          }`}
-        />
-      ))}
-      <span className="ml-2 text-sm text-gray-600">{rating.toFixed(1)}</span>
-    </div>
-  );
+const getCategoryStyles = (listingType) => {
+  const styles = {
+    apartments: { bg: "bg-blue-100", text: "text-blue-600" },
+    services: { bg: "bg-amber-100", text: "text-amber-600" },
+    products: { bg: "bg-emerald-100", text: "text-emerald-600" },
+    default: { bg: "bg-red-100", text: "text-red-600" },
+  };
+  return styles[listingType] || styles.default;
 };
 
 const getCurrency = (currency) => {
-  switch (currency) {
-    case "TL":
-      return "₺";
-    case "USD":
-      return "$";
-    case "EUR":
-      return "€";
-    default:
-      return "";
-  }
+  const symbols = { TL: "₺", USD: "$", EUR: "€" };
+  return symbols[currency] || "";
 };
 
 export const ProductCard = ({ listing }) => {
+  const [isLiked, setIsLiked] = React.useState(false);
+  const [showTooltip, setShowTooltip] = React.useState("");
+
+  const handleShare = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (navigator.share) {
+      navigator
+        .share({
+          title: listing.name,
+          text: listing.description,
+          url: window.location.href,
+        })
+        .catch(console.error);
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
+  const handleLike = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newLikedState = !isLiked;
+    setIsLiked(newLikedState);
+    console.log("Listing liked:", newLikedState, "Listing ID:", listing.id);
+  };
+
+  const categoryStyles = getCategoryStyles(listing.listingType);
+
   return (
-    <Card className="overflow-hidden transition-shadow hover:shadow-lg">
-      <CardContent className="p-0">
-        <div className="relative h-48 w-full">
-          {listing.imageUrls && listing.imageUrls.length > 0 ? (
-            <Image
-              src={listing.imageUrls[0]}
-              alt={listing.name}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="h-full bg-muted bg-gray-200 flex items-center justify-center">
-              <ImageIcon className="w-12 h-12 text-muted-foreground" />
-            </div>
-          )}
-        </div>
-        <div className="p-2 space-y-2">
-          <div className="flex items-center justify-between">
-            <span
-              className="text-sm font-medium px-2 py-1 rounded-full transform -translate-x-1 translate-y-1"
-              style={{
-                backgroundColor:
-                  listing.listingType === "apartments"
-                    ? "rgba(59, 130, 246, 0.1)"
-                    : listing.listingType === "services"
-                    ? "rgba(245, 158, 11, 0.1)"
-                    : listing.listingType === "products"
-                    ? "rgba(16, 185, 129, 0.1)"
-                    : "rgba(185, 78, 16, 0.1)",
-                color:
-                  listing.listingType === "apartments"
-                    ? "rgb(59, 130, 246)"
-                    : listing.listingType === "services"
-                    ? "rgb(245, 158, 11)"
-                    : listing.listingType === "products"
-                    ? "rgb(16, 185, 129)"
-                    : "rgb(235, 72, 72)",
-              }}
-            >
-              {listing.category}
-            </span>
+    <div className="group relative h-[400px] w-full overflow-hidden rounded-lg border border-gray-200 bg-white transition-all duration-300 hover:shadow-lg">
+      {/* Image Container - Fixed Height */}
+      <div className="relative h-48 w-full overflow-hidden">
+        {listing.imageUrls?.length > 0 ? (
+          <img
+            src={listing.imageUrls[0]}
+            alt={listing.name}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-gray-100">
+            <ImageIcon className="h-12 w-12 text-gray-400" />
           </div>
-          <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-1">
+        )}
+
+        {/* Action Buttons */}
+        <div className="absolute right-2 top-2 flex space-x-2">
+          <button
+            className="relative h-8 w-8 rounded-full bg-white/90 p-2 shadow-sm transition-all hover:bg-white"
+            onClick={handleShare}
+            onMouseEnter={() => setShowTooltip("share")}
+            onMouseLeave={() => setShowTooltip("")}
+          >
+            <Share2 className="h-4 w-4 text-gray-600" />
+            {showTooltip === "share" && (
+              <div className="absolute -bottom-8 right-0 z-10 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white">
+                Share listing
+              </div>
+            )}
+          </button>
+
+          <button
+            className="relative h-8 w-8 rounded-full bg-white/90 p-2 shadow-sm transition-all hover:bg-white"
+            onClick={handleLike}
+            onMouseEnter={() => setShowTooltip("like")}
+            onMouseLeave={() => setShowTooltip("")}
+          >
+            <Heart
+              className={`h-4 w-4 transition-colors ${
+                isLiked ? "fill-red-500 text-red-500" : "text-gray-600"
+              }`}
+            />
+            {showTooltip === "like" && (
+              <div className="absolute -bottom-8 right-0 z-10 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white">
+                {isLiked ? "Remove from favorites" : "Add to favorites"}
+              </div>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Content - Fixed Height */}
+      <div className="flex h-[208px] flex-col p-4">
+        <div className="mb-2">
+          <span
+            className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${categoryStyles.bg} ${categoryStyles.text}`}
+          >
+            {listing.category}
+          </span>
+        </div>
+
+        <div className="flex-grow overflow-hidden">
+          <h3 className="mb-2 line-clamp-1 text-lg font-semibold text-gray-900">
             {listing.name}
           </h3>
-          <p className="text-sm line-clamp-2 h-10 text-muted-foreground">
+          <p className="line-clamp-2 text-sm text-gray-500">
             {listing.description}
           </p>
+        </div>
+
+        <div className="mt-auto border-t pt-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1 text-green-600">
-              <FaTag className="text-base" />
+              <Tag className="h-4 w-4" />
               <span className="text-base font-semibold">
                 {listing?.price
-                  ? `${listing.price} ${getCurrency(listing.currency)}`
+                  ? `${getCurrency(listing.currency)}${listing.price}`
                   : "N/A"}
               </span>
             </div>
             <div className="flex items-center space-x-1 text-gray-600">
-              <FaMapMarkerAlt className="text-base" />
+              <MapPin className="h-4 w-4" />
               <span className="text-sm">{listing?.location || "N/A"}</span>
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
+
+export default ProductCard;

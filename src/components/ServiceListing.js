@@ -1,6 +1,12 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Share2, Heart } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { FaBriefcase, FaCalendar, FaMapMarkerAlt, FaTag, FaTools } from "react-icons/fa";
+import {
+  FaBriefcase,
+  FaCalendar,
+  FaMapMarkerAlt,
+  FaTag,
+  FaTools,
+} from "react-icons/fa";
 import ImageGallery from "./ProductsGallery";
 import ContactModal from "./ContactModal";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -20,6 +26,7 @@ const FreelancerServicePage = ({ skill }) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [user] = useAuthState(auth);
   const router = useRouter();
 
@@ -80,98 +87,161 @@ const FreelancerServicePage = ({ skill }) => {
     setLoading(true);
   };
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: skill.name,
+          text: skill.description,
+          url: window.location.href,
+        })
+        .catch(console.error);
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   if (!skill || loading) {
     return <LoadingSpinner />;
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-8">
-   
-      {isOwnListing && (
-        <div className="max-w-4xl mt-6 mx-auto bg-blue-100 rounded-t-lg border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
-          <p className="font-bold">Note:</p>
-          <p>You are viewing your own listing.</p>
-        </div>
-      )}
-      
-      <div className={`max-w-4xl mx-auto mb-6 bg-white shadow-md overflow-hidden ${isOwnListing ? "rounded-b-lg" : "rounded-lg mt-6"}`}>
-      <BackButton />
-        <div className="p-6">
-          {skill.imageUrls && skill.imageUrls.length > 0 && (
-            <ImageGallery images={skill.imageUrls} />
-          )}
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <BackButton />
         </div>
 
-        <div className="px-6 py-8 space-y-6 bg-gray-50">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
-            {skill.name}
-          </h2>
-
-          {/* Price and Location */}
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center space-x-2 text-green-600">
-              <FaTag className="text-xl" />
-              <span className="text-2xl font-bold">
-                {skill.price || "N/A"}
-                {" " + getCurrency(skill.currency)}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <FaMapMarkerAlt className="text-xl" />
-              <span className="text-lg">{skill.location}</span>
+        {isOwnListing && (
+          <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FaTools className="h-5 w-5 text-blue-500" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  You are viewing your own service listing
+                </p>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Service Description */}
-          <div className="bg-white p-4 rounded-lg shadow-inner">
-            <h2 className="text-xl font-semibold mb-2">Description</h2>
-            <p className="text-gray-600 leading-relaxed">{skill.description}</p>
-          </div>
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Images */}
+            <div className="p-6">
+              {skill.imageUrls && skill.imageUrls.length > 0 && (
+                <ImageGallery images={skill.imageUrls} />
+              )}
+            </div>
 
-          {/* Additional Details */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h3 className="text-xl font-semibold mb-4 text-blue-800">Service Details</h3>
-            <div className="grid lg:grid-cols-2 gap-4">
-              <div className="flex items-center space-x-2">
-                <FaBriefcase className="text-blue-500" />
-                <span className="font-medium text-gray-600">Payment Type:</span>
-                <span className="text-gray-800">{skill.paymentType}</span>
+            {/* Right Column - Service Details */}
+            <div className="p-6 space-y-6">
+              <div className="flex justify-between items-start">
+                <h1 className="text-3xl font-bold text-gray-900 leading-tight">
+                  {skill.name}
+                </h1>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setIsFavorite(!isFavorite)}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <Heart
+                      className={`w-6 h-6 ${
+                        isFavorite
+                          ? "fill-red-500 text-red-500"
+                          : "text-gray-400"
+                      }`}
+                    />
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <Share2 className="w-6 h-6 text-gray-400" />
+                  </button>
+                </div>
               </div>
+
               <div className="flex items-center space-x-2">
-                <FaTools className="text-blue-500" />
-                <span className="font-medium text-gray-600">Category:</span>
-                <span className="text-gray-800">{skill.category}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <FaCalendar className="text-blue-500" />
-                <span className="font-medium text-gray-600">Listed on:</span>
-                <span className="text-gray-800">
-                  {new Date(skill.createdAt).toLocaleDateString()}
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  {skill.category}
+                </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  {skill.paymentType}
                 </span>
               </div>
-            </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="mt-6">
-            {!isOwnListing && (
-              <ContactProfileButtons
-                listing={skill}
-                setIsContactModalOpen={setIsContactModalOpen}
-              />
-            )}
-            {isOwnListing && (
-              <div className="flex space-x-2">
-                <Button onClick={handleEdit} variant="white">
-                  <Pencil size={20} className="inline-block mr-2" />
-                  Edit
-                </Button>
-                <Button onClick={() => setIsConfirmOpen(true)} variant="red">
-                  <Trash2 size={20} className="inline-block mr-2" />
-                  Delete
-                </Button>
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center text-2xl font-bold flex-wrap text-green-600">
+                  {getCurrency(skill?.currency)}
+                  {skill?.price || "N / A"}
+                </div>
+
+                <div className="flex items-center space-x-2 text-gray-600">
+                  <FaMapMarkerAlt className="flex-shrink-0" />
+                  <span>{skill?.location || "N / A"}</span>
+                </div>
               </div>
-            )}
+
+              <div className="bg-white border-t border-gray-200 pt-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Description
+                </h2>
+                <p className="text-gray-600 whitespace-pre-line">
+                  {skill.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-3 bg-gray-50 p-4 rounded-lg">
+                  <FaBriefcase className="text-xl text-blue-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Service Type</p>
+                    <p className="text-sm">{skill?.category}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 bg-gray-50 p-4 rounded-lg">
+                  <FaCalendar className="text-xl text-blue-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Listed On</p>
+                    <p className="text-sm">
+                      {new Date(skill.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-6">
+                {!isOwnListing ? (
+                  <ContactProfileButtons
+                    listing={skill}
+                    setIsContactModalOpen={setIsContactModalOpen}
+                  />
+                ) : (
+                  <div className="flex space-x-4">
+                    <Button
+                      onClick={handleEdit}
+                      variant="white"
+                      className="flex-1 flex items-center justify-center"
+                    >
+                      <Pencil size={20} className="mr-2" />
+                      Edit Service
+                    </Button>
+                    <Button
+                      onClick={() => setIsConfirmOpen(true)}
+                      variant="red"
+                      className="flex-1 flex items-center justify-center"
+                    >
+                      <Trash2 size={20} className="mr-2" />
+                      Delete Service
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -191,5 +261,4 @@ const FreelancerServicePage = ({ skill }) => {
     </div>
   );
 };
-
 export default FreelancerServicePage;
