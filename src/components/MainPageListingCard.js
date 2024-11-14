@@ -79,8 +79,8 @@ export const ProductCard = ({ user, listing }) => {
     if (navigator.share) {
       navigator
         .share({
-          title: listing.name,
-          text: listing.description,
+          title: apartment.name,
+          text: apartment.description,
           url: window.location.href,
         })
         .catch(console.error);
