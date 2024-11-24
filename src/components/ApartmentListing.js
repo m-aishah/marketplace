@@ -205,12 +205,14 @@ const ApartmentListingPage = ({ apartment }) => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                {/* <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                   {apartment?.category}
-                </span>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  {apartment?.paymentType}
-                </span>
+                </span> */}
+                 <div className="flex items-center space-x-2 text-gray-600">
+                  <FaMapMarkerAlt className="flex-shrink-0" />
+                  <span>{apartment?.location || "N / A"}</span>
+                </div>
+              
               </div>
 
               <div className="flex items-center justify-between flex-wrap gap-4">
@@ -219,10 +221,9 @@ const ApartmentListingPage = ({ apartment }) => {
                   {apartment?.price || "N / A"}
                 </div>
 
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <FaMapMarkerAlt className="flex-shrink-0" />
-                  <span>{apartment?.location || "N / A"}</span>
-                </div>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  {apartment?.paymentType}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

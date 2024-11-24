@@ -182,7 +182,7 @@ const ProductsListingPage = ({ listing }) => {
             <div className="p-6 space-y-6">
               <div className="flex justify-between items-start">
                 <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-                  {listing?.name || "Product Name"}
+                  {listing?.name}
                 </h1>
                 <div className="flex space-x-2">
                   {user && (
@@ -211,23 +211,20 @@ const ProductsListingPage = ({ listing }) => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                  {listing?.category || "Category"}
-                </span>
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  {listing?.condition || "Condition"}
+                  {listing?.condition}
                 </span>
               </div>
 
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center text-2xl font-bold flex-wrap text-green-600">
                   {getCurrency(listing?.currency)}
-                  {listing?.price || "N / A"}
+                  {listing?.price}
                 </div>
 
                 <div className="flex items-center space-x-2 text-gray-600">
                   <FaMapMarkerAlt className="flex-shrink-0" />
-                  <span>{listing?.location || "N / A"}</span>
+                  <span>{listing?.location}</span>
                 </div>
               </div>
 
@@ -236,7 +233,7 @@ const ProductsListingPage = ({ listing }) => {
                   Description
                 </h2>
                 <p className="text-gray-600 whitespace-pre-line">
-                  {listing?.description || "No description available"}
+                  {listing?.description}
                 </p>
               </div>
 
@@ -245,7 +242,7 @@ const ProductsListingPage = ({ listing }) => {
                   <FaTag className="text-xl text-blue-600" />
                   <div>
                     <p className="text-sm text-gray-500">Brand</p>
-                    <p className="text-sm">{listing?.brand}</p>
+                    <p className="text-sm">{listing?.brand || "N/A"}</p>
                   </div>
                 </div>
                 <div className="flex isFavitems-center space-x-3 bg-gray-50 p-4 rounded-lg">

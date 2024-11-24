@@ -1,181 +1,241 @@
-import React, { useState } from "react";
-import Image from "next/image";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import NextImage from "next/image";
 import { useSwipeable } from "react-swipeable";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-const ImageGallery = ({ images }) => {
+const useDebounce = (callback, delay) => {
+  const timeoutRef = useRef(null);
+
+  const debouncedCallback = useCallback((...args) => {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => callback(...args), delay);
+  }, [callback, delay]);
+
+  useEffect(() => {
+    return () => clearTimeout(timeoutRef.current);
+  }, []);
+
+  return debouncedCallback;
+};
+
+const ImageGallery = ({ images = [] }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const carouselRef = useRef(null);
+  const modalRef = useRef(null);
+  const imageCache = useRef(new Set());
 
-  const handleNextImage = () => {
-    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-  };
+  const preloadImages = useCallback(() => {
+    images.forEach((url) => {
+      if (!imageCache.current.has(url)) {
+        const img = new Image();
+        img.src = url;
+        img.onload = () => {
+          imageCache.current.add(url);
+        };
+      }
+    });
+  }, [images]);
 
-  const handlePrevImage = () => {
-    setCurrentImageIndex(
-      (prevIndex) => (prevIndex - 1 + images.length) % images.length
-    );
-  };
+  useEffect(() => {
+    preloadImages();
+  }, [preloadImages]);
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
+  const handleImageNavigation = useCallback((direction) => {
+    setIsLoading(true);
+    const newIndex = direction === 'next' 
+      ? (currentImageIndex + 1) % images.length
+      : (currentImageIndex - 1 + images.length) % images.length;
+    setCurrentImageIndex(newIndex);
+  }, [currentImageIndex, images.length]);
+
+  const handleNextImage = useCallback((e) => {
+    e.stopPropagation();
+    handleImageNavigation('next');
+  }, [handleImageNavigation]);
+
+  const handlePrevImage = useCallback((e) => {
+    e.stopPropagation();
+    handleImageNavigation('prev');
+  }, [handleImageNavigation]);
+
+  const closeFullscreen = useCallback(() => {
+    setIsFullscreen(false);
+  }, []);
+
+  // Handle click outside
+  const handleModalClick = useCallback((e) => {
+    if (modalRef.current && !modalRef.current.contains(e.target)) {
+      closeFullscreen();
+    }
+  }, [closeFullscreen]);
+
+  const scrollToThumbnail = useDebounce((index) => {
+    const thumbnail = document.querySelector(`[data-thumbnail-index="${index}"]`);
+    if (thumbnail && carouselRef.current) {
+      carouselRef.current.scrollTo({
+        left: thumbnail.offsetLeft - carouselRef.current.offsetWidth / 2 + thumbnail.offsetWidth / 2,
+        behavior: "smooth",
+      });
+    }
+  }, 100);
+
+  useEffect(() => {
+    scrollToThumbnail(currentImageIndex);
+  }, [currentImageIndex, scrollToThumbnail]);
+
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (isFullscreen) {
+        if (e.key === "ArrowRight") handleImageNavigation('next');
+        if (e.key === "ArrowLeft") handleImageNavigation('prev');
+        if (e.key === "Escape") closeFullscreen();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [isFullscreen, handleImageNavigation, closeFullscreen]);
 
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: handleNextImage,
-    onSwipedRight: handlePrevImage,
+    onSwipedLeft: () => handleImageNavigation('next'),
+    onSwipedRight: () => handleImageNavigation('prev'),
     preventDefaultTouchmoveEvent: true,
-    trackMouse: true,
+    trackMouse: false
   });
 
-  if (!images || images.length === 0) {
-    return null;
+  const NavigationButton = ({ direction, onClick }) => (
+    <button
+      onClick={onClick}
+      className="absolute top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-white/90 rounded-full shadow-lg transition-all duration-200 backdrop-blur-sm z-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      style={{
+        [direction === 'left' ? 'left' : 'right']: '1rem'
+      }}
+    >
+      {direction === 'left' ? (
+        <ChevronLeft className="w-6 h-6 text-gray-800" />
+      ) : (
+        <ChevronRight className="w-6 h-6 text-gray-800" />
+      )}
+    </button>
+  );
+
+  if (images.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
+        {/* <p className="text-gray-500">No images available</p> */}
+      </div>
+    );
   }
 
   return (
-    <div className="mb-6">
+    <div className="relative">
+      {/* Main Image Container */}
       <div
-        {...swipeHandlers}
-        className="relative w-full h-64 md:h-96 mb-4 touch-pan-x"
+        className="relative w-full overflow-hidden rounded-lg"
+        style={{ paddingBottom: "75%" }}
       >
         <div
-          className="absolute inset-0 bg-cover bg-center filter blur-sm"
-          style={{ backgroundImage: `url(${images[currentImageIndex]})` }}
-        ></div>
-        <div className="relative z-10 w-full h-full flex justify-center items-center">
-          <Image
+          {...swipeHandlers}
+          className="absolute inset-0 cursor-pointer"
+          onClick={() => setIsFullscreen(true)}
+        >
+          <NextImage
             src={images[currentImageIndex]}
             alt={`Image ${currentImageIndex + 1}`}
-            fill
-            sizes="(max-width: 768px) 100vw, 80vw"
+            layout="fill"
+            objectFit="cover"
             priority
-            className="rounded-lg object-contain"
+            quality={90}
+            sizes="(max-width: 768px) 100vw, 800px"
+            className={`transition-opacity duration-300 ${isLoading ? 'opacity-70' : 'opacity-100'}`}
+            onLoadingComplete={() => setIsLoading(false)}
           />
-
-          {/* Navigation buttons for desktop view */}
-          <button
-            onClick={handlePrevImage}
-            className="hidden md:block absolute left-2 top-1/2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 transition-opacity z-20"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-          <button
-            onClick={handleNextImage}
-            className="hidden md:block absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 transition-opacity z-20"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
-
-          <button
-            onClick={toggleFullscreen}
-            className="absolute bottom-2 right-2 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 transition-opacity"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-              />
-            </svg>
-          </button>
         </div>
+
+        {/* Image Counter Overlay */}
+        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/50 to-transparent p-4">
+          <span className="text-white text-sm font-medium">
+            {currentImageIndex + 1} / {images.length}
+          </span>
+        </div>
+
+        {/* Navigation Arrows */}
+        {images.length > 2 && (
+          <>
+            <NavigationButton direction="left" onClick={handlePrevImage} />
+            <NavigationButton direction="right" onClick={handleNextImage} />
+          </>
+        )}
       </div>
-      <div className="flex overflow-x-auto space-x-2 pb-2">
+
+      {/* Thumbnails */}
+      <div
+        ref={carouselRef}
+        className="mt-4 overflow-x-auto flex space-x-2 pb-2 scrollbar-hide"
+      >
         {images.map((url, index) => (
-          <div
+          <button
             key={index}
-            className={`flex-shrink-0 cursor-pointer ${
-              index === currentImageIndex ? "ring-2 ring-blue-500" : ""
+            data-thumbnail-index={index}
+            className={`relative w-20 h-20 rounded-lg overflow-hidden focus:outline-none transform transition-all duration-200 ${
+              index === currentImageIndex
+                ? "ring-2 ring-blue-500 scale-105"
+                : "ring-1 ring-gray-200 hover:ring-blue-300"
             }`}
             onClick={() => setCurrentImageIndex(index)}
           >
-            <div className="relative w-20 h-20">
-              <div
-                className="absolute inset-0 bg-cover bg-center filter blur-sm"
-                style={{ backgroundImage: `url(${url})` }}
-              ></div>
-              <Image
-                src={url}
-                alt={`Thumbnail ${index + 1}`}
-                fill
-                sizes="80px"
-                className="rounded relative z-10 object-cover"
-              />
-            </div>
-          </div>
+            <NextImage
+              src={url}
+              alt={`Thumbnail ${index + 1}`}
+              layout="fill"
+              objectFit="cover"
+              quality={60}
+              className="transition-transform duration-300 hover:scale-105"
+              loading="eager"
+            />
+          </button>
         ))}
       </div>
 
+      {/* Fullscreen Modal */}
       {isFullscreen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
-          <div
-            {...swipeHandlers}
-            className="relative w-full h-full touch-pan-x"
+        <div 
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center"
+          onClick={handleModalClick}
+        >
+          <div 
+            ref={modalRef}
+            className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
           >
-            <div
-              className="absolute inset-0 bg-cover bg-center filter blur-sm opacity-50"
-              style={{ backgroundImage: `url(${images[currentImageIndex]})` }}
-            ></div>
-            <div className="relative z-10 w-full h-full flex justify-center items-center">
-              <Image
+            <button
+              className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors duration-200 z-50"
+              onClick={closeFullscreen}
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+            
+            {/* Navigation Arrows in Fullscreen */}
+            {images.length > 2 && (
+              <>
+                <NavigationButton direction="left" onClick={handlePrevImage} />
+                <NavigationButton direction="right" onClick={handleNextImage} />
+              </>
+            )}
+
+            <div className="relative w-full h-full">
+              <NextImage
                 src={images[currentImageIndex]}
-                alt={`Image ${currentImageIndex + 1}`}
-                fill
-                sizes="100vw"
-                className="object-contain"
+                alt={`Fullscreen Image ${currentImageIndex + 1}`}
+                layout="fill"
+                objectFit="contain"
+                quality={100}
+                priority
+                className={`select-none ${isLoading ? 'opacity-70' : 'opacity-100'}`}
+                onLoadingComplete={() => setIsLoading(false)}
               />
             </div>
-            <button
-              onClick={toggleFullscreen}
-              className="absolute top-4 right-4 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 transition-opacity z-20"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
           </div>
         </div>
       )}

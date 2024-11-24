@@ -152,24 +152,25 @@ const FreelancerServicePage = ({ skill }) => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                {/* <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                   {skill.category}
-                </span>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  {skill.paymentType}
-                </span>
+                </span> */}
+                 <div className="flex items-center space-x-2 text-gray-600">
+                  <FaMapMarkerAlt className="flex-shrink-0" />
+                  <span>{skill?.location}</span>
+                </div>
               </div>
 
               <div className="flex items-center justify-between flex-wrap gap-4">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  {skill.paymentType}
+                </span>
                 <div className="flex items-center text-2xl font-bold flex-wrap text-green-600">
-                  {getCurrency(skill?.currency)}
-                  {skill?.price || "N / A"}
+                  {skill?.price? getCurrency(skill?.currency) : null}
+                  {skill?.price || "Nigotiable"}
                 </div>
 
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <FaMapMarkerAlt className="flex-shrink-0" />
-                  <span>{skill?.location || "N / A"}</span>
-                </div>
+             
               </div>
 
               <div className="bg-white border-t border-gray-200 pt-6">
