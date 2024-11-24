@@ -141,17 +141,17 @@ const ImageGallery = ({ images = [] }) => {
           className="absolute inset-0 cursor-pointer"
           onClick={() => setIsFullscreen(true)}
         >
-          <NextImage
-            src={images[currentImageIndex]}
-            alt={`Image ${currentImageIndex + 1}`}
-            layout="fill"
-            objectFit="cover"
-            priority
-            quality={90}
-            sizes="(max-width: 768px) 100vw, 800px"
-            className={`transition-opacity duration-300 ${isLoading ? 'opacity-70' : 'opacity-100'}`}
-            onLoadingComplete={() => setIsLoading(false)}
-          />
+       <NextImage
+          src={images[currentImageIndex]}
+          alt={`Image ${currentImageIndex + 1}`}
+          layout="fill" // Matches 'fill' behavior
+          sizes="(max-width: 768px) 100vw, 80vw"
+          priority
+          quality={90}
+          className="rounded-lg object-contain transition-opacity duration-300"
+          onLoadingComplete={() => setIsLoading(false)}
+        />
+
         </div>
 
         {/* Image Counter Overlay */}
@@ -162,7 +162,7 @@ const ImageGallery = ({ images = [] }) => {
         </div>
 
         {/* Navigation Arrows */}
-        {images.length > 2 && (
+        {images.length > 1 && (
           <>
             <NavigationButton direction="left" onClick={handlePrevImage} />
             <NavigationButton direction="right" onClick={handleNextImage} />
@@ -217,7 +217,7 @@ const ImageGallery = ({ images = [] }) => {
             </button>
             
             {/* Navigation Arrows in Fullscreen */}
-            {images.length > 2 && (
+            {images.length > 1 && (
               <>
                 <NavigationButton direction="left" onClick={handlePrevImage} />
                 <NavigationButton direction="right" onClick={handleNextImage} />

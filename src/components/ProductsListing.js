@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { Pencil, Trash2, Share2, Heart } from "lucide-react";
+import { Pencil, Trash2, Share2, Heart, MapPin } from "lucide-react";
 import {
   deleteListingFromFirestore,
   fetchLikeStatusFromFirestore,
@@ -223,7 +223,7 @@ const ProductsListingPage = ({ listing }) => {
                 </div>
 
                 <div className="flex items-center space-x-2 text-gray-600">
-                  <FaMapMarkerAlt className="flex-shrink-0" />
+                <MapPin className="h-5 w-5" />
                   <span>{listing?.location}</span>
                 </div>
               </div>

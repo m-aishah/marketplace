@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FaBed, FaBath, FaHome, FaMapMarkerAlt } from "react-icons/fa";
-import { Pencil, Trash2, Share2, Heart } from "lucide-react";
+import { Pencil, Trash2, Share2, Heart, MapPin } from "lucide-react";
 import ContactModal from "./ContactModal";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import {
@@ -208,8 +208,14 @@ const ApartmentListingPage = ({ apartment }) => {
                 {/* <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                   {apartment?.category}
                 </span> */}
-                 <div className="flex items-center space-x-2 text-gray-600">
-                  <FaMapMarkerAlt className="flex-shrink-0" />
+               
+                
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  {apartment?.category}
+                </span>
+                <div className="flex items-center space-x-2 text-gray-600">
+                  {/* <FaMapMarkerAlt className="flex-shrink-0" /> */}
+                  <MapPin className="h-5 w-5" />
                   <span>{apartment?.location || "N / A"}</span>
                 </div>
               

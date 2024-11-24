@@ -1,4 +1,4 @@
-import { Pencil, Trash2, Share2, Heart } from "lucide-react";
+import { Pencil, Trash2, Share2, Heart,MapPin } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import {
   FaBriefcase,
@@ -156,7 +156,7 @@ const FreelancerServicePage = ({ skill }) => {
                   {skill.category}
                 </span> */}
                  <div className="flex items-center space-x-2 text-gray-600">
-                  <FaMapMarkerAlt className="flex-shrink-0" />
+                 <MapPin className="h-5 w-5" />
                   <span>{skill?.location}</span>
                 </div>
               </div>
